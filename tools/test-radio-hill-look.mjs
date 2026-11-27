@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {
   RADIO_HILL_LAYOUT, RADIO_HILL_STAGES, RADIO_HILL_BUDGET, RADIO_HILL_LAMP, radioHillLayout, radioHillSolids, buildRadioHill, updateRadioHill, radioHillLamp, mastLegAt,
 } from '../src/world/open/looks/radio-hill-look.js';
-import {RADIO_HILL} from '../src/world/open/content/sites.js';
+import {RADIO_HILL_SPOTS} from '../src/world/open/content/site-look-data.js';
 import {sitePosition} from '../src/world/open/site-rule.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
@@ -26,13 +26,13 @@ assert.equal(JSON.stringify(radioHillLayout()), JSON.stringify(L), 'the layout i
   assert.equal(JSON.stringify(again.RADIO_HILL_LAYOUT), JSON.stringify(L), 'the layout is the same when the file is loaded again');
 }
 assert.ok(Object.isFrozen(L) && Object.isFrozen(L.spots) && Object.isFrozen(L.mast.sections[0]) && Object.isFrozen(L.sheets[0]), 'the layout cannot be changed by a card that reads it');
-// The rules' spots (src/world/open/content/sites.js) keep their names and their places, and the leader meets at the door.
-for (const [name, spot] of Object.entries(RADIO_HILL.spots)) assert.deepEqual(L.spots[name], spot, `the rules' spot ${name} is where the rules put it`);
+// The live rule spots follow the reviewed layout.
+for (const [name, spot] of Object.entries(RADIO_HILL_SPOTS)) assert.deepEqual(L.spots[name], spot, `the rules' spot ${name} is where the rules put it`);
 assert.ok(Math.hypot(L.spots['car-stop'].x, L.spots['car-stop'].z) <= L.radius, 'the car stops at the edge of the camp, inside it');
 assert.ok(L.spots['car-stop'].z > L.spots.lookout.z, 'Hetty walks out from the door to the lookout, towards where the car stops');
 // The mast: 25 m, leaning a little, its old lower part and sections of scavenged tube above.
 {
-  assert.equal(L.mast.height, RADIO_HILL.structures.find(row => row.id === 'mast').height, 'the mast is as tall as the rules have it');
+  assert.equal(L.mast.height, 25, 'the mast is as tall as the rules have it');
   const top = [0, 1, 2].map(leg => mastLegAt(leg, L.mast.height)), foot = [0, 1, 2].map(leg => mastLegAt(leg, 0));
   const lean = Math.hypot(top.reduce((sum, p) => sum + p.x, 0) / 3, top.reduce((sum, p) => sum + p.z, 0) / 3);
   assert.ok(lean > .2 && lean < .6, `the mast leans a little: ${lean.toFixed(2)} m at the top`);
@@ -70,16 +70,16 @@ for (const stage of RADIO_HILL_STAGES) {
 {
   const camp = radioHillSolids('camp'), second = radioHillSolids('second-set'), id = name => camp.find(solid => solid.id === 'radio-hill-' + name);
   assert.ok(!camp.some(solid => solid.id === 'radio-hill-second-aerial') && second.some(solid => solid.id === 'radio-hill-second-aerial'), 'the second aerial stands only at the stage second-set');
-  // The rules' structures stand where the rules put them.
-  for (const row of RADIO_HILL.structures.filter(row => row.id !== 'hut')) {
+  // Keep the original authored positions even after removing the stand-in.
+  for (const row of [{id: 'mast', x: 0, z: 0}, {id: 'generator', x: -4, z: -4}, {id: 'anchor', x: 10, z: 0}]) {
     const solid = id(row.id);
     assert.ok(solid && solid.x === row.x && solid.z === row.z, `${row.id} stands where the rules put it`);
   }
-  // The hut is its four walls round the rules' box, with a door in the south wall wide enough to walk through, and the bed and the
+  // The hut is its four walls round the original hut footprint, with a door in the south wall wide enough to walk through, and the bed and the
   // chair at the set inside it.
-  const hut = RADIO_HILL.structures.find(row => row.id === 'hut'), walls = camp.filter(solid => solid.id.startsWith('radio-hill-hut-'));
+  const hut = {x: -7, z: 4, halfX: 2.8, halfZ: 2}, walls = camp.filter(solid => solid.id.startsWith('radio-hill-hut-'));
   assert.equal(walls.length, 5);
-  for (const wall of walls) for (const [x, z] of corners(wall)) assert.ok(Math.abs(x - hut.x) <= hut.halfX + .1 && Math.abs(z - hut.z) <= hut.halfZ + .1, `${wall.id} is on the rules' box`);
+  for (const wall of walls) for (const [x, z] of corners(wall)) assert.ok(Math.abs(x - hut.x) <= hut.halfX + .1 && Math.abs(z - hut.z) <= hut.halfZ + .1, `${wall.id} is on the original hut footprint`);
   const [west, east] = ['hut-south-west', 'hut-south-east'].map(id);
   assert.ok((east.x - east.halfX) - (west.x + west.halfX) >= .8, 'the door is at least 0.8 m wide');
   for (const name of ['bed', 'set', 'hut']) assert.ok(Math.abs(L.spots[name].x - hut.x) < hut.halfX && Math.abs(L.spots[name].z - hut.z) < hut.halfZ, `${name} is inside the hut`);

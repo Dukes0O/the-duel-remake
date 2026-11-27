@@ -217,7 +217,7 @@ function radioBearings(group, positionAt) {
     group.add(glow);
     return glow;
   };
-  const red = lamp('Radio Hill red lamp', 0xff3526), white = lamp('The Pocket white lamp', 0xfff4d2);
+  const white = lamp('The Pocket white lamp', 0xfff4d2);
   let placedSeed = null, beam = null;
   const placeProps = pocket => {
     for (const mesh of [...props.children]) disposeMeshes(mesh);
@@ -235,27 +235,16 @@ function radioBearings(group, positionAt) {
       const state = open?.parts.threads;
       const record = state?.places?.checkpointsEnabled && open.world.open.threads[RADIO_ID];
       const seed = record ? open.world.open.landSeed : null;
-      const hill = record && sitePosition('radio-hill', seed), pocket = record && sitePosition(POCKET_ID, seed);
+      const pocket = record && sitePosition(POCKET_ID, seed);
       if (seed !== placedSeed) { placeProps(pocket); placedSeed = seed; }
       props.visible = !!pocket && distanceBetween(here, pocket) < 700;
-      red.visible = white.visible = false;
+      white.visible = false;
       if (beam) beam.visible = false;
       if (!record || !state.radioDark) return;
-      const time = open.seconds;
-      const age = time - (state.progress?.[RADIO_ID]?.blinkedAt ?? -Infinity);
-      const blink = age < 3 ? age % 1 < .38 : time % 2 < 1.35;
-      const fuel = open.world.ledger.history.findLast(row => row.key === RADIO_MARK.fuel);
-      const broken = fuel?.type === 'settle' && fuel.choiceId.includes('/broken/');
-      red.visible = blink && !broken && distanceBetween(here, hill) < 4000;
-      if (red.visible) {
-        positionAt(red, hill, drawnShift);
-        red.position.y += 25;
-        red.scale.setScalar(Math.max(1, distanceBetween(here, hill) / 260));
-      }
       const silenced = record.end === 'second-set' || radioMarked(open.world, RADIO_MARK.peace);
       white.visible = !silenced && distanceBetween(here, pocket) < 4000;
       if (white.visible) {
-        const at = radioPlace([POCKET_ID, 'lamp'], hill, pocket);
+        const at = radioPlace([POCKET_ID, 'lamp'], null, pocket);
         positionAt(white, at, drawnShift);
         white.position.y += 2.5;
         const distance = distanceBetween(here, pocket);
@@ -279,7 +268,6 @@ function radioBearings(group, positionAt) {
     },
     dispose() {
       placeProps(null);
-      disposeMeshes(red);
       disposeMeshes(white);
       props.removeFromParent();
       if (beam) { beam.removeFromParent(); beam.target.removeFromParent(); beam.dispose(); }

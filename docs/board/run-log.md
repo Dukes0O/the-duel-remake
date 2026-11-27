@@ -1808,3 +1808,5 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-27 OPEN-T-LIGHTS (Codex): Lights on the Whites plays behind story-choices (rescue kind); Claude moved the Bell Buoy's second position to ships-in-sand (3500, 250), which has a way in from the road. Guards and 21 open-land suites passed 26/26; build passed.
 - 2026-11-27 OPEN-APPRENTICE-RUN-3 (Codex cloud, Sol): a gas run keeps its earnings when storage cannot be read, with a retry that pays once. Review: nothing blocks; Claude cleared the stale retry snapshot on every successful save at the merge. 16 suites passed; build passed.
 - 2026-11-27 OPEN-BURNED-PEN (Claude, Opus session): the burned camp's Scene 4 and the ransom; independent review's three faults fixed in the session; Claude settled three conflicts with Lights. Guards and 24 open-land suites passed 29/29; build passed.
+- 2026-11-27 OPEN-TALK-CHOICES (Codex cloud): merged in the evening batch at 76d730838.
+- 2026-11-27 OPEN-SITE-LOOKS (Codex cloud): merged in the evening batch at 92f03402f.

@@ -140,7 +140,7 @@ export function radioHillLayout() {
   }
 
   const spots = {
-    // The rules' own spots (src/world/open/content/sites.js), at the same places.
+    // The original rule spots keep their authored positions.
     mast: {x: 1.6, z: 0}, generator: {x: -4, z: -2.5}, anchor: {x: 10, z: 1.4},
     door: {x: -7, z: 6.6}, lookout: {x: 3, z: 12}, bench: {x: -10.5, z: 5}, bed: {x: -7, z: 4},
     // Where the player leaves the car, south of the camp on the open hilltop, with the lookout between it and the hut.
@@ -1411,11 +1411,11 @@ export function buildRadioHill({stage = 'camp', heightAt = () => 0, night = fals
     stage, night, draws, triangles: kit.triangles + smoke.geometry.index.count / 3, lines: lineCount,
     lights: [hutLight, lampLight], rotor: parts.rotor, smoke, glow, wires, lit: parts.lit, levels: levels.value, daylight,
     head: {x: mast.head[0], y: mast.head[1], z: mast.head[2]},
-    update(seconds, {night: dark = group.userData.night, signalAt = null} = {}) {
-      const lamp = radioHillLamp(seconds, {night: dark, signalAt});
+    update(seconds, {night: dark = group.userData.night, signalAt = null, lampPowered = true} = {}) {
+      const lamp = radioHillLamp(seconds, {night: dark && lampPowered, signalAt});
       // The hut's light is steady, with a small waver from the generator.
       const hut = dark ? .92 + .05 * Math.sin(seconds * 7.3) * Math.sin(seconds * 2.1) : 0;
-      levels.value.set(dark ? .1 + lamp * 1.15 : .0, hut);
+      levels.value.set(dark && lampPowered ? .1 + lamp * 1.15 : .0, hut);
       daylight.value = dark ? .2 : 1;
       hutLight.visible = dark; lampLight.visible = dark && lamp > .02;
       hutLight.intensity = 9 * hut; lampLight.intensity = 5 * lamp;

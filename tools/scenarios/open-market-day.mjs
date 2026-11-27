@@ -2,6 +2,7 @@
 import market from '../../src/story/threads/content/market-day.js';
 import {LAND} from '../../src/world/scablands-names.js';
 import {scablandsSurfaceHeightAt} from '../../src/world/scablands-ground.js';
+import {siteSpot} from '../../src/world/open/site-rule.js';
 import {MARKET_PLACES} from '../../src/world/open/content/market-day-places.js';
 import {applyEffects} from '../../src/world/open/open-effects.js';
 import {newWorld} from '../../src/world/open/open-record.js';
@@ -31,6 +32,10 @@ export const pageFunctions = {
   roamReady: scout.roamReady,
   loadWorld: scout.loadWorld,
   placeCar: scout.placeCar,
+  busRingDrawn: () => {
+    const ring = window.__render?.scene?.getObjectByName('Open Scablands sites')?.getObjectByName('The Bus Ring');
+    return ring?.visible && ring.userData.smoke?.visible;
+  },
   drive: scout.drive,
   advance: scout.advance,
   walkAt: camp.walkAt,
@@ -150,6 +155,10 @@ export async function run(context) {
   }
   await wait('roamReady');
   await evaluate('loadWorld', world);
+  await evaluate('placeCar', siteSpot('bus-ring', world.open.landSeed, 'car-stop'), siteSpot('bus-ring', world.open.landSeed, 'gate'));
+  await evaluate('advance', .25);
+  await wait('busRingDrawn');
+  await context.screenshot('market-day-bus-ring');
   await evaluate('placeCar', approach, parking);
   await evaluate('drive', parking, 6, 30);
   await evaluate('setDay', 'dusk', 16 * 60);

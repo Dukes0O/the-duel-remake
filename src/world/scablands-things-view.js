@@ -1,5 +1,6 @@
 // The things of the realism trial, in batches. The scene owns the switch. Where each thing stands comes from
 // scablands-things.js; its shape and surface from scablands-things-look.js (Claude's drawing).
+import {inSiteClearing} from './open/site-rule.js';
 import * as THREE from 'three';
 import {smallThingsInCell, thingSolids, realismThingsData, THINGS_CELL, THINGS_RANGE} from './scablands-things.js';
 import {nearGroundHeightAt} from './near-ground.js';
@@ -44,9 +45,11 @@ export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurf
   let centreI = NaN, centreJ = NaN, filledX = NaN, filledZ = NaN;
   let cells = new Map();
   const object = new THREE.Object3D(), tint = new THREE.Color();
-  function update(x, z) {
+  let lastClearings;
+  function update(x, z, clearings) {
     const i = Math.floor(x / THINGS_CELL), j = Math.floor(z / THINGS_CELL);
-    if (i !== centreI || j !== centreJ) {
+    if (i !== centreI || j !== centreJ || lastClearings !== clearings) {
+      lastClearings = clearings;
       centreI = i; centreJ = j;
       for (const batch of batches.values()) batch.items.length = 0;
       const nextCells = new Map();
@@ -62,7 +65,7 @@ export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurf
         }
         nextCells.set(key, items);
         for (const item of items) {
-          batches.get(item.kind).items.push(item);
+          if (!inSiteClearing(clearings, item.x, item.z)) batches.get(item.kind).items.push(item);
         }
       }
       cells = nextCells; filledX = NaN;
@@ -128,14 +131,17 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null, g
   let filledX = NaN, filledZ = NaN;
   let fallen = new Set(), fallenCount = 0;
   const tint = new THREE.Color();
-  function update(x, z) {
-    if (Math.hypot(x - filledX, z - filledZ) < 60) return;
+  let lastClearings;
+  function update(x, z, clearings) {
+    if (lastClearings === clearings && Math.hypot(x - filledX, z - filledZ) < 60) return;
+    lastClearings = clearings;
     filledX = x; filledZ = z;
     for (const {mesh, parts, range, tinted} of batches) {
       let count = 0;
       for (const part of parts) {
         const away = Math.hypot(part.x - x, part.z - z);
         if (away > range || count >= mesh.instanceMatrix.count) continue;
+        if (part.kind === 'boulder' && inSiteClearing(clearings, part.x, part.z, part.halfX)) continue;
         const grown = Math.min(1, (range - away) / (range * .1) + .35);
         object.position.set(part.center[0], part.center[1] + part.drawOffset - part.size[1] * (1 - grown) / 2, part.center[2]);
         object.rotation.set(0, part.heading, 0);
@@ -316,7 +322,7 @@ export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, ha
   const group = new THREE.Group();
   group.name = 'Scablands realism things';
   group.add(small.group, large.group, lines.group, signs.group);
-  return {group, fixed, loneBoulders, setFallen(ids) { large.setFallen(ids); lines.setFallen(ids); }, update(x, z) { small.update(x, z); large.update(x, z); }, dispose() {
+  return {group, fixed, loneBoulders, setFallen(ids) { large.setFallen(ids); lines.setFallen(ids); }, update(x, z, clearings) { small.update(x, z, clearings); large.update(x, z, clearings); }, dispose() {
     small.dispose(); large.dispose(); lines.dispose(); signs.dispose(); group.clear();
   }};
 }

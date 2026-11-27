@@ -2,91 +2,28 @@ import * as THREE from 'three';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {createStoryPeople, STORY_FIGURES} from '../jobs/story-people.js';
 import {createStoryPeopleView} from '../story-people-view.js';
-import {BUS_RING} from './content/market-day-places.js';
-import {CAMP_SITES, RADIO_HILL} from './content/sites.js';
+import {RADIO_ID, RADIO_MARK} from './content/radio-hill-voice-places.js';
+import {CAMP_SITES, landSite} from './content/sites.js';
 import {campPeople} from './content/people-sites.js';
-import {isFound, stageOf} from './open-record.js';
+import {stageOf} from './open-record.js';
 import {isTrue} from './facts.js';
 import {buildGlasshouse, updateGlasshouse} from './looks/glasshouse-look.js';
-import {distance, hasSiteServices, residentPose, sitePosition} from './site-rule.js';
+import {distance, hasSiteServices, residentPose, siteLookStage, sitePosition} from './site-rule.js';
 import {flagPeople} from './content/somebody-elses-flag-places.js';
-
-function radioHillLook(heightAt) {
-  const group = new THREE.Group();
-  const box = (name, x, y, z, width, height, depth, color, extra = {}) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth),
-      new THREE.MeshStandardMaterial({color, roughness: .86, ...extra}));
-    mesh.name = name;
-    mesh.position.set(x, y, z);
-    group.add(mesh);
-    return mesh;
-  };
-  const [mast, hut, generator, anchor] = RADIO_HILL.structures;
-  const top = heightAt(mast.x, mast.z) + mast.height;
-  box('Radio Hill mast', mast.x, top - mast.height / 2, mast.z,
-    mast.halfX * 2, mast.height, mast.halfZ * 2, 0x63514a);
-  for (const height of [mast.height - 1, mast.height - 3, mast.height - 5])
-    box('Radio Hill aerial', mast.x, top - mast.height + height, mast.z, 4.2, .12, .13, 0x817061);
-  const lamp = box('Radio Hill lamp', mast.x, top + .2, mast.z, .38, .38, .38, 0x6d1d15,
-    {emissive: 0xff2308, emissiveIntensity: 2.5});
-  const other = [hut, generator, anchor].map(row => box('Radio Hill ' + row.id, row.x,
-    heightAt(row.x, row.z) + row.height / 2, row.z, row.halfX * 2, row.height, row.halfZ * 2,
-    row === hut ? 0x8e7963 : 0x514c46));
-  other.push(box('Radio Hill hut roof', hut.x, heightAt(hut.x, hut.z) + hut.height, hut.z, 6, .19, 4.5, 0x56443b));
-  other.push(box('Radio Hill hut door', hut.x, heightAt(hut.x, hut.z) + 1, hut.z + hut.halfZ + .05,
-    .95, 2, .12, 0x534941));
-  const wires = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(mast.x, top - 4, mast.z),
-    new THREE.Vector3(anchor.x, heightAt(anchor.x, anchor.z) + anchor.height, anchor.z),
-    new THREE.Vector3(mast.x, top - 4, mast.z),
-    new THREE.Vector3(hut.x, heightAt(hut.x, hut.z) + hut.height, hut.z),
-  ]), new THREE.LineBasicMaterial({color: 0x514841}));
-  group.add(wires);
-  other.push(wires);
-  group.userData.update = (range, phase, seconds) => {
-    for (const node of other) node.visible = range <= 180;
-    lamp.visible = phase === 'dark' && seconds % 2.5 < .65;
-  };
-  return group;
-}
-
-function busRingLook(heightAt) {
-  const group = new THREE.Group();
-  group.name = 'The Bus Ring';
-  const metal = new THREE.MeshStandardMaterial({color: 0x775d43, roughness: .93});
-  const glass = new THREE.MeshStandardMaterial({color: 0x302f2a, roughness: .65});
-  const wood = new THREE.MeshStandardMaterial({color: 0x5e4732, roughness: .95});
-  const box = (material, x, y, z, width, height, depth) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
-    mesh.position.set(x, y, z);
-    group.add(mesh);
-    return mesh;
-  };
-  for (const {x, z, halfX, halfZ, height, kind} of BUS_RING.structures) {
-    const y = heightAt(x, z);
-    box(kind === 'wreck' ? metal : wood, x, y + height / 2, z, halfX * 2, height, halfZ * 2);
-    if (kind !== 'wreck') continue;
-    const wide = halfX > halfZ;
-    for (const side of [-1, 1]) for (const along of [-3, -1, 1, 3])
-      box(glass, x + (wide ? along : side * halfX), y + 1.85, z + (wide ? side * halfZ : along),
-        wide ? 1.45 : .06, .65, wide ? .06 : 1.45);
-  }
-  const lamp = box(new THREE.MeshStandardMaterial({color: 0xdba45b, emissive: 0xff891c, emissiveIntensity: 2}),
-    0, heightAt(0, -6) + 2.9, -6, .35, .4, .35);
-  group.userData.update = (range, phase) => { lamp.visible = phase !== 'day' || range < 120; };
-  return group;
-}
+import {buildRadioHill, updateRadioHill} from './looks/radio-hill-look.js';
+import {buildBusRing, updateBusRing} from './looks/bus-ring-look.js';
+import {buildRatsNest, updateRatsNest} from './looks/rats-nest-look.js';
 
 const LOOKS = {
-  glasshouse: (stage, options) => buildGlasshouse({...options, stage: stage === 'burned' ? 'burned' : 'camp'}),
-  'radio-hill': (stage, {heightAt}) => radioHillLook(heightAt),
-  'bus-ring': (stage, {heightAt}) => busRingLook(heightAt),
+  glasshouse: buildGlasshouse,
+  'radio-hill': buildRadioHill,
+  'bus-ring': buildBusRing,
+  'rats-nest': buildRatsNest,
 };
 
 export function siteLook(id, stage, options = {}) {
-  if (!LOOKS[id] || stage === 'empty') return null;
-  if (stage !== 'burned' && !hasSiteServices(stage)) return null;
-  return LOOKS[id](stage, {heightAt: () => 0, ...options});
+  const art = siteLookStage(id, stage, options.secondSet, options.night);
+  return art && LOOKS[id] ? LOOKS[id]({...options, stage: art}) : null;
 }
 
 function clear(node) {
@@ -115,7 +52,7 @@ export function createSiteView({loadAsset}) {
     });
     if (daylight) return daylight.getWorldPosition(direction).sub(daylight.target.getWorldPosition(target));
   }
-  const camps = CAMP_SITES.map(site => {
+  const camps = [...CAMP_SITES, landSite('rats-nest')].map(site => {
     const people = createStoryPeopleView(loadAsset);
     group.add(people.group);
     const residents = campPeople(site.id);
@@ -135,10 +72,11 @@ export function createSiteView({loadAsset}) {
       if (!world || !here) return;
       const state = worldJob.open.parts.sites ?? {};
       const phase = state.partOfDay ?? 'day';
+      const night = phase === 'dusk' || phase === 'dark';
+      const secondSet = world.ledger.made.includes('radio-hill/second-set');
       for (const camp of camps) {
         const {site, people, residents, cast} = camp;
-        if ((site.storyOnly || site.storyChoices) &&
-            !(state.marketSites || worldJob.open.parts.threads?.places?.dryPumpEnabled)) {
+        if ((site.storyChoices || site.storyOnly || site.id === 'radio-hill' || site.id === 'rats-nest') && !state.marketSites) {
           if (camp.node) camp.node.visible = false;
           people.group.visible = false;
           continue;
@@ -147,19 +85,21 @@ export function createSiteView({loadAsset}) {
         const heightAt = (x, z) => scablandsSurfaceHeightAt(position.x + x, position.z + z);
         const range = distance(here, position);
         const stage = stageOf(world, site.id);
-        const fresh = stage === 'burned' && glasshouseFresh(world, site.id);
+        const fresh = site.id === 'glasshouse' && stage === 'burned' && glasshouseFresh(world, site.id);
         // Allow the sun on the screens to be read at 250 m, including the offset from the site's centre.
         const nearRange = phase === 'day' && hasSiteServices(stage) ? 280 : 180;
-        const visible = range <= (site.tell === 'dusk-smoke' && phase !== 'dusk' ? nearRange : site.tellWithin);
+        const radioThread = site.id === 'radio-hill' && world.open.threads[RADIO_ID];
+        const tellRange = radioThread && night ? 4000 : site.tellWithin;
+        const visible = range <= (site.tell === 'dusk-smoke' && phase !== 'dusk' ? nearRange : tellRange);
         if (!visible) {
           if (camp.node) camp.node.visible = false;
           people.group.visible = false;
           continue;
         }
-        const key = [world.open.landSeed, stage, fresh].join('/');
+        const key = [world.open.landSeed, siteLookStage(site.id, stage, secondSet, night), fresh].join('/');
         if (camp.key !== key) {
           clear(camp.node);
-          camp.node = siteLook(site.id, stage, {heightAt, fresh});
+          camp.node = siteLook(site.id, stage, {heightAt, fresh, secondSet, night});
           camp.key = key;
           if (camp.node) group.add(camp.node);
         }
@@ -185,7 +125,13 @@ export function createSiteView({loadAsset}) {
               cart.rotation.y = pose.yaw;
             }
           }
-        } else camp.node.userData.update(range, phase, seconds);
+        } else if (site.id === 'radio-hill') {
+          const fuel = radioThread && world.ledger.history.findLast(row => row.key === RADIO_MARK.fuel);
+          const broken = fuel?.type === 'settle' && fuel.choiceId.includes('/broken/');
+          const signalAt = worldJob.open.parts.threads?.progress?.[RADIO_ID]?.blinkedAt;
+          updateRadioHill(camp.node, worldJob.open.seconds, {night, signalAt, lampPowered: !broken});
+        } else if (site.id === 'bus-ring') updateBusRing(camp.node, seconds);
+        else updateRatsNest(camp.node, seconds);
         if (range < 100 && hasSiteServices(stage)) {
           for (const [index, person] of cast.entries()) {
             const pose = residentPose(residents[index], world, state, STORY_FIGURES[residents[index].figure].pace);
