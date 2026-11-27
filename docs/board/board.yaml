@@ -1194,6 +1194,18 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
 
+  - id: HOME-GROUND-LOOK-1
+    title: "Home Ground art, round 1: two brown hens, a crate nest box, a tin coop and an egg"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    claimed_by: "Claude session (local), 27 November 2026"
+    needs: []
+    locks: []
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-GROUND-LOOK-1.md"
+
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"
@@ -1206,10 +1218,12 @@ tasks:
 
   - id: SCENERY-FENCE-BOUNCE
     title: "A car shoved into a thin fence jumps 1 to 2 m back off it in one tick"
-    owner: "claude"
+    owner: "codex"
+    model: "astra"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex laptop lane, 27 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/SCENERY-FENCE-BOUNCE.md"
@@ -1231,10 +1245,12 @@ tasks:
   # Claude's drive of the merged batch, 27 November 2026 (docs/board/looks/drive-2026-11-27.md).
   - id: OPEN-PEN-DRAIN-BANK
     title: "Rats' Nest: a 9 m bank of earth fills the drain, so the way in on foot cannot be walked"
-    owner: "claude"
+    owner: "codex"
+    model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex laptop lane, 27 November 2026"
     needs: []
     locks: []
     flag: "story-choices"
