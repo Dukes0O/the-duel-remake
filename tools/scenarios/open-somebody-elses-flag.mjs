@@ -22,6 +22,12 @@ export const pageFunctions = {
   advance: camp.advance,
   walkAt: camp.walkAt,
   seen: () => window.__qaApp.duel.state.arena.worldJob.open.world.ledger.marks.includes('somebody-elses-flag/tower-seen'),
+  optionsReady: (question, choice) => {
+    const {job} = window.__qaApp.duel.state.arena.worldJob;
+    const screen = job.steps[job.stepIndex]?.kind === 'talk' ? job.stepState.screen : null;
+    return screen?.phase === 'options' && screen.options.some(row => row.kind === 'ask' && row.words === question) &&
+      screen.options.some(row => row.kind === 'say' && row.words.includes(choice));
+  },
   // A click counts once the game's own talk screen no longer offers it: the buttons on the page are redrawn a frame
   // later, so a button still showing may belong to a screen the game has already left.
   choose: words => {
@@ -58,12 +64,14 @@ export const pageFunctions = {
       events: (state.arena.worldJob.openJobEvents ?? []).slice(-6), input: state.input,
     });
   },
-  shared: () => {
+  shared: (asked, skipped) => {
     const {open} = window.__qaApp.duel.state.arena.worldJob;
     if (open.world.open.threads['somebody-elses-flag'].end !== 'shared' ||
         !open.world.ledger.marks.includes('somebody-elses-flag/signed') ||
         open.world.open.favours.glasshouse !== 1 || open.world.scrap !== 90)
       throw Error('The schedule did not keep the authored marks, favour and price.');
+    const answered = id => open.world.ledger.marks.includes('somebody-elses-flag/asked/' + id);
+    if (!answered(asked) || answered(skipped)) throw Error('The talk did not keep exactly the question the driver asked.');
     return true;
   },
 };
@@ -115,27 +123,22 @@ export async function run(context) {
   await evaluate('drive', parking, 4, 60);
   await use();
   await evaluate('walkAt', floor(table));
-  // Miss Pell's choices open once her questions are all asked (the shared talk part, parts/threads.js), so the driver
-  // asks each one, ends the call, and presses F again for the choices.
-  const askAll = async beat => {
-    for (const question of flagStory.beats[beat].questions) await wait('choose', question.words);
-    await wait('choose', 'I will call again if I need you.');
-    await wait('roaming');
-  };
+  const share = 'Ask Miss Pell what it would take to share the water';
+  const sign = 'Sign the form for Tin Town';
   await use();
   await wait('talking');
+  await wait('optionsReady', flagStory.beats.site.questions[0].words, share);
   await context.screenshot('sweet-seep-miss-pell');
-  await askAll('site');
-  await use();
-  await wait('choose', 'Ask Miss Pell what it would take to share the water');
+  await wait('choose', share);
   await wait('roaming');
   await evaluate('advance', .2);
   await use();
-  await askAll('schedule');
-  await use();
-  await wait('choose', 'Sign the form for Tin Town');
+  const [whatSigning, howManyCans] = flagStory.beats.schedule.questions;
+  await wait('optionsReady', whatSigning.words, sign);
+  await wait('choose', whatSigning.words);
+  await wait('choose', sign);
   await wait('roaming');
   await evaluate('advance', .2);
-  await evaluate('shared');
+  await evaluate('shared', whatSigning.id, howManyCans.id);
   await context.screenshot('sweet-seep-signed-schedule');
 }

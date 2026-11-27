@@ -136,5 +136,21 @@ const ashQuestion = radioScene(burned, burned.beats.clues, threadRule(burned, {w
   .questions.find(row => row.id === 'ash');
 assert.match(ashQuestion.lines[0].words, /somebody tipped that ash onto a fire that was already dead/);
 
+for (const [beat, point, question, decision, outcome] of [
+  ['grey-pen', placeForThread('grey-camp', cast), 'grey-watch', 'grey-offer', 'grey-offer'],
+  ['home', placeForThread(['tin-town', 'hearth'], cast), 'who-moss', 'raise-party', 'rescue'],
+]) {
+  const world = apply(started, `fixture/${beat}`, [{type: 'thread', id, to: beat, cast: {...cast, enemy: 'ash-men'}}]);
+  const view = {openRoam: true, checkpointsEnabled: true};
+  const entered = walk(openFor(world), point, view).open;
+  const talk = walk(entered, point, {...view, interact: true});
+  const {scene} = talk.requests.find(request => request.type === 'talk');
+  assert.ok(scene.questions.some(row => row.id === question));
+  const option = scene.choices.find(row => row.id === `${id}/${beat}/decision/${decision}`);
+  assert.ok(option, `${decision} is offered alongside ${question}`);
+  const chosen = walk(talk.open, point, {...view, jobEvents: [{type: 'talkChoice', scene: scene.id, id: option.id, asked: []}]});
+  assert.equal(record(chosen.open).beat, outcome);
+}
+
 for (const name of Object.keys(pageFunctions)) assert.doesNotThrow(() => new Function(`return ${pageSource(name)}`), name);
 console.log('test-burned-camp: passed');

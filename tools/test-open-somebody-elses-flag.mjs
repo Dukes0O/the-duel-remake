@@ -30,6 +30,7 @@ import {openRoamJob} from '../src/world/open/roam-job.js';
 import {placeActor} from '../src/arena/arena-event.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {flagSolids} from '../src/world/open/content/somebody-elses-flag-places.js';
+import {actOnTalk, startTalk, talkScreen} from '../src/story/talk.js';
 
 assert.equal(FEATURE_STATES['story-choices'], 'dev');
 assert.equal(createFeatureFlags({qa: false, storage: null, search: ''}).enabled('story-choices'), false);
@@ -86,11 +87,41 @@ for (const id of ['peg', 'reeds', 'board', 'stakes']) {
   assert.ok(marks(found.open).includes(FLAG_ID + '/' + ({peg: 'peg-read', reeds: 'reeds-seen', board: 'board-read', stakes: 'stakes-seen'}[id])));
   assert.ok(found.events.some(event => event.cue === 'open.clue.found'));
 }
-let shared = choice(site.open, 'site', 'share');
+const openTalk = open => frame(open, table, {interact: true});
+const sceneOf = out => out.requests.find(row => row.type === 'talk').scene;
+const selectTalk = (scene, talk, kind, words) => {
+  const index = talkScreen(scene, talk).options.findIndex(option => option.kind === kind && option.words === words);
+  assert.ok(index >= 0, `${words} is available in ${scene.id}`);
+  return actOnTalk(scene, talk, {type: 'select', index});
+};
+const finishTalk = (out, scene, result) => {
+  assert.equal(result.state.phase, 'done');
+  return frame(out.open, table, {jobEvents: [{type: 'talkChoice', scene: scene.id, ...result.choice}]});
+};
+
+const siteTalk = openTalk(site.open), siteScene = sceneOf(siteTalk);
+const siteStart = startTalk(siteScene);
+assert.ok(talkScreen(siteScene, siteStart).options.some(option => option.kind === 'ask'));
+const offerShare = flagStory.beats.site.choices.find(row => row.id === 'share').words + '.';
+const share = selectTalk(siteScene, siteStart, 'say', offerShare);
+assert.deepEqual(share.choice.asked, []);
+let shared = finishTalk(siteTalk, siteScene, share);
 assert.equal(record(shared.open).beat, 'schedule');
-shared = frame(shared.open);
-shared = choice(shared.open, 'schedule', 'sign');
+shared = openTalk(frame(shared.open).open);
+const schedule = sceneOf(shared), scheduleStart = startTalk(schedule);
+const [firstQuestion, secondQuestion] = flagStory.beats.schedule.questions;
+const signWords = flagStory.beats.schedule.choices.find(row => row.id === 'sign').words + '.';
+assert.ok(talkScreen(schedule, scheduleStart).options.some(option => option.kind === 'say' && option.words === signWords));
+const answer = selectTalk(schedule, scheduleStart, 'ask', firstQuestion.words);
+assert.equal(talkScreen(schedule, answer.state).line.words, firstQuestion.lines[0].words);
+const afterAnswer = actOnTalk(schedule, answer.state, {type: 'advance'}).state;
+assert.deepEqual(talkScreen(schedule, afterAnswer).options.filter(option => option.kind === 'ask').map(option => option.words),
+  [secondQuestion.words]);
+const signed = selectTalk(schedule, afterAnswer, 'say', signWords);
+shared = finishTalk(shared, schedule, signed);
 assert.equal(record(shared.open).end, 'shared');
+assert.ok(marks(shared.open).includes(`${FLAG_ID}/asked/${firstQuestion.id}`));
+assert.ok(!marks(shared.open).includes(`${FLAG_ID}/asked/${secondQuestion.id}`));
 assert.equal(shared.open.world.open.favours.glasshouse, 1);
 assert.equal(feudOf(shared.open.world, 'water-men'), 'Watching');
 assert.equal(shared.open.world.scrap, 90);
