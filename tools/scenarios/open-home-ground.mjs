@@ -57,6 +57,12 @@ export const pageFunctions = {
   },
   camera: mode => { window.__qaApp.setFootCamera(mode); return window.__qaApp.footCameraMode; },
   face: yaw => { window.__qaApp.duel.state.fighter.yaw = yaw; window.__qaApp.advance(.05); return true; },
+  // He tips his head up or down (the mouse's job in play); negative looks down.
+  look: pitch => { window.__qaApp.duel.state.fighter.pitch = pitch; window.__qaApp.advance(.02); return true; },
+  hen: index => {
+    const hen = window.__qaApp.duel.state.arena.worldJob.open.parts.home.flock[index];
+    return hen ? {x: hen.x, z: hen.z, mode: hen.mode} : null;
+  },
   talk: () => {
     const talk = document.querySelector('.story-talk:not([hidden])');
     return talk ? {phase: talk.dataset.phase, words: talk.textContent} : null;
@@ -378,12 +384,22 @@ export async function run(context) {
   if (!(now.record.boxes[0].eggs >= 1)) fail('No egg was laid in the first few minutes.', now.record);
   report.firstEggs = now.record.boxes[0].eggs;
   const nest = boxInLand({i: 4, j: 5});
-  await evaluate('camera', 'overhead');
-  if (await walk({x: nest.x + 1.5, z: nest.z + 2.6}, .2) > .5) fail('He could not walk back to look at the box.');
-  await evaluate('face', Math.atan2(nest.x - (nest.x + 1.5), nest.z - (nest.z + 2.6)));
-  await evaluate('advance', .5);
+  // Pictures for the look: the box with its first egg, looked down into, and a hen close to.
+  if (await walk({x: nest.x, z: nest.z + 1.4}, .15) > .4) fail('He could not walk back to look at the box.');
+  await evaluate('face', Math.PI);
+  await evaluate('look', -.62);
   await context.screenshot('home-hens-nest-box');
-  await evaluate('camera', 'first-person');
+  await evaluate('look', 0);
+  const hen = await evaluate('hen', 1);
+  if (hen) {
+    const from = {x: hen.x + 1.1, z: hen.z + 1.1};
+    await walk(from, .2);
+    const close = await evaluate('hen', 1);
+    await evaluate('face', Math.atan2(close.x - from.x, close.z - from.z));
+    await evaluate('look', -.42);
+    await context.screenshot('home-hens-on-his-ground');
+    await evaluate('look', 0);
+  }
 
   // ---- He leaves; two days later on the laptop's clock, his next outing brings it all back with eggs laid. -------
   const left = (await home()).record;
@@ -420,15 +436,13 @@ export async function run(context) {
   if (await walk({x: nest.x, z: nest.z + 1.3}, .12) > .3) fail('He could not walk to the nest box.');
   await evaluate('face', Math.PI);
   await wait('promptStarts', 'Press F to gather');
+  await evaluate('look', -.62);
   await context.screenshot('home-hens-full-box');
+  await evaluate('look', 0);
   const before = (await home()).record;
   await tap('KeyF');
   now = await home();
   if (now.record.boxes[0].eggs !== 0 || now.record.eggs !== before.eggs + before.boxes[0].eggs) fail('F did not gather the eggs.', now.record);
   report.gathered = now.record.eggs;
-  await evaluate('camera', 'overhead');
-  await evaluate('advance', .5);
-  await context.screenshot('home-hens-on-his-ground');
-  await evaluate('camera', 'first-person');
   return {...report, pieces: left.pieces.length, kept: true};
 }
