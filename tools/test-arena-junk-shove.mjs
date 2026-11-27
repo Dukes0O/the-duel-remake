@@ -311,13 +311,13 @@ for (const fps of [30, 60, 144]) check('production App junk ram repeats at ' + f
 // The nine cars of the released game, before the first medal car (the Enzo);
 // then with the Enzo, F1, Bolide and Sirena. The fan and the Skyline each have their own pin.
 const solverPins = [
-  ['', Object.keys(CARS).filter(car => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)), controls.solverFingerprint],
-  [' with the Enzo', Object.keys(CARS).filter(car => !['mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)), controls.solverFingerprintWithEnzo],
-  [' with the F1', Object.keys(CARS).filter(car => !['bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)), controls.solverFingerprintWithF1],
-  [' with the Bolide', Object.keys(CARS).filter(car => !['falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)), controls.solverFingerprintWithBolide],
-  [' with the Sirena', Object.keys(CARS).filter(car => car !== 'mcmurtry_speirling' && car !== 'nissan_skyline_gtr_r34'), controls.solverFingerprintWithSirena],
-  [' with the Speirling', Object.keys(CARS).filter(car => car !== 'nissan_skyline_gtr_r34'), controls.solverFingerprintWithSpeirling],
-  [' with the Skyline', Object.keys(CARS), controls.solverFingerprintWithSkyline],
+  ['', Object.keys(CARS).filter(car => !CARS[car].workshop).filter(car => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)), controls.solverFingerprint],
+  [' with the Enzo', Object.keys(CARS).filter(car => !CARS[car].workshop).filter(car => !['mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)), controls.solverFingerprintWithEnzo],
+  [' with the F1', Object.keys(CARS).filter(car => !CARS[car].workshop).filter(car => !['bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)), controls.solverFingerprintWithF1],
+  [' with the Bolide', Object.keys(CARS).filter(car => !CARS[car].workshop).filter(car => !['falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)), controls.solverFingerprintWithBolide],
+  [' with the Sirena', Object.keys(CARS).filter(car => !CARS[car].workshop).filter(car => car !== 'mcmurtry_speirling' && car !== 'nissan_skyline_gtr_r34'), controls.solverFingerprintWithSirena],
+  [' with the Speirling', Object.keys(CARS).filter(car => !CARS[car].workshop).filter(car => car !== 'nissan_skyline_gtr_r34'), controls.solverFingerprintWithSpeirling],
+  [' with the Skyline', Object.keys(CARS).filter(car => !CARS[car].workshop), controls.solverFingerprintWithSkyline],
 ];
 for (const [suffix, cars, pin] of solverPins) check('released rigid-body solver fingerprint remains unchanged for every playable mass pair' + suffix, () => {
   const results = [];

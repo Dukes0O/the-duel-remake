@@ -4,6 +4,10 @@ import { featureFlags } from './feature-flags.js';
 // Model-local metres. Every car uses its authored size, then a small adjustment
 // for its nose, roof and body center. +Z is forward on all eleven vehicle models.
 const ADJUSTMENTS = Object.freeze({
+  rattler: Object.freeze({frontY: .48, roofLift: .10, roofZ: -.24, shieldLift: .1}),
+  longhaul: Object.freeze({frontY: .95, roofLift: .10, roofZ: 1.4, shieldLift: .2}),
+  scarab: Object.freeze({frontY: .5, roofY: 1.65, roofLift: .08, roofZ: .64, shieldLift: .1}),
+  bully: Object.freeze({frontY: .58, roofLift: .10, roofZ: -.55, shieldLift: .20}),
   falcone_f42: Object.freeze({ frontY: 0.48, roofLift: 0.10, roofZ: -0.24, shieldLift: 0 }),
   stuttgart_959s: Object.freeze({ frontY: 0.50, roofLift: 0.09, roofZ: -0.36, shieldLift: 0 }),
   falcone_heritage: Object.freeze({ frontY: 0.49, roofLift: 0.10, roofZ: -0.22, shieldLift: 0 }),
@@ -38,7 +42,7 @@ export function vehicleSocketLayout(key, size) {
   return Object.freeze({
     front: Object.freeze([0, adjustment.frontY, halfLength + 0.04]),
     rear: Object.freeze([0, adjustment.frontY, -halfLength - 0.04]),
-    roof: Object.freeze([0, size.height + adjustment.roofLift, adjustment.roofZ]),
+    roof: Object.freeze([0, adjustment.roofY ?? size.height + adjustment.roofLift, adjustment.roofZ]),
     hood: Object.freeze([0, Math.max(adjustment.frontY + 0.14, size.height * 0.57), halfLength * 0.43]),
     left: Object.freeze([halfWidth + 0.04, shoulderY, 0]),
     right: Object.freeze([-halfWidth - 0.04, shoulderY, 0]),

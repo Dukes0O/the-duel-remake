@@ -7,3 +7,11 @@
 .town-entry .town-map-hint[hidden]{display:none}
 .town-wmap-chart{background-image:repeating-linear-gradient(2deg,#8d704018 0 1px,transparent 1px 5px),repeating-linear-gradient(91deg,#8d704010 0 1px,transparent 1px 7px),radial-gradient(ellipse at 22% 35%,#e7d8af,#d7c397 70%,#c8b489)}
 .town-wmap-center{left:51%;top:52%}.town-wmap-region{left:var(--map-x);top:var(--map-y);border-color:var(--map-ink)}
+
+.town-workshop { position: absolute; inset: 8% 15%; z-index: 4; overflow: auto; padding: 20px; color: #f7edd9; background: #15211df5; border: 1px solid #aa986f; box-shadow: 0 8px 35px #0009; }
+.town-workshop header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.town-workshop article { padding: 12px 0; border-top: 1px solid #aa986f88; }
+.town-workshop h2, .town-workshop h3 { margin: 0 0 8px; }
+.town-workshop progress { width: 100%; }
+.town-workshop button:disabled { opacity: .5; cursor: default; }
+@media (max-width: 700px) { .town-workshop { inset: 4%; } }

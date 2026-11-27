@@ -22,7 +22,7 @@ export const gforceBench = makeBench({
   },
   goalMet: history => history.some(({result}) => result.g >= 2),
   facts() {
-    const limits = Object.keys(CARS).map(gameLimitG);
+    const limits = Object.keys(CARS).filter(id => !CARS[id].workshop).map(gameLimitG);
     return {doubleSpeedRatio: lateralG(80, 50) / lateralG(40, 50), halfRadiusRatio: lateralG(40, 25) / lateralG(40, 50),
       lowestCarLimitG: Math.min(...limits), highestCarLimitG: Math.max(...limits)};
   },

@@ -538,7 +538,7 @@ export class App {
   }
   driveLessonProps(){
     const run=this.duel.drivingLesson,choices=this.getRaceChoices();
-    return {corners:DRIVE_LESSON_CORNERS,courses:COURSE,cars:Object.entries(CARS).map(([id,car])=>({id,name:car.name})),
+    return {corners:DRIVE_LESSON_CORNERS,courses:COURSE,cars:Object.entries(CARS).filter(([,car])=>!car.workshop).map(([id,car])=>({id,name:car.name})),
       ownedCourseIds:COURSE.filter(course=>isCourseUnlocked(this.profile,course)).map(course=>course.id),
       ownedCarIds:this.profile.unlockedCars,playerId:this.player?.id,progress:this.profile.drivingLessons,
       courseId:this.driveLessonCourse,carId:choices.car,difficulty:choices.difficulty,
@@ -1011,6 +1011,7 @@ export class App {
     this.helpVisible=false;
     this._settleAbandoned();
     const selectedCar=options.car||this.duel.state.car;
+    if(CARS[selectedCar]?.workshop&&!this._switches().enabled('wasteland-cars'))return false;
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
     if(this._airOnlyRefused(car,stage.id))return false;
     if(this._fireClosedRefused(stage))return false;
@@ -1039,7 +1040,8 @@ export class App {
     const laps=isSummitAttack(stage)?1:this.getLapChoice(stageIndex,mode,options.laps);
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
       this._lapChoices.set(this._lapChoiceKey(stageIndex,mode),laps);
-    const rival=isSummitAttack(stage)?null:Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
+    let rival=isSummitAttack(stage)?null:Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
+    if(CARS[rival?.car]?.workshop&&!this._switches().enabled('wasteland-cars'))rival=null;
     const cupState=normalizeCups(this.profile.cups),cupRun=cupState.version===1?cupState.active:null;
     const cupRound=this.cupsAvailable()&&cupRun?.ownerId===this.player.id&&mode==='grandprix'&&
       CUPS.find(cup=>cup.id===cupRun.cupId)?.events[cupRun.results.length]===stage.id&&
@@ -1110,6 +1112,8 @@ export class App {
     this._applyRaceSettings(normalizeRaceSettings({...saved,...overrides},this.profile),customSeed);
   }
   _applyRaceSettings(settings,customSeed=this._customMenuSeed){
+    if(CARS[settings.car]?.workshop&&!this._switches().enabled('wasteland-cars'))settings={...settings,car:'falcone_f42'};
+    if(CARS[settings.rival?.car]?.workshop&&!this._switches().enabled('wasteland-cars'))settings={...settings,rival:null};
     this._footCameraMode=settings.footCamera;
     this._raceSettings=settings;this.menuStage=raceSettingsStage(settings);this.menuCar=settings.car;this.menuRouteId=settings.routeVariant;this._customMenuSeed=customSeed;
     this.cpuDifficulty=settings.cpuDifficulty;this.ghostEnabled=settings.ghostEnabled;this.lightingMood=settings.lightingMood;
@@ -2336,6 +2340,24 @@ export class App {
     clearScablandsTownLayout();
     return false;
   }
+
+  // The town must already be saved by the Workshop screen. A failed profile
+  // write leaves its completed car available to collect again.
+  async collectTownCar(town, carId) {
+    const playerId = this.player?.id;
+    const {collectWorkshopCar} = await import('./town/town-workshop.js');
+    if (this.player?.id !== playerId) return {ok: false, message: 'Choose your own town again.'};
+    this._refreshPlayer();
+    const previous = this.profile;
+    const result = collectWorkshopCar(previous, town, carId, {playerId,
+      enabled: this._switches().enabled('wasteland-cars') && this._switches().enabled('wasteland-town')});
+    if (!result.ok || !result.changed) return result;
+    this.profile = result.profile;
+    if (!this._saveShopProfile(previous)) return {ok: false, message: 'The car could not be saved yet. It is still ready at the Workshop.'};
+    this.duel.emit({garage: true});
+    this._storyBonus();
+    return result;
+  }
   // HELI-RUSTWALL: FLY from the town's finished Helipad. The Scablands is loaded as the town's drive loads it (so it is drawn
   // with the town on it), then the helicopter visit runs there with the land handed to the session as plain inputs. What the
   // visit does goes back to the town as commands, and the town is saved when the visit ends.
@@ -2403,6 +2425,7 @@ export class App {
     if (run?.refused) return false;
     if (run) job = run.job;
     const car = run?.car ?? (isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42');
+    if(CARS[car]?.workshop&&!this._switches().enabled('wasteland-cars'))return false;
     if (this._airOnlyRefused(car, venueId)) return false;
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: level,

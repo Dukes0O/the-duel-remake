@@ -982,6 +982,11 @@ const FALCONE_VOICE = {
   intake: 0.09,
 };
 export const CAR_VOICES = {
+  // CAR-DRIVE-WASTE: existing engine bands, shaped from Banshee, Titan and Dusthawk.
+  rattler: {pitch: .94, brightness: 1.1, gain: 1.08, accent: 1.08, exhaust: .26, intake: .08},
+  longhaul: {pitch: .74, brightness: .70, gain: 1.04, accent: 1.02, exhaust: .25, intake: .04},
+  scarab: {pitch: 1.06, brightness: 1.04, gain: .98, accent: 1.05, exhaust: .12, intake: .13},
+  bully: {pitch: .79, brightness: .76, gain: 1.04, accent: 1.02, exhaust: .25, intake: .04},
   nissan_skyline_gtr_r34: {
     pitch: .96, brightness: 1.03, gain: .98, accent: 1,
     exhaust: .16, intake: .13, turbo: true,

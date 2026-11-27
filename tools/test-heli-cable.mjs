@@ -43,6 +43,7 @@ function hookedOver(massKg, {fuelKg = 400} = {}) {
 
 // Which cars lift (the packet's table).
 const table = {
+  rattler: [1100, true], longhaul: [9000, false], scarab: [850, true], bully: [6500, false],
   viper_proto: [940, true], falcone_heritage: [1150, true], falcone_f42: [1250, true],
   dusthawk_rally: [1280, true], aurora_gt: [1350, true], koenigsegg_jesko: [1390, true],
   stuttgart_959s: [1450, true], banshee_muscle: [1810, false], titan_monster: [4700, false],

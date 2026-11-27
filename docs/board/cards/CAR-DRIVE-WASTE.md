@@ -7,3 +7,23 @@ Follow `docs/UNLOCK_VEHICLES.md` and `docs/EARNED_CARS.md` for how a car is adde
 Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-long-dry.md](../../story/the-long-dry.md). Read sections 2, 3, 10, 11 and the checks in section 15 first. **This game is for years of play and years of building (Kyle, 5 November): no fixed limits on people, buildings, map size or years; content lives in data under `src/town/content/`; a town saved today must load in every later build.** A pure sim file imports no DOM, no Three.js and nothing from `src/app.js`. Stay inside the files named here. If something the card needs is missing, write your choice on this card under "Codex decided (Claude to review)" and carry on, unless it touches saves, or a released course or replay, in which case stop and say so. Real numbers wherever a real number exists, and note the source of any you add. Every player-facing word is plain, in whole sentences, with no em dashes. Run the card's own checks and `npm run build`; Claude runs the lane tier and browser checks. Write `docs/changes/<card>.md` with a Removed section, and list what Claude should look at. No Chrome under `codex exec`. Memory-only saves. No new dependency, network request or key.
 
 ## Claude answers
+
+## Codex decided (Claude to review)
+
+- The `wasteland-cars` switch starts at `dev`. The four IDs are always known to save loading; only an owner with the switch on sees them in car lists. No new car enters the helicopter's job pool or the existing computer field. No released handling value changes.
+- Own the hooks in `config.js`, `feature-flags.js`, `earned-cars-ui.js`, `vehicle-assets.js`, `vehicle-sockets.js`, `sound-bank.js`, `engine-curve.js`, `app.js`, the car-list readers in the Lab and helicopter, plus new `wasteland-vehicles.js`, `town/content/workshop-cars.js`, `town/town-workshop.js`, `town/ui/town-workshop.js`, and the town index/entry hooks. Update the affected existing checks and add `test-town-workshop.mjs`, `test-wasteland-cars.mjs` and `test-wasteland-vehicles.mjs`.
+- These are fictional machines. Handling is HOUSE tuning against Dusthawk, Banshee and Titan in `src/config.js`, not a claim about a real vehicle. Geometry comes from the existing GLBs and their Blender recipes; Rattler uses the round-nine verdict's 0.38 m front and 0.51 m rear tyres. The Bully's collision envelope includes its plough.
+
+| Car | mph | Accel | Grip | Brake | Gears, mph | Mass, kg | Dirt grip / mph / scrub |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Rattler | 145 | 8.8 | .82 | .98 | 40,70,100,125,145 | 1100 | .88 / 105 / .25 |
+| Longhaul | 82 | 4.6 | .75 | .72 | 20,34,48,62,74,82 | 9000 | .90 / 70 / .18 |
+| Scarab | 118 | 8.5 | .96 | 1.10 | 32,55,78,100,118 | 850 | 1.08 / 115 / .10 |
+| Bully | 65 | 3.8 | .72 | .80 | 18,32,46,58,65 | 6500 | .88 / 55 / .18 |
+
+- The Workshop has one assembly bay per finished building. Parts/steel costs are 400/700, 2500/6500, 350/500 and 2000/4500 kg respectively, summing to each fictional vehicle's mass. Assembly takes 6, 15, 8 and 12 minutes at normal town speed. These are pacing choices, not real build times. Existing salvage can be stripped using the existing `sort-salvage` recipe to supply missing parts; shortages stop work until another load arrives. No money buys a car and no button completes one.
+- Optional `town.workshop` version 1 stores orders and completed cars, created only by the first Workshop command. Old towns gain no field on load; unknown versions and content are preserved. Ownership is granted through existing `profile.unlockedCars`, once, after the completed town has saved. A retry recovers an interrupted grant. Cars retain normal upgrades and six medal boxes. Visiting a town cannot grant its cars.
+- Reuse engine bands with a louder Banshee-derived voice for Rattler, low Titan-derived voices for Longhaul/Bully, and the rally voice for Scarab. Reuse `interface.go` for starting work and `interface.bonus` for collecting a completed car; no new sound-bank cue.
+- Checks before handover: the three suites above prove Workshop completion/save compatibility, actual driving and field isolation, and real GLB loading/moving wheels/damage. Then the requested lane tier with two jobs, `test-feature-flags`, and build, one heavy job at a time. Claude runs browser checks and judges handling, sound and the four models in game.
+
+- Roster expansion updates every older roster assertion and the existing headless model fixtures. The unchanged roster retains its exact pins. The four cars also need fitted armour kits, so this card includes `tools/blender/armor-kits.py`, its existing fit/model audits, and four generated runtime kit GLBs. Claude checks the fit in game before promotion.

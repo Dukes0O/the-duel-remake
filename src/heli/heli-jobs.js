@@ -192,7 +192,7 @@ export const JOBS_PER_DAY = 3;
 // The customers' cars: every car Kestrel One can lift in H1, except the
 // medal cars, Sirena and garage-completion reward. The Jesko's racing freedom
 // does not change the existing customer pool or seeded dispatch jobs.
-export const JOB_CARS = Object.freeze(Object.keys(CARS).filter(id => liftCheck(id).ok && !isAirOnlyCar(id) && !MEDAL_CARS.includes(id) && id !== 'koenigsegg_jesko'));
+export const JOB_CARS = Object.freeze(Object.keys(CARS).filter(id => !CARS[id].workshop && liftCheck(id).ok && !isAirOnlyCar(id) && !MEDAL_CARS.includes(id) && id !== 'koenigsegg_jesko'));
 
 const JOB_SEED = 0x4b455354;
 

@@ -5,6 +5,7 @@ import { FREESTYLE_COURSE } from './freestyle-course.js';
 import { applyCircuits } from './circuits/index.js';
 import { BOWL_COURSE } from './bowl/bowl-course.js';
 import { featureFlags } from './feature-flags.js';
+import {WORKSHOP_CARS} from './town/content/workshop-cars.js';
 
 // Five crash slots; a stage win restores up to two, never above the starting reserve.
 export const LIVES = {
@@ -150,6 +151,9 @@ export const CARS = {
       awd: true, excludeFromCompletion: true,
     },
   } : {}),
+  // Always known to save loading, even with wasteland-cars off. Visibility is
+  // separate from ownership, so disabling the preview never erases a built car.
+  ...Object.fromEntries(Object.entries(WORKSHOP_CARS).map(([id, car]) => [id, car.spec])),
 };
 export const DEFAULT_CAR = 'falcone_f42';
 

@@ -2,6 +2,7 @@
 // medal sheet panel, the locked page and the results lines. Markup only; no
 // race state and no save writes.
 import { CARS } from './config.js';
+import {featureFlags} from './feature-flags.js';
 import { KOGANE_SKYLINE } from './story/story-save.js';
 import { MEDAL_CARS, MEDAL_ROWS, MEDAL_LEVELS, MEDAL_COLOURS, medalRequirement,
   medalCarProgress, medalTotals } from './medals.js';
@@ -15,11 +16,12 @@ const escape = value => String(value).replace(/[&<>"']/g, character =>
 // place in the lists belong to DEEP-SIRENA-VIEW. Every list stays exactly what it was.
 // NISSAN-SKYLINE-GTR-R34-V6: the Nissan Skyline is the Kogane Invitation's prize (unlockRequirement 'kogane-duel'), never a
 // shop car. It is on no list until the player owns it, as the Sirena is; `wonCars` adds it for an owner.
-export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== KOGANE_SKYLINE && (enabled === true || !medalRequirement(id));
+export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && !CARS[id].workshop && id !== 'falcone_sirena' && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== KOGANE_SKYLINE && (enabled === true || !medalRequirement(id));
 export const shownCarIds = enabled => Object.keys(CARS).filter(id => isShownCar(id, enabled));
 export const shownCars = enabled => Object.entries(CARS).filter(([id]) => isShownCar(id, enabled));
 // The story prize cars this player owns, as [id, car] pairs to add after the shown cars (garage, armory, scores, rival picker).
-export const wonCars = profile => Object.entries(CARS).filter(([id]) => id === KOGANE_SKYLINE && profile?.unlockedCars?.includes(id) === true);
+export const wonCars = (profile, flags = featureFlags) => Object.entries(CARS).filter(([id, car]) =>
+  (id === KOGANE_SKYLINE || car.workshop && flags.enabled('wasteland-cars')) && profile?.unlockedCars?.includes(id) === true);
 // "MEDALS 4/6", and for a car that needs gold "MEDALS 20/24 · GOLD 4/6".
 export function medalProgressLabel(profile, id) {
   const progress = medalCarProgress(profile, id);

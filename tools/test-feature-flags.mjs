@@ -20,10 +20,10 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 64 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 65 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
     && FEATURE_STATES['gear-find'] === 'on'
     && FEATURE_STATES['titan-bowl'] === 'on'
-    && ['arena-tricks', 'snow-world', 'rival-voices', 'engine-curve', 'tyre-slip', 'story-everburn', 'story-choices', 'road-riders', 'scablands-runs', 'scablands-realism', 'wasteland-town', 'water-cannon', 'the-dig', 'deep-vasca', 'wildlife-hits', 'far-rain', 'far-jobs', 'bowl-rex-3'].every(name => FEATURE_STATES[name] === 'dev')
+    && ['arena-tricks', 'snow-world', 'rival-voices', 'engine-curve', 'tyre-slip', 'story-everburn', 'story-choices', 'road-riders', 'scablands-runs', 'scablands-realism', 'wasteland-town', 'wasteland-cars', 'water-cannon', 'the-dig', 'deep-vasca', 'wildlife-hits', 'far-rain', 'far-jobs', 'bowl-rex-3'].every(name => FEATURE_STATES[name] === 'dev')
     && ['wildlife', 'heli-skins'].every(name => FEATURE_STATES[name] === 'on')
     && ['lap-choice', 'snowmen', 'the-deep', 'cpu-racecraft', 'lab', 'lab-tuning', 'lab-2', 'rescue', 'heli-logbook', 'heli-skiing', 'driving-lessons', 'pilot-map', 'nissan-skyline', 'kogane-invitation', 'lab-classroom', 'water-road', 'warlord-nine', 'earned-cars'].every(name => FEATURE_STATES[name] === 'on')
     && FEATURE_STATES['grand-prix-career'] === 'on' && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES.yeti === 'on'

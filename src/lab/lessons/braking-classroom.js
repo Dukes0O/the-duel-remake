@@ -21,7 +21,7 @@ const SETTLE_S = .7, HELD_GAP_S = .14;
 const MS_PER_MPH = DRIVE.mphToWorld, KMH_PER_MS = 3.6;
 const exactMs = speed => speed / KMH_PER_MS, benchMph = speed => exactMs(speed) / MS_PER_MPH;
 // The bench's own car, the slow and fast settings of "twice the speed", and the cars of the free test (their brakes all differ).
-const CAR_IDS = Object.keys(CARS);
+const CAR_IDS = Object.keys(CARS).filter(id => !CARS[id].workshop);
 export const BENCH_CAR = CAR_IDS[0], SLOW = 100, FAST = 200;
 // The deceleration step and the Watch brake from other speeds, so that nothing settles the "Twice the speed" guess before it is answered.
 export const DECEL_SPEED = 150, WATCH_SPEED = 150;

@@ -15,6 +15,7 @@ import {createTownSession,townsAvailableToVisit} from './town-session.js';
 // HELI-RUSTWALL: FLY from a finished Helipad (the town's side of Kestrel One over the wall).
 import {townHelipad,scablandsVisitRefusal} from './town-heli.js';
 import {townMissionCardMarkup,townMissionCardModel} from './ui/town-mission-card.js';
+import {workshopMarkup} from './ui/town-workshop.js';
 import './ui/town-screen.css';
 
 const QA_TOWN_MEMORY={towns:new Map(),copies:new Map()};
@@ -59,7 +60,13 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
     if(!walletSaved||!townSaved){message='The scrap moved, but it could not be saved yet. Stay in the town and it will try again when you next save.';paint();repaintWastelandMap();}
   };
   const leave=async(reason='return')=>{if(leavePromise)return leavePromise;leavePromise=(async()=>{if(visiting){await session[reason]();return;}if(await save('leaving'))dispose();else leavePromise=null;})();return leavePromise;};
-  const paint=()=>{if(closed||!town)return;renderTownScreen(ui,town,{speed,next:message||'Nothing needs your attention. Make a plan.',tab:selectedBuildTab,visiting,owner:ownerName,canFly:!!townHelipad(town)&&app?.heliAvailable?.()===true});const reports=ui.querySelector('.town-reports');if(reports){reports.innerHTML=townReportsPanelMarkup(townReportsPanelModel(town));if(visiting)for(const article of reports.querySelectorAll('.town-report')){article.querySelector('ul')?.remove();article.insertAdjacentHTML('beforeend','<p>This report is read-only while you are visiting.</p>');}const selected=[...reports.querySelectorAll('.town-report')].find(article=>article.dataset.townReport===selectedReportId);selected?.classList.add('is-selected');}const mission=townMissionCardModel(town,{readOnly:visiting});if(mission&&reports&&missionCard!=='open')reports.insertAdjacentHTML('afterbegin',`<button type="button" data-town-mission-open>JOB: ${safeText(mission.title.toUpperCase())}</button>`);if(mission&&(missionCard==='open'||missionCard==='auto'&&!visiting&&mission.jobId!=='town-salvage-run'))ui.insertAdjacentHTML('beforeend',townMissionCardMarkup(mission));if(ledgerOpen)ui.insertAdjacentHTML('beforeend',townLedgerMarkup(townLedgerModel(town,{profile:app?.profile,canTrade:!visiting,shortfall:mapShortfall})));ui.querySelector('[data-town-action="visit"]')?.addEventListener('click',showVisits);};
+  let workshopOpen = false;
+  const paintWorkshop = () => {
+    if (app?._switches?.().enabled('wasteland-cars') !== true) return;
+    ui.querySelector('.town-toolbar')?.insertAdjacentHTML('beforeend', '<button type="button" data-workshop-open>Open the Workshop plans.</button>');
+    if (workshopOpen) ui.insertAdjacentHTML('beforeend', workshopMarkup(town, app?.profile, {enabled: true, readOnly: visiting}));
+  };
+  const paint=()=>{if(closed||!town)return;renderTownScreen(ui,town,{speed,next:message||'Nothing needs your attention. Make a plan.',tab:selectedBuildTab,visiting,owner:ownerName,canFly:!!townHelipad(town)&&app?.heliAvailable?.()===true});const reports=ui.querySelector('.town-reports');if(reports){reports.innerHTML=townReportsPanelMarkup(townReportsPanelModel(town));if(visiting)for(const article of reports.querySelectorAll('.town-report')){article.querySelector('ul')?.remove();article.insertAdjacentHTML('beforeend','<p>This report is read-only while you are visiting.</p>');}const selected=[...reports.querySelectorAll('.town-report')].find(article=>article.dataset.townReport===selectedReportId);selected?.classList.add('is-selected');}const mission=townMissionCardModel(town,{readOnly:visiting});if(mission&&reports&&missionCard!=='open')reports.insertAdjacentHTML('afterbegin',`<button type="button" data-town-mission-open>JOB: ${safeText(mission.title.toUpperCase())}</button>`);if(mission&&(missionCard==='open'||missionCard==='auto'&&!visiting&&mission.jobId!=='town-salvage-run'))ui.insertAdjacentHTML('beforeend',townMissionCardMarkup(mission));if(ledgerOpen)ui.insertAdjacentHTML('beforeend',townLedgerMarkup(townLedgerModel(town,{profile:app?.profile,canTrade:!visiting,shortfall:mapShortfall})));ui.querySelector('[data-town-action="visit"]')?.addEventListener('click',showVisits);paintWorkshop();};
   const repaintWastelandMap=()=>{if(!mapOverlay||!town)return;mapOverlay.innerHTML=townWastelandMapMarkup(townWastelandMapModel(town,{profile:app?.profile,canTrade:!visiting,message,shortfall:mapShortfall}));};
   const closeWastelandMap=()=>{if(!mapOpen)return;mapOpen=false;mapDispose?.();mapDispose=null;mapOverlay?.remove();mapOverlay=null;};
   const openWastelandMap=()=>{if(mapOpen||closed)return;mapOpen=true;mapOverlay=document.createElement('div');host.append(mapOverlay);repaintWastelandMap();mapDispose=bindTownWastelandMap(mapOverlay,{onClose:closeWastelandMap,onCommand:cmd=>{command(cmd);repaintWastelandMap();}});mapOverlay.addEventListener('wheel',event=>{if(event.deltaY<0){event.preventDefault();closeWastelandMap();sceneView.move({zoom:-.025,delta:1/60});}},{passive:false});if(qa)host.__townMapOpen=true;};
@@ -109,8 +116,28 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
   markerLayer.addEventListener('wheel',zoomTown,{passive:false});
   markerLayer.addEventListener('pointermove',()=>{flight=null;});host.addEventListener('pointermove',()=>{flight=null;},true);
   ui.addEventListener('click',event=>{const tillIn=event.target.closest?.('[data-town-till-in]'),tillOut=event.target.closest?.('[data-town-till-out]');if(tillIn||tillOut){if(!visiting)command({type:tillIn?'tillIn':'tillOut',amount:Number((tillIn||tillOut).dataset[tillIn?'townTillIn':'townTillOut'])});return;}if(event.target.closest?.('[data-town-ledger-close]')){ledgerOpen=false;paint();return;}const missionGo=event.target.closest?.('[data-town-mission-go]');if(missionGo){if(!visiting)void(async()=>{if(!await save('leaving'))return;dispose();await app?.startTownJob?.(town,missionGo.dataset.townMissionGo);})();return;}if(event.target.closest?.('[data-town-mission-later]')){missionCard='hidden';paint();return;}if(event.target.closest?.('[data-town-mission-open]')){missionCard='open';paint();return;}const answer=event.target.closest?.('[data-town-report-answer]');if(answer){if(visiting){event.preventDefault();return;}command({type:'answerReport',reportId:answer.dataset.townReportId,answerId:answer.dataset.townReportAnswer});return;}const focus=event.target.closest?.('[data-town-focus-report]');if(focus){const marker=markerRecords.find(row=>row.id===`report:${focus.dataset.townFocusReport}`);if(marker)startFlight(marker);}});
-  const session=createTownSession({town,homeTown:returnTownSnapshot,store,visiting,clock:{step:target=>stepTown(target),command:(target,cmd)=>stepTown(target,cmd,{profile:app?.profile})},save:(target,reason)=>saveTown(target,{store,reason}),onReturn:()=>{if(returnTownId){dispose(false);void startTown({app,onExit,townId:returnTownId,returnTownSnapshot});}else dispose();}});
+  const session=createTownSession({town,homeTown:returnTownSnapshot,store,visiting,clock:{step:target=>stepTown(target),command:(target,cmd)=>stepTown(target,cmd,{profile:app?.profile,flags:app?._switches?.()})},save:(target,reason)=>saveTown(target,{store,reason}),onReturn:()=>{if(returnTownId){dispose(false);void startTown({app,onExit,townId:returnTownId,returnTownSnapshot});}else dispose();}});
   const command=cmd=>{if(visiting){message=session.command(cmd).message;paint();return [{ok:false,message}];}if(cmd.type==='setSpeed'){speed=cmd.speed;paint();return [];}const answers=session.command(cmd),answer=answers[0];message=answer?.ok?(cmd.type==='placeBuilding'&&cmd.buildingId?.startsWith('road-')?'Road laid.':answer.message):answer?.message||'';if(cmd.type==='buyDeed'){const deed=TOWN_DEEDS.find(row=>row.id===cmd.deedId);mapShortfall=!answer?.ok&&message==='The town till does not have enough scrap.'?Math.max(0,deed?.purchasePrice-Number(town.till||0n)):0;}if(cmd.type==='tillIn'||cmd.type==='tillOut'){if(answer?.ok){mapShortfall=0;void saveWalletChange();}}sceneView.update();paint();renderMarkers(true);return answers;};
+  ui.addEventListener('click', event => {
+    if (event.target.closest?.('[data-workshop-open]')) { workshopOpen = true; paint(); return; }
+    if (event.target.closest?.('[data-workshop-close]')) { workshopOpen = false; paint(); return; }
+    if (visiting || app?._switches?.().enabled('wasteland-cars') !== true) return;
+    const build = event.target.closest?.('[data-workshop-build]');
+    if (build) {
+      const [answer] = command({type: 'buildWorkshopCar', carId: build.dataset.workshopBuild});
+      if (answer?.ok) {
+        app?.playDriveLessonCue?.(answer.cue);
+        void save('Workshop order');
+      }
+    }
+    const collect = event.target.closest?.('[data-workshop-collect]');
+    if (collect) void (async () => {
+      if (!await save('Workshop completion')) return;
+      const answer = await app?.collectTownCar?.(town, collect.dataset.workshopCollect);
+      message = answer?.message ?? 'The car could not be collected yet.';
+      paint();
+    })();
+  });
   if(qa){host.__townCommand=command;host.__townStoredRecord=async()=>JSON.stringify((await store.towns([town.id]))[0],(_key,value)=>typeof value==='bigint'?String(value):value);if(visiting)globalThis.__townVisitStoredRecord=host.__townStoredRecord;}
   input=bindTownInput(ui,{command,onPlacementChange:value=>markerLayer.classList.toggle('is-placing',value),viewAction:action=>{if(action.type==='yard')void leave();if(action.type==='drive'&&!visiting)void(async()=>{if(!await save('leaving'))return;dispose();await app?.startTownDrive?.(town);})();if(action.type==='fly'&&!visiting){const refusal=scablandsVisitRefusal(town,{lessonsDone:app?.profile?.heli?.lessons});if(refusal){message=refusal;paint();}else void(async()=>{if(!await save('leaving'))return;dispose();await app?.startTownHeli?.(town);})();}if(action.type==='ledger'){ledgerOpen=true;paint();}if(action.type==='showBuildTab'){selectedBuildTab=action.tab;paint();}if(action.type==='visit')showVisits();if(action.type==='backup')void(async()=>{if(!await save('backup'))return;try{const result=await backupTownFile(town.id,{store});message=typeof result==='string'?result:'The town backup was downloaded.';}catch(error){message=error?.message||'The town backup could not be made.';}paint();})();}});
   resize=()=>{renderer.setSize(host.clientWidth,host.clientHeight,false);sceneView.resize(host.clientWidth,host.clientHeight);};window.addEventListener('resize',resize);

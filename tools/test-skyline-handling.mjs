@@ -9,7 +9,7 @@ const {CARS, COURSE} = await import('../src/config.js');
 const {createVehicleAssets} = await import('../src/vehicle-assets.js');
 const {completionCarProgress, createProfile, unlockCar, CAR_PRICES} = await import('../src/progression.js');
 const {featureFlags} = await import('../src/feature-flags.js');
-const oldCars = Object.fromEntries(Object.entries(CARS).filter(([key]) => key !== id));
+const oldCars = Object.fromEntries(Object.entries(CARS).filter(([key]) => key !== id && !CARS[key].workshop));
 assert.equal(createHash('sha256').update(JSON.stringify(oldCars)).digest('hex'),
   'fce0c23e2c2f7c0acb6d79c19bdb60fa3b177546929d7abeae8002060bb68f75',
   'every previous config entry remains byte-identical');
@@ -20,12 +20,12 @@ const assets = createVehicleAssets();
 {
   const car = CARS[id];
   assert.equal(featureFlags.enabled('nissan-skyline'), true);
-  assert.equal(Object.keys(CARS).at(-1), id, 'append only');
+  assert.equal(Object.keys(CARS).filter(key => !CARS[key].workshop).at(-1), id, 'append only');
   assert.deepEqual([car.topSpeed, car.accel, car.grip, car.braking, car.gears, car.mass],
     [205, 8.4, 1.08, 1.12, [55, 95, 133, 167, 190, 205], 1560]);
   assert.equal(car.awd, true);
   assert.equal(car.excludeFromCompletion, true);
-  assert.equal(Object.keys(CARS).length, 15, 'only the Skyline adds to the fourteen-car roster');
+  assert.equal(Object.values(CARS).filter(car => !car.workshop).length, 15, 'only the Skyline adds to the fourteen-car roster');
   const {Course} = await import('../src/course.js');
   const {performanceIndex, chooseCars, chooseRacers} = await import('../src/race-field.js');
   for (const courseId of ['tremblant-woods', 'panorama-ridge', 'ardennes-forest', 'harbour-lights']) {

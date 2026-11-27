@@ -32,6 +32,11 @@ SIZES = {
     # The Nissan Skyline GT-R R34 (SKYLINE-FULL-GAME): the model's own size. Its shell is the unlocks GLB, whose body is the
     # skyline_paint material. Last, so the cars before it keep their plates.
     'nissan_skyline_gtr_r34': (1.96, 4.60, 1.36),
+    # Workshop cars: runtime bounds; append so all previous kit shapes stay exact.
+    'rattler': (2.442, 4.508, 1.791),
+    'longhaul': (3.186, 6.938, 3.941),
+    'scarab': (2.268, 4.072, 2.613),
+    'bully': (2.560, 5.821, 2.880),
 }
 
 # Where the general placement rules would put a plate on a wheel, a car gets its own numbers. The Sirena's wheels stand

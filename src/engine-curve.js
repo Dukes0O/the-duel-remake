@@ -66,6 +66,11 @@ export function autoShiftGear({gears, gear, revs}) {
 // tools/fit-engine-curve.mjs with the car at the engine level it races at. A car not listed (one added later)
 // uses scale 1 until it is fitted; test-engine-curve fails until every car has its own.
 export const ENGINE_FIT = Object.freeze({
+  // Fitted with tools/fit-engine-curve.mjs on these four cars only; prior fits stay exact.
+  rattler: Object.freeze({scale: .61, upgraded: [.61, .612, .613]}),
+  longhaul: Object.freeze({scale: .583, upgraded: [.583, .583, .582]}),
+  scarab: Object.freeze({scale: .604, upgraded: [.601, .6, {scale: .632, power: .247}]}),
+  bully: Object.freeze({scale: .617, upgraded: [.616, .615, .616]}),
   falcone_f42: Object.freeze({scale: 0.606, upgraded: [0.602, 0.601, {scale: 0.63, power: 0.254}]}),
   stuttgart_959s: Object.freeze({scale: 0.601, upgraded: [0.6, 0.597, 0.593]}),
   falcone_heritage: Object.freeze({scale: 0.606, upgraded: [0.602, 0.601, {scale: 0.63, power: 0.254}]}),

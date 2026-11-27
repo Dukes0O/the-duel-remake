@@ -9,6 +9,8 @@ import {loadHeroVehicle} from '../src/hero-vehicle.js';
 import {createVehicleAssets} from '../src/vehicle-assets.js';
 import {loadSpeirlingVehicle} from '../src/speirling-vehicle.js';
 import {loadSkylineVehicle,SKYLINE_MODEL_URL} from '../src/skyline-vehicle.js';
+import {loadWastelandVehicle, wastelandModelUrl} from '../src/wasteland-vehicles.js';
+import {featureFlags} from '../src/feature-flags.js';
 import {placeGroundedVehicle as place,vehicleGroundSlope as groundSlope,vehicleGroundPoint,prepareVehicleGrounding} from '../src/vehicle-grounding.js';
 
 // Preserve every original mesh, physical factor and transform. Only texture
@@ -30,7 +32,18 @@ const fanFactory = await loadSpeirlingVehicle({loadAsset: async () => fanAsset})
 const skylineBytes = await readFile(new URL('../public' + SKYLINE_MODEL_URL, import.meta.url));
 const skylineAsset = await new GLTFLoader().parseAsync(skylineBytes.buffer.slice(skylineBytes.byteOffset, skylineBytes.byteOffset + skylineBytes.byteLength), '');
 const skylineFactory = await loadSkylineVehicle({loadAsset: async () => skylineAsset});
-const assets=createVehicleAssets({loadHero:()=>hero, loadSpeirling:()=>fanFactory, loadSkyline:()=>skylineFactory});await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
+const workshopFactories = new Map();
+globalThis.ProgressEvent ??= class {constructor(type, props) {Object.assign(this, {type}, props);}};
+for (const id of Object.keys(CARS).filter(id => CARS[id].workshop)) {
+  const bytes = await readFile(new URL('../public' + wastelandModelUrl(id), import.meta.url));
+  const length = bytes.readUInt32LE(12), gltf = JSON.parse(bytes.subarray(20, 20 + length));
+  gltf.buffers[0].uri = 'data:application/octet-stream;base64,' + bytes.subarray(28 + length).toString('base64');
+  stripTextures(gltf.materials); delete gltf.images; delete gltf.textures;
+  const asset = await new GLTFLoader().parseAsync(JSON.stringify(gltf), '');
+  workshopFactories.set(id, await loadWastelandVehicle(id, {loadAsset: async () => asset}));
+}
+const assets=createVehicleAssets({loadHero:()=>hero, loadSpeirling:()=>fanFactory, loadSkyline:()=>skylineFactory,
+  loadWasteland: id => workshopFactories.get(id), flags: {enabled: name => name === 'wasteland-cars' || featureFlags.enabled(name)}});await Promise.all(Object.keys(CARS).map(key=>assets.load(key)));
 const point=new THREE.Vector3(),center=new THREE.Vector3(),plane=new THREE.Plane(),normal=new THREE.Vector3(),inverse=new THREE.Matrix4(),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
 export const models=Object.keys(CARS).map(key=>{
   const vehicle=assets.create(key);

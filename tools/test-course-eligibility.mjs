@@ -47,7 +47,7 @@ try{
   Object.assign(app.profile,{medals:medalProfile.medals,unlockedCars:medalProfile.unlockedCars,upgrades:medalProfile.upgrades});app._saveProfile();
   // The Falcone Sirena is owned only once the Lab restores it (SIRENA-CAR), so maxing the fleet never earns it.
   // The Nissan Skyline is won only from the Kogane story (SKYLINE-FULL-GAME), so maxing the fleet never earns it either.
-  const OWNABLE_CARS=Object.keys(CARS).filter(car=>car!=='falcone_sirena'&&car!=='mcmurtry_speirling'&&car!=='nissan_skyline_gtr_r34');
+  const OWNABLE_CARS=Object.keys(CARS).filter(car=>!CARS[car].workshop&&car!=='falcone_sirena'&&car!=='mcmurtry_speirling'&&car!=='nissan_skyline_gtr_r34');
   check(!isCarUnlocked(app.profile,'falcone_sirena'),'maxing the fleet does not earn the Sirena: only the Lab restores it');
   check(!isCarUnlocked(app.profile,'nissan_skyline_gtr_r34'),'maxing the fleet does not earn the Skyline: only the Kogane story wins it');
   check(OWNABLE_CARS.every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and the medals the Enzo, the F1 and the Bolide, before eligibility checks');
