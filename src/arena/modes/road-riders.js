@@ -509,6 +509,7 @@ function startCheckpointFight(duel, world, request) {
     if (request.missionRule) {
       const rule = request.missionRule;
       rider.mass = rule.mass;
+      if (rule.ramDamageScale !== undefined) car.openMissionRamDamageScale = rule.ramDamageScale;
       rider.fightToEnd = true;
       rider.slot = 2 + ids.indexOf(id) % 2;
       rider.missionPace = Math.min(tune.pace, (CARS[duel.state.car].offRoadSpeed ?? 52) * .75);

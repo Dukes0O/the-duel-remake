@@ -17,6 +17,8 @@ import {scoutPeople} from '../content/burned-scout.js';
 import {penPeople} from '../content/burned-pen.js';
 import {haulerPeople} from '../content/stranded-hauler-places.js';
 import {haulerTalkScene} from '../content/talk-hauler.js';
+import {POCKET_ID, radioPeople, PARROT_TALK, PARROT_SCENE} from '../content/radio-hill-voice-places.js';
+import {sitePosition} from '../site-rule.js';
 import {flagPeople} from '../content/somebody-elses-flag-places.js';
 
 export const TALK_RANGE = 2.5;
@@ -97,7 +99,8 @@ export const peoplePart = {
     }) : [];
     const storyPeople = view.checkpointsEnabled ? [...flagPeople(world), ...tollPeople] : [];
     const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []), ...penPeople(world),
-      ...haulerPeople(world, {...view, seconds: context.seconds}), ...storyPeople] : [];
+      ...haulerPeople(world, {...view, seconds: context.seconds}), ...storyPeople,
+      ...radioPeople(world, view.checkpointSites?.[POCKET_ID] ?? sitePosition(POCKET_ID, world.open.landSeed))] : [];
     const learner = view.dayClock ? routineFor(world).learner : null;
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];
     const mallPeople = pump && (pump.beat !== 'sign' || pump.end) ? DRY_PUMP_CAST.filter(row =>
@@ -139,7 +142,7 @@ export const peoplePart = {
           row.scene.startsWith('runaway/later/') && !heard.includes(row.scene) &&
           (!row.needs || isTrue(row.needs, world)) && runawayTalkScene(row.scene, context));
         const talk = thread ? {id: thread.scene, scene: runawayTalkScene(thread.scene, context)} : talkFor(rows.find(row => row.id === person.id), world,
-          id => (view.checkpointsEnabled ? runawayTalkScene(id, context) : null) ?? haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
+          id => id === PARROT_TALK ? PARROT_SCENE : (view.checkpointsEnabled ? runawayTalkScene(id, context) : null) ?? haulerTalkScene(id, context) ?? TOWN_SCENES[id], heard);
         if (!talk) continue;
         active = {person: person.id, scene: talk.id};
         cast = cast.map(item => item === person ? faceDriver(item, driver, 1) : item);

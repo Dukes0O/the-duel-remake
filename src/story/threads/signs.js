@@ -16,13 +16,15 @@ export function isSignAlive(thread, record, night) {
   return !record.end && record.beat === firstBeat(thread);
 }
 
-export function liveSigns(threads, {world, holds = NO_HOLDS, view = {}, placeAt, signFor = thread => thread.sign}) {
+export function liveSigns(threads, {world, holds = NO_HOLDS, view = {}, placeAt,
+  contextCall = () => undefined, signFor = thread => thread.sign}) {
   if (isHeld(holds, 'signs')) return [];
   return threads.flatMap(thread => {
     const record = world.open.threads[thread.id], sign = signFor(thread);
     if (!record || !isSignAlive(thread, signRecord(thread, record, world), world.ledger.night) || (sign.part && sign.part !== (view.partOfDay ?? 'day'))) return [];
     const at = placeAt(sign.at, record.cast);
-    return [{id: thread.id, sign, at,
+    const call = contextCall(thread, world);
+    return [{id: thread.id, sign, at, ...(call ? {call} : {}),
       ...(sign.points ? {points: sign.points.map(key => placeAt(thread.id + ':' + key, record.cast)).filter(Boolean)} : {})}];
   });
 }
@@ -41,7 +43,7 @@ export function witnessSign(entry, view, elapsed, dt) {
     event.type === 'talkChoice' && event.id === `${id}/heard-sign`)};
   if (sign.kind === 'stranger') return {seconds: 0, witnessed: witnessStranger(entry, view)};
   const inRange = !at || distanceBetween(player, at) <= (sign.seenWithin ?? Infinity);
-  if (sign.kind === 'call') return {seconds: 0, witnessed: inRange};
+  if (sign.kind === 'call') return witnessCall(entry, view, inRange);
   if (sign.kind === 'wreckage') return witnessWreckage(entry, view, elapsed, dt);
   if (sign.kind === 'thing') return witnessThing(entry, view, elapsed, dt);
   if (sign.kind !== 'smoke' || !at || !player || !inRange) return {seconds: 0, witnessed: false};
@@ -56,6 +58,16 @@ export function witnessThing({sign, at}, view, elapsed, dt) {
     sees(player, at, {eye: view.onFoot ? 1.6 : 2.5, target: sign.at?.checkpoint ? 2.8 : 24, heightAt: view.signHeightAt ?? view.missionHeightAt});
   const seconds = visible ? elapsed + dt : 0;
   return {seconds, witnessed: seconds >= 3 - 1e-9};
+}
+
+function witnessCall({at, call}, view, inRange) {
+  if (!call) return {seconds: 0, witnessed: inRange};
+  const car = view.carPosition;
+  const witnessed = !!car && !view.onFoot && (call.anywhere || view.onRoad === true && !!at &&
+    distanceBetween(at, car) <= call.range && sees(at, car, {
+      heightAt: view.signHeightAt ?? view.missionHeightAt, eye: 5, target: 2.5, step: 12,
+    }));
+  return {seconds: 0, witnessed};
 }
 
 export function witnessWreckage({sign, at}, view, elapsed, dt) {

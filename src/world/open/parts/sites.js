@@ -11,6 +11,7 @@ import {BUS_RING} from '../content/market-day-places.js';
 import {CAMP_SITES, LAND_SITES} from '../content/sites.js';
 import {brokenMark} from '../content/needs.js';
 import {meetingMark, siteGreeting, siteScene} from '../content/talk-sites.js';
+import {RADIO_ID, RADIO_MARK, radioMarked} from '../content/radio-hill-voice-places.js';
 import {goodwillEffects} from '../goodwill-rule.js';
 import {bearing, canFindSite, distance, hasSiteServices, namedPick, residentPose, sitePosition, siteSpot, visitNeed} from '../site-rule.js';
 
@@ -50,6 +51,7 @@ function speechLines(world, site, sceneId, extra) {
 }
 
 function listenAtRadio(site, world, state, position, view, holds, events, queue) {
+  if (view.checkpointsEnabled && site.id === 'radio-hill' && world.open.threads[RADIO_ID] && !world.open.threads[RADIO_ID].end) return;
   if (!site.radioWithin || state.radio || view.onFoot || isFound(world, site.id) ||
       distance(view.carPosition ?? view.player?.position, position) > site.radioWithin ||
       isHeld(holds, 'signs')) return;
@@ -89,6 +91,8 @@ function news(scene, event, world) {
   const {ledger} = world;
   if (scene === 'finch/rumour') return {scene, effects: [{type: 'rumour', site: 'radio-hill'}], cue: CUES.rumour};
   if (scene !== 'hetty/friendly' && scene !== 'hetty/sworn') return null;
+  if (world.ledger.obligations.some(item => item.id === RADIO_MARK.fuel))
+    return {scene: 'radio-hill-voice/fuel-news'};
   const heard = id => marked(world, 'radio-hill/news/' + id);
   if (!isFound(world, 'glasshouse') && !marked(world, 'rumour/glasshouse'))
     return {scene: 'hetty/glasshouse', effects: [{type: 'rumour', site: 'glasshouse'}], cue: CUES.rumour};
@@ -127,7 +131,7 @@ function meet(site, world, state, person, sign, choices, events, requests, queue
   const item = news(greeting, sign, world);
   if (!item) return;
   if (item.scene !== greeting) queue.push(...speechLines(world, site, item.scene, item.extra));
-  choices.push({id: newsId, effects: item.effects});
+  if (item.effects?.length) choices.push({id: newsId, effects: item.effects});
   if (item.cue) events.push({type: 'siteRumour', site: site.id, cue: item.cue, scene: item.scene});
 }
 
@@ -239,13 +243,16 @@ function spendFavour(world, view, choices, events, queue) {
   if (choiceSeen(world, id)) return;
   const here = event.position ?? view.carPosition;
   const tow = event.type === 'siteTowRequested';
-  const candidates = CAMP_SITES.filter(site => (!event.site || event.site === site.id) &&
+  const quietRats = !tow && (event.group === 'road-rats' || event.enemy === 'road-rats') && radioMarked(world, RADIO_MARK.peace);
+  const candidates = CAMP_SITES.filter(site => (!event.site || event.site === site.id) && (!quietRats || site.id !== 'radio-hill') &&
     isFound(world, site.id) && hasSiteServices(stageOf(world, site.id)) &&
     isTrue({fact: 'favour', of: site.people, atLeast: 1}, world)).map(site => ({
     site, range: distance(here, sitePosition(site.id, world.open.landSeed)),
   })).sort((a, b) => a.range - b.range);
   const nearest = candidates[0];
-  if (!nearest || !Number.isFinite(nearest.range) || (!tow && nearest.range > FAVOUR_RADIUS)) return;
+  const radius = nearest?.site.id === 'radio-hill' && world.ledger.made.includes('radio-hill/second-set')
+    ? 2 * FAVOUR_RADIUS : FAVOUR_RADIUS;
+  if (!nearest || !Number.isFinite(nearest.range) || (!tow && nearest.range > radius)) return;
   const {site} = nearest;
   choices.push({id, effects: [{type: 'favour', person: site.people, by: -1}]});
   const type = tow ? 'siteTow' : site.warns ? 'siteWarning' : 'siteSupport';

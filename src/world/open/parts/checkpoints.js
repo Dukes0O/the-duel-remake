@@ -4,6 +4,8 @@ import {isTrue} from '../facts.js';
 import {OPEN_CHECKPOINTS, drawCheckpoint, friendlyCamps, gap, isArmed} from '../checkpoint-rule.js';
 import {startEncounter, stepEncounter, stepRecovery} from '../encounter-rule.js';
 import {haulerStop, haulerMarked} from '../content/stranded-hauler-places.js';
+import voice from '../../../story/threads/content/radio-hill-voice.js';
+import {RADIO_ID, radioMarked} from '../content/radio-hill-voice-places.js';
 import hauler from '../../../story/threads/content/stranded-hauler.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 
@@ -81,6 +83,12 @@ export const checkpointsPart = {
       const {encounter, requests: start} = startEncounter(inside, number, draw, {...point, heading: view.checkpointHeading ?? point.heading});
       next.encounter = encounter;
       requests.push(...start);
+      if (draw.group === 'road-rats' && radioMarked(world, RADIO_ID + '/took-the-set') &&
+          !radioMarked(world, RADIO_ID + '/later/took-the-set')) {
+        const row = voice.later.find(item => item.id === 'took-the-set').lines[0];
+        requests.push({type: 'say', lineId: 'open/' + RADIO_ID + '/took-the-set', text: row.as + ': ' + row.words});
+        effects.push({type: 'mark', id: RADIO_ID + '/later/took-the-set'});
+      }
       if (draw.group === 'road-rats' && haulerMarked(world, 'paid-the-trap') && !haulerMarked(world, 'said/rats-remember-the-payer')) {
         requests.push({type: 'say', lineId: 'open/hauler/remembered-payer',
           text: "Sump's rider: " + hauler.later.find(row => row.id === 'rats-remember-the-payer').lines[0].words});
