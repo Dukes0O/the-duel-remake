@@ -8,6 +8,13 @@ import {detectOnset, rms} from '../audio-analysis.mjs';
 import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource}
   from '../audio/capture-witness.mjs';
 
+export function inspectNativeCallbacks(chunk) {
+  const mismatch = chunk.callbacks.find((row, index) => row.chunkOffset !== index * 128 ||
+    row.frame !== chunk.frame + index * 128 || row.witnessFrames !== 128);
+  return {complete: chunk.callbacks.length === 16 && !mismatch,
+    ...(mismatch ? {mismatch} : {})};
+}
+
 async function install(recorder) {
   const app = window.__qaApp, audio = app.audio;
   if (!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value || !window.__qaMemoryBackupStore)
@@ -298,24 +305,27 @@ async function nativeRecorder(audio, helpers) {
             }))};
           } catch(error) {clockFailure={...header,retentionError:error.message};}
         }
-        demand(from === covered, 'Missing or duplicated native sample frames: ' + name + ' ' + JSON.stringify({
+        demand(from === covered, 'capture disturbed, rerun alone: Missing or duplicated native sample frames: ' + name + ' ' + JSON.stringify({
           segment: row.index, startFrame: row.startFrame, endFrame, expected: covered, actual: from,
           chunkFrame: chunk.frame, previousFrames: chunks.slice(Math.max(0, chunks.indexOf(chunk) - 2), chunks.indexOf(chunk) + 2).map(item => item.frame),
           callbacks: chunk.callbacks.map(item => item.frame), witnessFirst: chunk.witness[0]}));
+        const timing = helpers.inspectCallbacks(chunk);
+        demand(timing.complete, 'capture disturbed, rerun alone: native callback clock gap/repeat: ' + name + ' ' + JSON.stringify(timing));
         const offset = from - chunk.frame, count = to - from, target = from - row.startFrame;
         pcm.set(chunk.pcm.subarray(offset * 2, (offset + count) * 2), target * 2);
         witness.set(chunk.witness.subarray(offset, offset + count), target);
         for (const header of chunk.callbacks.filter(item => item.frame < to && item.frame + 128 > from)) {
           callbacks++;
-          demand(header.witnessFrames === 128, 'Short witness input: ' + name);
-          demand([0, 128].includes(header.leftFrames) && [0, 128].includes(header.rightFrames), 'Short signal input: ' + name);
+          demand(header.witnessFrames === 128, 'capture disturbed, rerun alone: Short witness input: ' + name);
+          demand([0, 128].includes(header.leftFrames) && [0, 128].includes(header.rightFrames),
+            'capture disturbed, rerun alone: Short signal input: ' + name);
           if (!header.leftFrames) emptyInput++;
         }
         covered = to;
       }
       demand(covered === endFrame, 'Incomplete native interval: ' + name);
       const identity = helpers.inspectWitness(witness, reference);
-      demand(identity.complete, 'Native sample identity failed: ' + name + ' ' + JSON.stringify(identity));
+      demand(identity.complete, 'capture disturbed, rerun alone: Native sample identity failed: ' + name + ' ' + JSON.stringify(identity));
       demand(name === 'interface' || emptyInput === 0, 'Connected mix/engine input missing: ' + name);
       for (const sample of pcm) demand(Number.isFinite(sample), 'Nonfinite recorded sample: ' + name);
       output[name] = {pcmBase64: encode(pcm), identity, callbacks, disconnectedSilentInputCallbacks: emptyInput,
@@ -345,7 +355,8 @@ async function nativeRecorder(audio, helpers) {
 
 function recorderCode() {
   return '{worklet:' + JSON.stringify(recorderWorkletSource) + ',createWitness:(' + createCaptureWitness.toString() +
-    '),inspectWitness:(' + inspectCaptureWitness.toString() + '),create:(' + nativeRecorder.toString() + ')}';
+    '),inspectWitness:(' + inspectCaptureWitness.toString() + '),inspectCallbacks:(' + inspectNativeCallbacks.toString() +
+    '),create:(' + nativeRecorder.toString() + ')}';
 }
 
 async function appendSegment(outputDir, recording, segment) {
@@ -520,7 +531,7 @@ export async function run(context) {
     })()`);
   } finally {
     // Retain the actual disputed samples before recorder cleanup. The original
-    // thrown continuity assertion still decides this run's failure.
+    // continuity check still rejects this run; it is never treated as a pass.
     try {
       const failure=await context.evaluate('window.__p4Capture.failurePacket()');
       if(failure) {

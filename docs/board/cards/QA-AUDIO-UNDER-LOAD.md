@@ -10,3 +10,12 @@ capture was disturbed, rather than fail as a sound fault. Never widen a toleranc
 alone and once inside a four-job browser stage.
 
 ## Claude answers
+
+## Capture decision and checks
+Keep all sound assertions and limits. Reject disturbed captures with a rerun-alone diagnosis, never a pass.
+P4 uses exact native callback positions and its existing independent sample witness.
+Skyline carries that witness on a separate recorder channel (never in the measured stereo mix);
+sample identity proves repeats/gaps. Late delivery alone is not damage. Missed throttle lifts identify an invalid stimulus.
+Run `tools/test-audio-under-load.mjs`, importing suites, the lane tier and build;
+run each audio scenario five times alone, then both with arsenal-core-audio and arsenal-wave1-audio at four jobs.
+Claude review owed: only capture classification changes; clean-capture sound assertions and tolerances are unchanged.
