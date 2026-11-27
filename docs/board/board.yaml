@@ -1204,6 +1204,17 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
 
+  - id: HOME-GROUND
+    title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "L"
+    status: "ready"
+    waiting_on: "kyle"
+    needs: []
+    locks: []
+    details: "docs/board/cards/HOME-GROUND.md"
+
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"
     owner: "claude"

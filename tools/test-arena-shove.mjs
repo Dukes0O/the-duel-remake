@@ -17,6 +17,9 @@ import {containInArena, floorLimit, worldPose} from '../src/arena/arena-floor.js
 const DT = 1 / 120, EPS = 1e-8;
 const fixture = JSON.parse(readFileSync(new URL('./replays/arena-shove-controls.json', import.meta.url), 'utf8'));
 const CARS_IN_GAME = Object.keys(CARS);
+// The cars an arena event accepts: the Workshop's machines go out only on Wasteland outings (Kyle, 27 November 2026;
+// app.js refuses them in every other arena mode). Their wall contact in the Wasteland is card WASTE-TRUCKS-FIT.
+const ARENA_CARS = CARS_IN_GAME.filter(car => !CARS[car].workshop);
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 let checks = 0;
 const eq = (a, b, message) => {checks++; assert.deepEqual(a, b, message);};
@@ -150,7 +153,7 @@ test('run-up covers native fan braking without changing any earlier car', () => 
 for (const kind of fixture.sittingStates) for (const role of fixture.roles) for (const [mph, metres] of fixture.minimums) {
   test(kind + '/' + role + ': every playable mass pair at ' + mph + '+ mph moves at least ' + metres + ' m', () => {
     const failures = [];
-    for (const attacker of CARS_IN_GAME) for (const target of CARS_IN_GAME) {
+    for (const attacker of ARENA_CARS) for (const target of ARENA_CARS) {
       const result = ram(attacker, target, role, kind, mph);
       const name = attacker + '→' + target;
       checks++;
@@ -306,7 +309,7 @@ for (const kind of fixture.sittingStates) for (const role of fixture.roles)
   for (const side of [-1, 1]) for (const [mph] of fixture.minimums) {
     test(`SETTLED WALL: ${kind}/${role}/side${side}/${mph}mph all native masses stay solid and attacker rebounds`, () => {
       const failures = [];
-      for (const attackingCar of CARS_IN_GAME) for (const targetCar of CARS_IN_GAME) {
+      for (const attackingCar of ARENA_CARS) for (const targetCar of ARENA_CARS) {
         const r = wallRam(attackingCar, targetCar, role, kind, mph, side), name = attackingCar + '→' + targetCar;
         checks++;
         if (!r.contact || r.incomingMph < mph - EPS) failures.push(name + ': actual normal swept contact below threshold/missing');

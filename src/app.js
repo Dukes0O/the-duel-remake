@@ -1012,6 +1012,8 @@ export class App {
     this._settleAbandoned();
     const selectedCar=options.car||this.duel.state.car;
     if(CARS[selectedCar]?.workshop&&!this._switches().enabled('wasteland-cars'))return false;
+    // The Workshop's machines work in the Wasteland; they do not race the courses (Kyle, 27 November 2026).
+    if(CARS[selectedCar]?.workshop){this.courseAccessMessage=`The ${CARS[selectedCar].name} is a Wasteland work machine, so choose a car from the garage to race.`;return false;}
     const car=isCarUnlocked(this.profile,selectedCar)?selectedCar:'falcone_f42';
     if(this._airOnlyRefused(car,stage.id))return false;
     if(this._fireClosedRefused(stage))return false;
@@ -2426,6 +2428,8 @@ export class App {
     if (run) job = run.job;
     const car = run?.car ?? (isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42');
     if(CARS[car]?.workshop&&!this._switches().enabled('wasteland-cars'))return false;
+    // The Workshop's machines go out only on Wasteland outings and jobs, never into an arena event (Kyle, 27 November 2026).
+    if(CARS[car]?.workshop&&mode!=='world-job')return false;
     if (this._airOnlyRefused(car, venueId)) return false;
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
     const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: level,

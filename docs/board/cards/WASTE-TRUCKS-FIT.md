@@ -19,3 +19,9 @@ they are news every night until this card closes.
 **Checks:** `test-arena-shove`, all four shards of `test-lesson-instructor-any-car`, the rule 23 set, the build.
 
 ## Claude answers
+
+**27 November 2026.** Kyle ruled that the Workshop's work machines do not race the courses (`docs/board/decisions.md`).
+A course race and every arena event but a Wasteland outing now refuse them, and `test-lesson-instructor-any-car` and
+`test-arena-shove` check the cars those offer, so item 2 is closed and the night's two suites pass. What is left of this
+card is item 1 inside the Wasteland: the Longhaul pushed against a wall on an outing must stay on its side of it. Prove
+it there, with a check on a Wasteland job.

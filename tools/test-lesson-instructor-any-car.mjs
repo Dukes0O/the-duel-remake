@@ -8,7 +8,8 @@ import {buildInstructorRun, DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS, DRIVE_GEAR_RO
 // Lane gates alternate the starter and the fastest road car across lesson roads.
 // Every lesson and road keeps both difficulties. Full and direct runs keep all cars.
 const sample = process.argv.includes('--sample');
-const cars = Object.keys(CARS);
+// The cars the lessons offer (app.js leaves the Workshop's machines out: they do not race the courses).
+const cars = Object.keys(CARS).filter(id => !CARS[id].workshop);
 const sampleCars = ['falcone_f42', 'koenigsegg_jesko'];
 // The full tier splits every car into parallel shards (--shard=K/N): each run goes to shard index % N.
 const shardArgument = process.argv.find(argument => argument.startsWith('--shard='));

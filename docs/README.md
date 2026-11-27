@@ -34,6 +34,7 @@ choose which one to read; they do not override the spec or current board.
 | Arena and warlords | [Scrapdome](SCRAPDOME.md): play design, architecture and the handoff cards |
 | The Wasteland world | [Wasteland world](WASTELAND_WORLD.md): the Scablands, the Everburn and later stories, job kinds, the Bowl, and their cards |
 | When a boss comes out | [Feuds and runs](FEUDS_AND_RUNS.md): agreed 11 November 2026: feuds between communities, recurring escort runs, field battles and Scrapdome challenges |
+- `docs/HOME_GROUND.md`: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (a design, waiting for Kyle and Gratian to read it; it replaces the way the town plays).
 - `docs/WASTELAND_TOWN.md`: Wasteland Tycoon, the town around the Scrapdome. `docs/story/the-long-dry.md`: the map of every Wasteland story. `docs/story/open-scablands.md`: the open Scablands, with people, buildings, skirmishes, hidden camps and storylines written as data. `docs/story/five-cold-nights.md`: the Everburn rebuilt as a story of choices (a design, waiting for Kyle to read it).
 | Course and car packets | Staged line packets (`docs/FACTORY.md` section 3): [Eifel Crown](courses/eifel-crown.md) (the full treatment), [Kogane Pass](courses/kogane-pass.md) (new mountain pass), [Nissan Skyline GT-R R34](cars/nissan-skyline-gtr-r34.md) (new shop car) |
 | Phase 4 racing | [Grand Circuits](CIRCUITS.md): new tracks, full-field Grand Prix racing, snow, pit stops and the Summit Run, settled for build |

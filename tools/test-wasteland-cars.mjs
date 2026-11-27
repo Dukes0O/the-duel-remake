@@ -89,4 +89,10 @@ assert.ok(!ids.includes(reopened.getRaceChoices().rival?.car), 'off: saved rival
 assert.ok(reopened.profile.unlockedCars.includes('rattler'), 'owned cars survive reopening');
 assert.equal(reopened.startCampaign({car: 'falcone_f42', rival: {car: 'scarab'}}), true);
 assert.ok(!ids.includes(reopened.duel.state.rival?.car), 'off: explicit rival is also refused');
+// Kyle, 27 November 2026: the Workshop's machines work in the Wasteland and do not race the courses.
+for (const id of ids) {
+  assert.equal(app.startCampaign({car: id}), false, `${id}: a course race refuses a work machine`);
+  assert.match(app.courseAccessMessage, /Wasteland work machine, so choose a car from the garage to race\.$/, `${id}: and says why`);
+}
+assert.equal(app.startCampaign({car: 'falcone_f42'}), true, 'a garage car still races');
 console.log('PASS: four repeatable driving models, rough-ground handling, six medal boxes, ownership, no sale, and unchanged field pools.');
