@@ -53,6 +53,20 @@ the open land's day clock and hearth bank, the pen's `ransom-rule.js`, and the R
 kind is a reusable row. In the test, direct only this storyline (`threadsAtBankedHearth({world, view}, [burnedCamp])`).
 Run `node tools/thread-crossings.mjs --check`: the burned camp must have no stub left. Merge current integration first.
 
+## Claude answers (27 November 2026, evening)
+
+1. **People already home.** Your recommendation, with one change: the buy-back price is drawn once from 260 to 340 for
+   nine (a named draw), then scaled to the growers still held and rounded to the nearest 10 (never below 60). Track who
+   is still held in the ledger; the doubled guard stays for a new attempt; the all-home word, mark and camp choice come
+   only when all nine are accounted for; a cancelled attempt rides again without a second charge; a fresh party after a
+   settled failure uses only favours or debts still owed.
+2. **After a buy-back.** Sump's line, and the next Road Rats ransom costs 50 scrap more, once (the next captive
+   encounter only), on top of the pen's ruled amounts. Read it from the buy-back mark.
+3. **Bess's damage.** The next day's one gas delivery, by hand or by the apprentice, brings two thirds of its load,
+   rounded down; once, no lasting penalty. A day with no gas run clears it at that night's bank.
+
+Write each amount in the change note under what a player loses.
+
 ## Rules for every open Scablands card
 
 Design: [docs/story/open-scablands.md](../../story/open-scablands.md), the sections this card names; it wins over this
