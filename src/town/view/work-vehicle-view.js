@@ -36,11 +36,20 @@ export function haulPiecesToDraw(state) {
 }
 
 // TOWN-FIRE-JOB: while the fire truck sprays, the water's arc from the cannon on its roof to the flames it is aimed at. Reads only.
+// TOWN-FIRE-STREAM-LOOK: with the building's id and how hard its fire is burning (0 to 1), for the steam the water throws.
 export function douseJetToDraw(state) {
   const job = state?.arena?.worldJob?.job, step = job?.steps?.[job.stepIndex];
   if (step?.kind !== 'douse' || job.stepState?.spraying !== true) return null;
   const building = (step.buildings ?? []).find(row => row.id === job.stepState.targetId);
-  return building ? {x:building.x, z:building.z, halfX:building.halfX, halfZ:building.halfZ} : null;
+  // A fire call holds its last state while its closing lines are said: water on a fire that is out is not drawn.
+  if (building && job.stepState.fires?.[building.id]?.state !== 'burning') return null;
+  return building ? {id:building.id, x:building.x, z:building.z, halfX:building.halfX, halfZ:building.halfZ,
+    heat:job.stepState.fires?.[building.id]?.heat ?? 0} : null;
+}
+/** The fires of a fire call by building id ({state, heat}), or null when no fire call is being driven. Reads only. */
+export function douseFiresToDraw(state) {
+  const job = state?.arena?.worldJob?.job, step = job?.steps?.[job.stepIndex];
+  return step?.kind === 'douse' ? job.stepState?.fires ?? null : null;
 }
 
 // WEAPON-WATER-CANNON: where the fire truck's stream lands on a car ({x, z}), when it is on one (src/arena/modes/world-job.js).
@@ -169,12 +178,13 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
   // The ground as it is drawn (the Scablands' own drawn ground stands a little off the rules' ground on sand and dunes),
   // so that a thin piece is neither buried nor left in the air.
   let land = null;
+  const findLand = scene => { if (land?.parent !== scene) land = scene.children.find(child => typeof child.userData?.drawnGroundHeightAt === 'function') ?? null; };
   const groundAt = (x, z, fallback) => {
     const drawn = land?.userData.drawnGroundHeightAt?.(x, z), y = Number.isFinite(drawn) ? drawn : scablandsSurfaceHeightAt(x, z);
     return Number.isFinite(y) ? y : fallback;
   };
   function drawFallen(scene, pieces, player, clock) {
-    if (pieces?.shed.length && land?.parent !== scene) land = scene.children.find(child => typeof child.userData?.drawnGroundHeightAt === 'function') ?? null;
+    if (pieces?.shed.length) findLand(scene);
     for (const piece of pieces?.shed ?? []) {
       if (fallen.has(piece.id)) continue;
       const mesh = look.piece(piece, pieces.good, {fallen:true}), seed = seedOf(piece.id), size = mesh.userData.size;
@@ -219,19 +229,75 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     }
   }
 
-  // The jet: drops of water along a curve from the cannon to the nearest side of the flames, moving out along it. The look is
-  // the one every water cannon shares (src/arsenal/water-stream-view.js, WEAPON-WATER-CANNON). With no flames in front, the
-  // stream may be on a car (truckStreamToDraw): then it lands on that car.
+  // The jet: water from the cannon to the nearest side of the flames. The look is the one every water cannon shares
+  // (src/arsenal/water-stream-view.js, WEAPON-WATER-CANNON). With no flames in front, the stream may be on a car
+  // (truckStreamToDraw): then it lands on that car.
+  // TOWN-FIRE-STREAM-LOOK: the rules give the side of the building's plot the water lands on. The building drawn on that plot
+  // is smaller than the plot and is not a box, so the jet is carried on along its own line, across the plot, to the first
+  // thing of the town it meets (a wall, a post, a roof), and that is the surface it wets. When the fire it was on goes out, the stream throws its cloud.
   const CANNON = new THREE.Vector3(0, 3.1, 2.2);
   const jet = createWaterStreamView({name:'fire-truck-jet', layer:WORK_VEHICLE_LAYER});
-  const from = new THREE.Vector3(), to = new THREE.Vector3();
-  function drawJet(scene, player, target, onCar, clock) {
-    if (!target && !onCar) { jet.hide(); return; }
+  const from = new THREE.Vector3(), to = new THREE.Vector3(), aim = new THREE.Vector3(), facing = new THREE.Vector3();
+  const ray = new THREE.Raycaster(), probe = new THREE.Vector3(), probeX = new THREE.Vector3(), probeY = new THREE.Vector3();
+  let townArt = null, found = {key:'', at:-Infinity, point:null, normal:null, wall:false}, sprayed = null;
+  // The daylight, read from the colour of the air: water and steam are drawn without the scene's lamps, so they are taken
+  // down by hand at night (docs/ART_LINE.md, "Unlit things glow at night").
+  const daylight = scene => {
+    const air = scene.fog?.color;
+    return air ? Math.max(.28, Math.min(1, (air.r + air.g + air.b) / 3 / .3)) : 1;
+  };
+  function surface(scene, clock, across) {
+    const key = [from.x, from.z, to.x, to.z].map(value => Math.round(value * 2)).join(':');
+    if (key === found.key || Math.abs(clock - found.at) < .25) return found;
+    found = {key, at:clock, point:null, normal:null, wall:false};
+    if (!townArt?.parent) townArt = scene.getObjectByName('Town roads, sites and buildings') ?? null;
+    if (!townArt) return found;
+    const first = (target, least, further = across) => {
+      aim.subVectors(target, from);
+      const reach = aim.length();
+      ray.set(from, aim.normalize()); ray.near = 2; ray.far = reach + further;
+      // Anything solid counts, cloth and glass too (they write depth); flames, smoke and light cards do not.
+      return ray.intersectObject(townArt, true).find(row => row.face && row.object.isMesh && row.object.visible &&
+        row.object.material?.depthWrite !== false && row.distance > reach - least) ?? null;
+    };
+    const hit = first(to, 5);
+    if (!hit) return found;
+    found.point = hit.point.clone();
+    found.normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+    if (found.normal.dot(aim) > 0) found.normal.negate();
+    // A wall is wide and tall: four more lines of sight, to points round the first, must end on the same face. A post, a rail
+    // or the edge of a roof fails this, and then the water wets the ground under it and no wall.
+    probeX.crossVectors(ALONG_Y, found.normal).normalize(); probeY.crossVectors(found.normal, probeX).normalize();
+    let same = 0;
+    for (const [x, y] of [[.8, 0], [-.8, 0], [0, .7], [0, -.7]]) {
+      const near = first(probe.copy(found.point).addScaledVector(probeX, x).addScaledVector(probeY, y), 1.5, 1.5);
+      if (near && Math.abs(probe.subVectors(near.point, found.point).dot(found.normal)) < .35) same++;
+    }
+    found.wall = same >= 3 && found.normal.y < .8;
+    return found;
+  }
+  function drawJet(scene, player, target, onCar, fires, clock) {
+    const light = daylight(scene);
+    // The fire the water was on has gone out: its last steam, thrown from where the water was landing.
+    if (sprayed && fires?.[sprayed.id]?.state === 'out') { jet.burst(scene, sprayed.at, clock, light); sprayed = null; }
+    if (!fires) sprayed = null;
+    if (!target && !onCar) { jet.rest(clock); return; }
+    findLand(scene);
     from.copy(CANNON).applyQuaternion(player.quaternion).add(player.position);
-    if (target) to.set(Math.max(target.x - target.halfX, Math.min(target.x + target.halfX, from.x)), player.position.y + 2,
+    if (!target) { jet.draw(scene, from, to.set(onCar.x, player.position.y + 1, onCar.z), clock, {light}); return; }
+    to.set(Math.max(target.x - target.halfX, Math.min(target.x + target.halfX, from.x)), player.position.y + 2,
       Math.max(target.z - target.halfZ, Math.min(target.z + target.halfZ, from.z)));
-    else to.set(onCar.x, player.position.y + 1, onCar.z);
-    jet.draw(scene, from, to, clock);
+    const drawn = surface(scene, clock, 2 * Math.max(target.halfX, target.halfZ));
+    if (drawn.point) to.copy(drawn.point);
+    else {
+      // Nothing of the building stands in the water's way (an open frame): it falls to the ground towards the plot's middle.
+      facing.set(target.x - to.x, 0, target.z - to.z);
+      to.addScaledVector(facing, Math.min(1, 4 / Math.max(.01, facing.length())));
+      to.setY(groundAt(to.x, to.z, player.position.y) + .1);
+    }
+    sprayed = {id:target.id, at:to.clone()};
+    if (drawn.wall) jet.draw(scene, from, to, clock, {wall:drawn.normal, heat:target.heat, light});
+    else jet.draw(scene, from, to, clock, {ground:groundAt(to.x, to.z, player.position.y), heat:target.heat, light});
   }
 
   function remove() {
@@ -241,6 +307,7 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     clearFallen();
     look.dispose();
     jet.remove();
+    sprayed = null; townArt = null; found = {key:'', at:-Infinity, point:null, normal:null, wall:false};
   }
 
   const turn = new THREE.Quaternion();
@@ -275,7 +342,7 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     const clock = Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0;
     drawStack(pieces, clock);
     drawFallen(scene, pieces, player, clock);
-    drawJet(scene, player, douseJetToDraw(state), truckStreamToDraw(state), clock);
+    drawJet(scene, player, douseJetToDraw(state), truckStreamToDraw(state), douseFiresToDraw(state), clock);
     // Wheels: the front ones turn with the steering, all of them roll with the distance driven.
     const seconds = shown.clock === null ? 0 : Math.max(0, Math.min(0.25, clock - shown.clock));
     shown.clock = clock;
