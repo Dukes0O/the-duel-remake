@@ -438,6 +438,27 @@ the game.
 - **The point of a roof weapon decides where it can stand.** A bolt reaching 0.36 m past the prod pushed the whole bow back off
   a short roof onto the engine cover. Keep what sticks forward short, and let the butt overhang the back instead.
 
+### Loads and loose pieces (TOWN-HAUL-LOAD-LOOK, 27 November 2026)
+
+- **A bed measured from the model's own load is the load's size, not the deck's.** The flatbed's model carries a heap of sacks on
+  the 1.8 m behind its cab, and the haul's stack was laid inside that heap's box: a full load stood as a tower on half the bed.
+  Take the deck from the truck's own figures (`tools.bed` in `src/town/content/work-vehicles.js`) and only its height and front
+  edge from the model.
+- **Things stacked by their outer boxes make a tower with air in it.** A gear leg's box is mostly air, so a spar laid on "its top"
+  floats. A load of scrap is a heap: put each piece where the heap is lowest and let it settle half way between the mean height
+  and the highest point under it, tilted where the two halves differ (`stackHaulPieces` in `src/town/view/haul-load-look.js`).
+  Thin open things (seat frames, lattices) read as wires that the next piece floats on; fold or fill them into a solid thing.
+- **A thin piece laid at the rules' ground height is buried.** On sand the drawn ground stands some centimetres over the height the
+  rules use, and a 2 cm steel plate vanished under it. Lay loose things on the ground as it is drawn
+  (`userData.drawnGroundHeightAt` on the Scablands' group), and prop a flat piece on one edge so that it catches the light.
+- **Bare aluminium does not rust.** `createScrapWear` draws brown rust, which is right for steel and paint. Salvaged aluminium
+  takes grey grime, scratches along its length and the land's dust on what faces up. Zinc-chromate primer written as the colour
+  it should be came out lime in the hard light; a dull olive at about two thirds of it reads as primer.
+- **A seeded deal hides kinds from the pictures.** Two rounds of pictures had no seat frames in them at all. A look scenario of
+  anything dealt from a seed ends with one of every kind, written straight into the job for the pictures only.
+- **A look scenario named after its area runs every night that area changes.** `town-...` matches the `town-` row of
+  `SCENARIO_AREAS`. Name it `look-...` and give it its own row with the look's files, as the open land's looks have.
+
 ### Moments (a thing that happens, not a thing that stands)
 
 - **A drawn moment that no player sees.** Hot Delivery's hand-over and the
@@ -466,6 +487,30 @@ the game.
 - **Another mode's fittings on a new mode's vehicles.** The arena draws its armour kits, spiked bumper and roof
   crossbow on every fighting truck, and they buried the Bowl rivals' own bolt-ons. Before judging a vehicle's look,
   take a picture of it with the new drawing off and name every part that is still there.
+
+- **Water thrown from the player's own truck is seen end on** (TOWN-FIRE-STREAM-LOOK, 27 November 2026). From the chase camera
+  a jet is a short streak over the cab, as the Bowl hammer's arm was. What tells the player is where it lands: the spray,
+  the steam and the dark wet patch. Judge the jet's own shape from the side, and the moment from behind.
+- **A plot is not the building on it.** The rules land the water on the nearest side of the building's plot. The soup kitchen is
+  drawn 4 m wide on a plot 16 m wide, so water drawn to the plot's side fell in the open three metres short. Carry the jet on
+  along its own line, across the plot, to the first thing of the town it meets (`surface` in
+  `src/town/view/work-vehicle-view.js`), and call that a wall only when four more lines of sight round it end on the same face:
+  a post or the edge of a roof wets the ground under it, never a patch hung in the air.
+- **A column of soft discs is a beam of light.** Steam drawn as discs rising in a line read as a searchlight. Tear each puff with
+  the shared noise picture, give each its own drift and rise, and throw a cloud out as separate puffs over its first second.
+- **A drawing that keeps its own state must keep it on the game's clock.** The wet wall counted a tenth of a second for each
+  drawn frame, and a look scenario that steps the game without drawing gave it four frames in four seconds. Count the game's
+  seconds, and in a look scenario draw a frame after each half-second step. Three views of one moment need the game's clock
+  held (`app.stop()`), or the second and third are later moments.
+- **A step holds its last state while its closing lines are said** (the frozen rule again). The fire call's last state says
+  "spraying", so water was drawn on a fire that was out. Gate the drawing on the fire still burning.
+- **A dark patch on a sunlit pale wall must take nearly all of its light.** A wet patch that took 0.6 of a cream cloth's light
+  changed it on the screen from 234, 219, 187 to 228, 210, 174: the tone mapping squeezes anything that bright. By eye the patch
+  was "not there" for three rounds, and four tries at its depth and draw order changed nothing. Sample the pixels with and
+  without the effect before looking for any other cause. At 0.93 it read 206, 185, 148; at 0.94 to 1 it reads 186, 166, 134.
+- **Look at the building before giving it a part in a picture.** A warehouse of steel and tin has nothing to burn and is no part
+  of a fire call (`fuelHours` in `src/town/town-fire.js`); the school is a bus under a roof with a black board, on which no
+  darker patch can show.
 
 ### Animals (WILD-ART-WASTE, 19 November 2026)
 

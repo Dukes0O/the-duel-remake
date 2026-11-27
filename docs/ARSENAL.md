@@ -248,7 +248,8 @@ player's own, from the town: computer cars never carry it, so no existing loadou
 - One stream wherever it is fitted, so a player learns one thing: H in the fire truck (from the
   truck's one 3,000 L tank, the fire call's tank in a fire call; water flows only while flames or a
   car are in front), and a car weapon slot (a 2 s burst). Rules in `src/arsenal/water-cannon.js`; the
-  look, the fire call's drop arc, in `src/arsenal/water-stream-view.js`.
+  look in `src/arsenal/water-stream-view.js`: a jet drawn in code that tears into spray, wets what it
+  lands on and throws steam off flames (TOWN-FIRE-STREAM-LOOK).
 - A straight stream from the nose, 14 m long and about a car wide. It stops at the first car in it.
   That car is shoved along the stream, 7 m/s more each second it stays in the water, at most 4 m/s
   from one stream (a game number: a real 1,000 L a minute jet pushes about 500 N). No damage, ever.

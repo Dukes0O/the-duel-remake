@@ -58,6 +58,9 @@ export const SCENARIO_AREAS = [
   {prefixes:['look-radio-hill'], paths:['src/world/open/looks/radio-hill-look.js','tools/open-look-stand.js']},
   {prefixes:['look-dace'], paths:['src/world/open/looks/dace-goes-looking-look.js','src/world/open/looks/dace-pickup-look.js',
     'src/world/open/looks/dace-sites-look.js','src/world/open/looks/dace-look-kit.js','tools/open-look-stand.js']},
+  // TOWN-HAUL-LOAD-LOOK and TOWN-FIRE-STREAM-LOOK: look scenarios of the town's work trucks, run when their drawing changes.
+  {prefixes:['look-haul-load'], paths:['src/town/view/haul-load-look.js','src/town/view/work-vehicle-view.js']},
+  {prefixes:['look-fire-stream'], paths:['src/arsenal/water-stream-view.js','src/town/view/work-vehicle-view.js']},
   {prefixes:['open-map'], paths:['src/world/open/map-marks.js','src/world/open/parts/ground.js','src/world/scablands-map.js']},
   {prefixes:['open-find-camp'], paths:['src/world/open/parts/sites.js','src/world/open/site-rule.js','src/world/open/site-view.js','src/world/open/content/sites.js']},
   {prefixes:['open-forge-shed'], paths:['src/world/open/parts/buildings.js','src/world/open/building-view.js','src/world/open/building-rule.js','src/world/open/content/buildings.js']},
