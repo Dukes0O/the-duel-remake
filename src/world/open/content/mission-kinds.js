@@ -7,6 +7,7 @@ import {sees} from '../../scablands-ways.js';
 import {BRAND_RULE} from '../../jobs/brand-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {nameOf} from '../register.js';
+import {routinePose} from '../routine-rule.js';
 
 const height = (view, point) => (view.missionHeightAt ?? scablandsSurfaceHeightAt)(point.x, point.z);
 const atGround = (view, point) => ({...point, y: height(view, point)});
@@ -457,11 +458,13 @@ const fight = {
     const won = wrecks >= (rule.winWrecks ?? mission.cars) || result?.outcome === 'won';
     const outcome = lost ? 'lost' : won ? 'won' : null;
     next.outcome = outcome;
-    const paid = outcome === 'lost' && rule.recoveryShare;
+    const paid = outcome === 'lost' && rule.recoveryShare && !rule.takenOnLoss;
     const bounty = outcome === 'won' && rule.bountyPerWreck * Math.max(wrecks, result?.wrecks ?? 0);
     return {state: next, outcome, requests,
       events: [
         ...(paid ? [{type: 'threadMissionRecoveryPaid', id: mission.id}] : []),
+        // A fight lost by a player who is then taken (to a pen) is not a wreck to be towed home from.
+        ...(outcome === 'lost' && rule.takenOnLoss ? [{type: 'threadMissionTaken', id: mission.id}] : []),
         ...(strike ? [{type: 'threadMissionPoleDown', id: mission.id,
           position: atGround(view, state.route.at), cue: rule.poleCue}] : []),
       ],
@@ -472,7 +475,7 @@ const fight = {
   end(mission, state, view) {
     return [{type: 'marker', place: null},
       ...(view.road?.id === mission.id ? [{type: ROAD_REQUEST, action: 'leave', id: mission.id}] : []),
-      ...(state.outcome === 'lost' ? [{type: ROAD_REQUEST, action: 'mission-loss', id: mission.id}] : [])];
+      ...(state.outcome === 'lost' && !mission.rule.takenOnLoss ? [{type: ROAD_REQUEST, action: 'mission-loss', id: mission.id}] : [])];
   },
 };
 
@@ -483,30 +486,48 @@ export function heistLampPose(lamp, seconds) {
   return {...lamp, heading};
 }
 
+// A guard who walks a round with a lamp. The round is a routine like anybody's (a `track` of the people table), so the
+// same row walks his figure; it is read on the land's clock. His lamp points where he walks, or where he faces at a stop.
+export function heistGuardPose(guard, seconds) {
+  const pose = routinePose({pace: guard.pace, resolveAt: at => at, ...guard.round}, seconds, 0);
+  return {x: pose.x, z: pose.z, heading: pose.yaw, range: guard.range, halfAngle: guard.coneDegrees * Math.PI / 360,
+    eye: guard.eye ?? 1.6};
+}
+const guardsCast = (mission, view, point, poses) => ({type: 'searchCast', id: mission.id, guards: true,
+  target: point ? atGround(view, point) : null, lamps: poses.map(pose => atGround(view, pose))});
+
 const heist = {
   prepare({rule}, place) {
-    const {destination, pickup, retreat, eject, cover, lamps, riders} = rule;
+    const {destination, pickup, retreat, eject, cover, lamps, riders, start} = rule;
     const target = place(destination);
     const stations = (lamps ?? []).map(({at, ...lamp}) => ({...lamp, position: place(at)}));
     const starts = (riders ?? []).map(place);
+    // A guard's round, with each stop's spot found in the land.
+    const guards = (rule.guards ?? []).map(guard => ({...guard, round: {...guard.round,
+      stops: guard.round.stops.map(stop => ({...stop, at: place(stop.at)}))}}));
+    const along = (rule.along?.places ?? []).map(place);
     if (!target || !(rule.within > 0) || stations.some(lamp => !lamp.position || !(lamp.turnsIn > 0)) ||
-        starts.some(start => !start) || [pickup, retreat, eject, cover].some(at => at && !place(at))) return null;
+        starts.some(start => !start) || [pickup, retreat, eject, cover, start].some(at => at && !place(at)) ||
+        guards.some(guard => !(guard.range > 0) || !(guard.coneDegrees > 0) || guard.round.stops.some(stop => !stop.at)) ||
+        along.some(at => !at)) return null;
     return {destination: target, pickup: pickup && place(pickup), retreat: retreat && place(retreat),
-      eject: eject && place(eject), cover: cover && place(cover), lamps: stations, starts};
+      eject: eject && place(eject), cover: cover && place(cover), start: start && place(start), lamps: stations, starts,
+      guards, along};
   },
 
   begin(mission, route, view) {
     return {state: {route, elapsed: mission.elapsed ?? 0, exposure: 0, litFor: 0, seen: !!mission.alarmed,
-      carrying: false, sentRiders: false, distance: 0, wrench: 0},
-    requests: [marker(view, route.pickup ?? route.destination, mission.rule.within)]};
+      carrying: false, sentRiders: false, distance: 0, wrench: 0, waved: []},
+    requests: [marker(view, route.pickup ?? route.destination, mission.rule.within),
+      ...(route.start ? [{type: 'threadFootPosition', place: route.start}] : [])]};
   },
 
-  step(mission, state, view, dt) {
+  step(mission, state, view, dt, {seconds} = {}) {
     const {rule} = mission;
     const {route} = state;
     const next = {...state, elapsed: state.elapsed + dt};
     const requests = [], events = [];
-    const finish = outcome => ({state: next, requests, events, outcome});
+    const finish = outcome => ({state: next, requests, events, outcome, choices: alongChoices(mission, next, outcome)});
     if (rule.road) {
       if (view.combatWrecking || (view.jobEvents ?? []).some(event => event.type === 'riderFight' &&
           event.id === mission.id && ['lost', 'surrounded'].includes(event.outcome))) return finish(rule.wrecked);
@@ -526,28 +547,42 @@ const heist = {
     }
 
     const point = view.fighter?.position ?? view.player?.position ?? view.player;
+    // A guard's lamp is where his round has him on the land's clock, drawn as a search lamp is.
+    const clock = (seconds ?? next.elapsed) - dt / 2;
+    const guards = (route.guards ?? []).map(guard => heistGuardPose(guard, clock));
+    if (guards.length) requests.push(guardsCast(mission, view, view.onFoot ? point : null, guards));
     if (!view.onFoot || !point) return finish(null);
     // The rim blocks the cones. No exposure accumulates in the staff corridor.
     const covered = route.cover && isNear(point, route.cover, rule.coverRadius);
-    const inLight = !covered && !isNear(point, route.destination, rule.within) && route.lamps.some(lamp => {
+    const inLight = !covered && !isNear(point, route.destination, rule.within) && (route.lamps.some(lamp => {
       const {heading} = heistLampPose(lamp, state.elapsed + dt / 2);
       const at = {...lamp.position, heading, range: rule.range, halfAngle: rule.coneDegrees * Math.PI / 360};
       return lookoutSees(at, point, view.missionHeightAt);
-    });
+    }) || guards.some(at => lookoutSees(at, point, view.missionHeightAt)));
     next.litFor = inLight ? state.litFor + dt : 0;
     next.exposure += inLight ? dt : 0;
     next.seen ||= next.litFor + 1e-9 >= rule.seenSeconds;
     if (!state.seen && next.seen && mission.cue) events.push({type: 'threadCue', id: mission.id, cue: mission.cue});
-    if (rule.caught && (next.exposure + 1e-9 >= rule.caughtSeconds ||
+    // Caught by the time in any light all told, or by one unbroken stretch in it (`caughtLitSeconds`).
+    if (rule.caught && (next.exposure + 1e-9 >= rule.caughtSeconds || next.litFor + 1e-9 >= rule.caughtLitSeconds ||
       (next.carrying && route.lamps.some(lamp => isNear(point, lamp.position, 1.2))))) {
       if (route.eject) requests.push({type: 'threadFootPosition', place: route.eject});
       return finish(rule.caught);
     }
     if (rule.escape && next.seen && isNear(point, route.retreat, rule.within)) return finish(rule.escape);
-    if (route.pickup && !next.carrying && isNear(point, route.pickup, rule.within) && view.interact) {
+    // Waving along: each hiding place passed within reach, up to the most that may come.
+    if (rule.along) for (const [index, at] of route.along.entries())
+      if (next.waved.length < rule.along.atMost && !next.waved.includes(index) && isNear(point, at, rule.along.within))
+        next.waved = [...next.waved, index];
+    // The pickup is taken by interacting, or by holding the wrench there (`pickupWrenchSeconds`), as on a chain.
+    const atPickup = route.pickup && !next.carrying && isNear(point, route.pickup, rule.within);
+    next.pickupWrench = atPickup && rule.pickupWrenchSeconds && view.wrench ? (state.pickupWrench ?? 0) + dt : 0;
+    if (atPickup && (rule.pickupWrenchSeconds ? next.pickupWrench + 1e-9 >= rule.pickupWrenchSeconds : view.interact)) {
       next.carrying = true;
       requests.push(marker(view, route.destination, rule.within));
       events.push({type: 'threadMissionPickup', id: mission.id});
+      for (const [index, row] of (mission.lines ?? []).entries()) if (row.moment === 'pickup')
+        requests.push({type: 'say', lineId: mission.id + '/pickup/' + index, text: (nameOf(row.speaker) ?? row.speaker) + ': ' + row.words});
     }
     const returned = (!route.pickup || next.carrying) && isNear(point, route.destination, rule.within);
     next.wrench = returned && view.wrench ? state.wrench + dt : 0;
@@ -556,11 +591,19 @@ const heist = {
     return finish(null);
   },
 
-  end(mission, _state, view) {
+  end(mission, state, view) {
     return [{type: 'marker', place: null},
+      ...(state.route.guards?.length ? [{type: 'searchCast', id: mission.id, target: null, lamps: []}] : []),
       ...(view.road?.id === mission.id ? [{type: ROAD_REQUEST, action: 'leave', id: mission.id}] : [])];
   },
 };
+
+// Those waved along on a way out that succeeded: one mark each, `<mark>-1` and on.
+function alongChoices(mission, after, outcome) {
+  const {along, success} = mission.rule;
+  if (!along?.mark || outcome !== success || !after.waved?.length) return [];
+  return [{id: mission.id + '/along', effects: after.waved.map((_, index) => ({type: 'mark', id: along.mark + '-' + (index + 1)}))}];
+}
 
 export const lookoutHeading = (post, turnsIn, seconds) => (post.heading ?? 0) + seconds / turnsIn * Math.PI * 2;
 

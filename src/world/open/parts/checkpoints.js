@@ -5,6 +5,11 @@ import {OPEN_CHECKPOINTS, drawCheckpoint, friendlyCamps, gap, isArmed} from '../
 import {startEncounter, stepEncounter, stepRecovery} from '../encounter-rule.js';
 import {haulerStop, haulerMarked} from '../content/stranded-hauler-places.js';
 import hauler from '../../../story/threads/content/stranded-hauler.js';
+import burnedCamp from '../../../story/threads/content/burned-camp.js';
+
+// The `later` rows Sump's rider says at a checkpoint, each asking only facts of the land.
+const RIDER_ROWS = [burnedCamp].flatMap(thread => (thread.later ?? []).filter(row => row.by === 'sumps-rider')
+  .map(row => ({thread, row})));
 
 const REST_NIGHT = 'checkpoint/rest-night-';
 function hearthBanked(world, events) {
@@ -36,7 +41,8 @@ export const checkpointsPart = {
       recoveryPaid: view.recoveryPaid || events.some(event => event.type === 'threadMissionRecoveryPaid'),
       interactWasHeld: state.interact, hearthBanked:banked}};
     const choices = [], requests = [];
-    const missionLoss = events.find(event => event.type === 'threadMissionOutcome' &&
+    // A player taken to a pen after a lost fight is not towed home (OPEN-BURNED-PEN).
+    const missionLoss = events.find(event => event.type === 'threadMissionTaken' || event.type === 'threadMissionOutcome' &&
       event.id.startsWith(hauler.id + '/') && ['lost', 'caught', 'car-wrecked'].includes(event.outcome));
     if (missionLoss) next.missionLossPaid = true;
     if (banked)
@@ -78,6 +84,15 @@ export const checkpointsPart = {
         requests.push({type: 'say', lineId: 'open/hauler/remembered-payer',
           text: "Sump's rider: " + hauler.later.find(row => row.id === 'rats-remember-the-payer').lines[0].words});
         effects.push({type: 'mark', id: hauler.id + '/said/rats-remember-the-payer'});
+      } else if (draw.group === 'road-rats') {
+        // Other storylines' ties back that Sump's rider says when the Road Rats are next met at a checkpoint.
+        const said = RIDER_ROWS.find(({thread, row}) => isTrue(row.when, world) &&
+          !world.ledger.marks.includes(thread.id + '/said/' + row.id));
+        if (said) {
+          requests.push({type: 'say', lineId: 'open/' + said.thread.id + '/' + said.row.id,
+            text: "Sump's rider: " + said.row.lines[0].words});
+          effects.push({type: 'mark', id: said.thread.id + '/said/' + said.row.id});
+        }
       }
     }
     choices.push({id: 'checkpoint/' + inside.id + '/crossing-' + number, effects});
