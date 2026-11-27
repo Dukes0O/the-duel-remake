@@ -1,6 +1,6 @@
 # Home Ground, step 1: the look
 
-Sheet: `step-1.jpg`, three pictures taken by the browser scenario `open-home-ground` on 27 November 2026, with the
+Sheet: `look-1.jpg`, three pictures taken by the browser scenario `open-home-ground` on 27 November 2026, with the
 switch `home-ground` on and a temporary player.
 
 - **At the gate (top left).** The whole edge fenced in tin panels, the gate shut, and the board reading G-TOWN beside it.
