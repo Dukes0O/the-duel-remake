@@ -4,7 +4,9 @@ The short board entry controls current state, ownership, dependencies and locks.
 
 Claude's card. Step 2 of `docs/HOME_GROUND.md` (read sections 3, 4, 7 and 15 first): **hens, nest boxes and the real
 clock, with the board at the gate**, plus what Claude's drive of step 1 found (`docs/board/looks/home-ground/drive-1.md`).
-Behind `home-ground`. It starts after Kyle and Gratian have tried step 1; their notes come first.
+Behind `home-ground`. Kyle started it on 27 November without waiting for the try of step 1; notes from that try are
+folded in when they come. The hens' look comes from HOME-GROUND-LOOK-1 (building now): use the wildlife chicken until
+it merges, then its parts, and do not count the stand-in as finished.
 
 **Hens and nest boxes.**
 - Moss brings two Tin Town Brown hens in a crate on the first visit after the fence is closed (one short talk). He
@@ -25,9 +27,12 @@ was away ("Your hens laid 14 eggs while you were gone. The nest boxes are full, 
 board shows it again.
 
 **From the drive of step 1.**
-1. Show the hammering: a hammer in his hands while he builds on his ground, the panel rising through its three seconds,
-   and the cue `home.fence.hammer` named for each strike.
-2. On his own ground, put the rocket launcher on his back and hide the car-aim label.
+1. **A tool in his hands, not his weapon** (Kyle, 27 November: "just make a tool like a hammer or a wrench for when he's
+   building"). On his own ground, whenever he builds, the rocket launcher goes on his back and he holds a hammer (a
+   wrench for the gate's hinges), drawn in the look of step 1's tin, swinging with each strike. Show the panel rising
+   through its three seconds, and name the cue `home.fence.hammer` for each strike. He takes the launcher back with
+   one press, as he does now.
+2. On his own ground, hide the car-aim label.
 3. From above, mark where he stands, and draw built pieces clearly (darker than the grid, at their real width).
 4. Show the build outline only after he presses B once (or holds it), not every moment on his ground; facing a piece
    he built within reach, the prompt offers to pick it up.

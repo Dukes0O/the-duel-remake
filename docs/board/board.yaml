@@ -1211,9 +1211,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "ready"
-    waiting_on: "kyle"
-    needs: ["HOME-GROUND-LOOK-1"]
+    status: "building"
+    claimed_by: "Claude Opus session (local), 27 November 2026"
+    needs: []
     locks: []
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-2.md"
