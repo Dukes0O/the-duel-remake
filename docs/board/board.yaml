@@ -1251,7 +1251,7 @@ tasks:
     size: "S"
     status: "review"
     waiting_on: "claude"
-    claimed_by: "Codex laptop lane, 27 November 2026"
+    claimed_by: "Codex Sol laptop lane, round 2, 27 November 2026"
     needs: []
     locks: []
     flag: "story-choices"

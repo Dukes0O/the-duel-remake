@@ -70,9 +70,6 @@ the game.
 
 ## What to watch for
 
-- **A drawn pipe does not cut the ground inside it.** The Rats' Nest had cut mouths but 30 m of earth between them.
-  Keep the land above a hidden pipe whole and give its interior a separate floor, walls and ceiling. Sample that floor
-  along the whole route and walk it with the foot mover; setting a fighter's position hides blocked routes.
 - **An open cage is not a roof.** The Scarab's roof weapon probe found the floor through its cage. Give an open vehicle a supported weapon bridge and check all four mount feet against its real geometry; do not raise the socket until the weapon appears to fit.
 - **Generic kit dimensions do not prove a fit.** Probe each stack against the tyre rubber and each cage foot against the body below it. Scarab needed inboard stacks seated on its chassis; Longhaul needed the whole cage and turret moved onto its cab. A single roof-centre height cannot place feet over a truck bed.
 - **Imported paint needs the full finish contract.** A standard GLB material has no clearcoat value. Convert painted surfaces to physical materials with an explicit factory clearcoat before preparing damage, so switching paint back to Factory restores the original finish exactly.
@@ -624,4 +621,5 @@ the game.
 - **A drawn pipe or tunnel needs a floor a walker can follow.** The Rats' Nest drew a pipe under 30 m of earth, but the
   foot mover walks the land's one surface, so the pipe could not be walked, and a scenario that set the fighter's
   position hid it. Give the passage its own floor and walls inside it; do not cut the land above it open. Walk every
-  route with the real foot mover (OPEN-PEN-DRAIN-BANK, 27 November 2026).
+  route with the real foot mover. Keep the camera below the ceiling and clear the terrain skin only inside the bore,
+  using the same pipe data (OPEN-PEN-DRAIN-BANK, 27 November 2026).

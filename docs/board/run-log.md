@@ -1830,3 +1830,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Night 2026-11-26, full (shared files): failed, 15 items, 2 standing. Cured on 27 November: vesper-art checksum, Old Smoke floor, Dace review names, open-forge-shed (Slack in the wash doorway: a game fault, fixed), everburn-job2 (brandSwingReady returned undefined). Reruns passed alone: p4-audio, skyline-audio (QA-AUDIO-UNDER-LOAD). Open: WASTE-TRUCKS-FIT (arena-shove, lesson instructor), frames (standing, new tanker line on QA-STANDING-BROWSER).
 - Merge WASTE-TRUCKS-FIT (Claude session): the Longhaul and Bully stay on their side of a wall on an outing; no game code changed
 - Merge HOME-GROUND-1 (Claude session): Home Ground step 1, the ground, tin fence, gate, lane, view from above and burst, behind home-ground
+- Janitor OPEN-PEN-DRAIN-BANK round 2: audit candidates advisory; pipe facts folded into ART_LINE; generated lane build recycled; no evidence remains.
