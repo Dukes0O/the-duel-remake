@@ -2,14 +2,16 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {wavFromPcm} from './audio-race.mjs';
 import {measureLoudness} from '../audio/measurements.mjs';
-import {createCaptureWitness, inspectCaptureWitness} from '../audio/capture-witness.mjs';
+import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource} from '../audio/capture-witness.mjs';
 
 export function inspectSkylineCapture(packet) {
-  const reasons = [];
+  const reasons = [], clockNotes = [];
   if (!packet.callbacks.length) reasons.push('no recorder callbacks');
   let previous = null;
   for (let i = 0; i < packet.callbacks.length; i++) {
     const row = packet.callbacks[i];
+    const expectedFrame = packet.callbacks[0].frame + i * 2048;
+    if (row.frame !== expectedFrame) clockNotes.push({callback: i, actualFrame: row.frame, expectedFrame});
     // Only the first two callbacks may contain silence before source frame 0.
     // Startup samples are also excluded from the measured stereo PCM.
     if (row.startupFrames) {
@@ -22,7 +24,7 @@ export function inspectSkylineCapture(packet) {
       reasons.push('recording missed source frame 0 at callback ' + i);
     if (!row.identity.complete || row.identity.checkedFrames !== row.frames)
       reasons.push('sample witness mismatch at callback ' + i);
-    // ScriptProcessor.playbackTime follows delivery, not input sample identity.
+    // Callback frame labels describe the clock, not input sample identity.
     // A late delivery alone must never invalidate an otherwise intact buffer.
     if (previous && row.identity.sourceStartFrame !== previous.identity.sourceStartFrame + previous.frames)
       reasons.push('sample witness gap/repeat at callback ' + i + ' (expected source frame ' +
@@ -37,7 +39,7 @@ export function inspectSkylineCapture(packet) {
         (row.liftCueTime ?? row.time) >= start && (row.liftCueTime ?? row.time) < end))
       reasons.push('control timer missed throttle lift ' + start + '..' + end + ' s');
   }
-  return {disturbed: reasons.length > 0, reasons};
+  return {disturbed: reasons.length > 0, reasons, clockNotes};
 }
 
 export function validateSkylineAudio(packet) {
@@ -64,29 +66,33 @@ export async function run(context) {
     await audio.context.resume();
     await Promise.all([audio._samplesPromise,audio._ambiencePromise,audio._cueBuffersPromise]);
     if(audio.sampleStatus!=='ready'||!audio.flags.enabled('nissan-skyline'))throw Error('Skyline audio unavailable');
-    const ctx=audio.context, processor=ctx.createScriptProcessor(2048,4,2), silent=ctx.createGain();
+    const ctx=audio.context, silent=ctx.createGain();
+    const url=URL.createObjectURL(new Blob([${JSON.stringify(recorderWorkletSource)}],{type:'text/javascript'}));
+    try{await ctx.audioWorklet.addModule(url);}finally{URL.revokeObjectURL(url);}
+    const processor=new AudioWorkletNode(ctx,'arsenal-native-meter',
+      {numberOfInputs:2,numberOfOutputs:1,outputChannelCount:[2]});
     const reference=(${createCaptureWitness.toString()})(ctx.sampleRate);
     const inspectWitness=(${inspectCaptureWitness.toString()});
     const witnessBuffer=ctx.createBuffer(1,reference.length,ctx.sampleRate);witnessBuffer.copyToChannel(reference,0);
-    const witness=ctx.createBufferSource(),split=ctx.createChannelSplitter(2),merge=ctx.createChannelMerger(4);
-    witness.buffer=witnessBuffer;witness.connect(merge,0,2);
-    audio.output.connect(split);split.connect(merge,0,0);split.connect(merge,1,1);
+    const witness=ctx.createBufferSource();
+    witness.buffer=witnessBuffer;witness.connect(processor,0,1);
+    audio.output.connect(processor);
     silent.gain.value=0;
     const chunks=[],callbacks=[],cues=[],rows=[],start=ctx.currentTime, original=audio._playCue;
     let witnessStarted=false;
     audio._playCue=function(id,...args){cues.push({id,time:ctx.currentTime-start});return original.call(this,id,...args);};
-    processor.onaudioprocess=event=>{
-      const measured=event.inputBuffer.getChannelData(2);
+    processor.port.onmessage=event=>{
+      const {witness:measured,pcm:stereo,frame}=event.data;
       let startupFrames=0;
       if(!witnessStarted && callbacks.length<2)while(startupFrames<measured.length && measured[startupFrames]===0)startupFrames++;
       if(startupFrames<measured.length)witnessStarted=true;
-      const left=event.inputBuffer.getChannelData(0).subarray(startupFrames),right=event.inputBuffer.getChannelData(1).subarray(startupFrames),pcm=new Int16Array(left.length*2);
-      callbacks.push({frame:Math.round(event.playbackTime*ctx.sampleRate),frames:left.length,startupFrames,
+      const frames=measured.length-startupFrames,pcm=new Int16Array(frames*2);
+      callbacks.push({frame,frames,startupFrames,
         deliveredMs:performance.now(),identity:inspectWitness(measured.subarray(startupFrames),reference)});
-      for(let i=0;i<left.length;i++){pcm[2*i]=Math.round(Math.max(-1,Math.min(1,left[i]))*32767);pcm[2*i+1]=Math.round(Math.max(-1,Math.min(1,right[i]))*32767);}
+      for(let i=0;i<frames*2;i++)pcm[i]=Math.round(Math.max(-1,Math.min(1,stereo[startupFrames*2+i]))*32767);
       chunks.push(pcm);
     };
-    witness.start();merge.connect(processor);processor.connect(silent);silent.connect(ctx.destination);
+    witness.start();processor.connect(silent);silent.connect(ctx.destination);
     const state={car:'nissan_skyline_gtr_r34',status:'racing',paused:false,impactTimer:0,
       speedMph:120,revs:.85,gear:3,input:{throttle:1,brake:0},slipAngle:0,steerVisual:0,
       offRoad:false,airborne:false,airHeight:0,police:{beep:0,pursuit:null}};
@@ -99,13 +105,13 @@ export async function run(context) {
       rows.push({time,throttle:state.input.throttle,liftCueTime,frequency:audio.turboLoop?.osc.frequency.value,
         gain:audio.turboLoop?.gain.gain.value});
     },16);
-    window.__skylineAudio={audio,ctx,processor,silent,split,merge,witness,chunks,callbacks,cues,rows,timer,original};
+    window.__skylineAudio={audio,ctx,processor,silent,witness,chunks,callbacks,cues,rows,timer,original};
   })()`);
   await new Promise(resolve=>setTimeout(resolve,6200));
   const packet=await context.evaluate(`(() => {
     const c=window.__skylineAudio;clearInterval(c.timer);c.audio.setPaused(true);
-    c.audio._playCue=c.original;c.audio.output.disconnect(c.split);c.split.disconnect();c.merge.disconnect();
-    c.witness.stop();c.witness.disconnect();c.processor.disconnect();c.silent.disconnect();
+    c.audio._playCue=c.original;c.audio.output.disconnect(c.processor);
+    c.witness.stop();c.witness.disconnect();c.processor.disconnect();c.processor.port.close();c.silent.disconnect();
     const pcm=new Int16Array(c.chunks.reduce((n,x)=>n+x.length,0));let offset=0;
     for(const chunk of c.chunks){pcm.set(chunk,offset);offset+=chunk.length;}
     const bytes=new Uint8Array(pcm.buffer);let binary='';

@@ -8,7 +8,7 @@ import {detectOnset, rms} from '../audio-analysis.mjs';
 import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource}
   from '../audio/capture-witness.mjs';
 
-export function inspectNativeCallbacks(chunk, interval = {}) {
+export function inspectNativeCallbacks(chunk, interval = {}, identity = null) {
   const from = interval.from ?? chunk.frame, to = interval.to ?? chunk.frame + 2048;
   const firstOffset = Math.floor((from - chunk.frame) / 128) * 128;
   const endOffset = Math.ceil((to - chunk.frame) / 128) * 128;
@@ -17,8 +17,12 @@ export function inspectNativeCallbacks(chunk, interval = {}) {
   const callbacks = chunk.callbacks.filter(row => row.chunkOffset >= firstOffset && row.chunkOffset < endOffset);
   const expectedCount = (endOffset - firstOffset) / 128;
   const mismatchIndex = callbacks.findIndex((row, index) => row.chunkOffset !== firstOffset + index * 128 ||
-    row.frame !== chunk.frame + row.chunkOffset || row.witnessFrames !== 128);
-  return {complete: to > from && callbacks.length === expectedCount && mismatchIndex < 0,
+    row.witnessFrames !== 128);
+  const clockNotes = callbacks.filter(row => row.frame !== chunk.frame + row.chunkOffset)
+    .map(row => ({actualFrame: row.frame, expectedFrame: chunk.frame + row.chunkOffset, chunkOffset: row.chunkOffset}));
+  const witnessed = identity?.complete && identity.checkedFrames === 2048;
+  return {complete: to > from && callbacks.length === expectedCount && mismatchIndex < 0 &&
+      (identity ? witnessed : clockNotes.length === 0), clockNotes,
     callbacks: callbacks.length, expectedCallbacks: expectedCount,
     ...(mismatchIndex >= 0 ? {mismatch: callbacks[mismatchIndex],
       expectedFrame: chunk.frame + firstOffset + mismatchIndex * 128} : {})};
@@ -291,18 +295,25 @@ async function nativeRecorder(audio, helpers) {
   async function close(row, endFrame) {
     demand(Number.isInteger(endFrame) && endFrame > row.startFrame, 'Invalid native capture interval');
     await settle(() => Object.values(row.tracks).every(track =>
-      track.chunks.at(-1)?.frame + 2048 >= endFrame), 'Recorder did not cover its final native frame');
+      track.chunks[0]?.frame + track.chunks.length * 2048 >= endFrame), 'Recorder did not cover its final native frame');
     disconnect(row);
     const output = {};
     for (const [name, track] of Object.entries(row.tracks)) {
-      const chunks = track.chunks.filter(chunk => chunk.frame < endFrame && chunk.frame + 2048 > row.startFrame);
+      // Message order and sample identity define the stream. Clock labels may
+      // disagree, but cannot remove, duplicate or rearrange its samples.
+      const chunks = track.chunks.map((chunk, index) => ({...chunk, labelFrame: chunk.frame,
+        frame: track.chunks[0].frame + index * 2048}))
+        .filter(chunk => chunk.frame < endFrame && chunk.frame + 2048 > row.startFrame);
       const pcm = new Float32Array((endFrame - row.startFrame) * 2);
       const witness = new Float32Array(endFrame - row.startFrame);
+      const clockNotes = [];
       let covered = row.startFrame, emptyInput = 0, callbacks = 0;
       for (const chunk of chunks) {
         demand(chunk.pcm.length === 4096 && chunk.witness.length === 2048, 'Short native block: ' + name);
         const from = Math.max(row.startFrame, chunk.frame), to = Math.min(endFrame, chunk.frame + 2048);
-        const timing = helpers.inspectCallbacks(chunk, {from, to});
+        const timing = helpers.inspectCallbacks(chunk, {from, to}, helpers.inspectWitness(chunk.witness, reference));
+        if (chunk.labelFrame !== chunk.frame) timing.clockNotes.push({actualFrame: chunk.labelFrame,
+          expectedFrame: chunk.frame, chunkOffset: 0, scope: 'chunk label'});
         if ((from !== covered || !timing.complete) && !clockFailure) {
           const header={callbackTiming:timing,sampleIdentity:helpers.inspectWitness(chunk.witness,reference),segment:row.index,track:name,sampleRate:rate,startFrame:row.startFrame,endFrame,
             expected:covered,actual:from,chunkFrame:chunk.frame,scope:'four raw neighboring chunks per stem; not a whole segment'};
@@ -319,11 +330,13 @@ async function nativeRecorder(audio, helpers) {
           segment: row.index, startFrame: row.startFrame, endFrame, expected: covered, actual: from,
           chunkFrame: chunk.frame, previousFrames: chunks.slice(Math.max(0, chunks.indexOf(chunk) - 2), chunks.indexOf(chunk) + 2).map(item => item.frame),
           callbacks: chunk.callbacks.map(item => item.frame), witnessFirst: chunk.witness[0]}));
-        demand(timing.complete, 'capture disturbed, rerun alone: native callback clock gap/repeat: ' + name + ' ' + JSON.stringify(timing));
+        demand(timing.complete, 'capture disturbed, rerun alone: native callback/witness gap/repeat: ' + name + ' ' + JSON.stringify(timing));
         const offset = from - chunk.frame, count = to - from, target = from - row.startFrame;
         pcm.set(chunk.pcm.subarray(offset * 2, (offset + count) * 2), target * 2);
         witness.set(chunk.witness.subarray(offset, offset + count), target);
-        for (const header of chunk.callbacks.filter(item => item.frame < to && item.frame + 128 > from)) {
+        for (const note of timing.clockNotes) clockNotes.push({...note, chunkFrame: chunk.frame});
+        for (const header of chunk.callbacks.filter(item => chunk.frame + item.chunkOffset < to &&
+            chunk.frame + item.chunkOffset + 128 > from)) {
           callbacks++;
           demand(header.witnessFrames === 128, 'capture disturbed, rerun alone: Short witness input: ' + name);
           demand([0, 128].includes(header.leftFrames) && [0, 128].includes(header.rightFrames),
@@ -337,7 +350,7 @@ async function nativeRecorder(audio, helpers) {
       demand(identity.complete, 'capture disturbed, rerun alone: Native sample identity failed: ' + name + ' ' + JSON.stringify(identity));
       demand(name === 'interface' || emptyInput === 0, 'Connected mix/engine input missing: ' + name);
       for (const sample of pcm) demand(Number.isFinite(sample), 'Nonfinite recorded sample: ' + name);
-      output[name] = {pcmBase64: encode(pcm), identity, callbacks, disconnectedSilentInputCallbacks: emptyInput,
+      output[name] = {pcmBase64: encode(pcm), identity, callbacks, clockNotes, disconnectedSilentInputCallbacks: emptyInput,
         startFrame: row.startFrame, endFrame, frames: pcm.length / 2};
     }
     // Keep earlier stems available if a later stem fails validation.
@@ -539,8 +552,8 @@ export async function run(context) {
       q.report.functionalVerdict={nativeEvents:true,replay:true,lifecycle:true,genuineThreeLapFinish:true,listeningApproved:false};
     })()`);
   } finally {
-    // Retain the actual disputed samples before recorder cleanup. The original
-    // continuity check still rejects this run; it is never treated as a pass.
+    // Retain damaged samples before cleanup. Intact samples with disagreeing
+    // clock labels are reported as notes on their segment tracks instead.
     try {
       const failure=await context.evaluate('window.__p4Capture.failurePacket()');
       if(failure) {

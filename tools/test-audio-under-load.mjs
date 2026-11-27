@@ -57,6 +57,24 @@ check('P4 repeated quantum is disturbed', () => {
   const c = chunk(); c.callbacks[1].frame -= 128;
   assert.equal(inspectNativeCallbacks(c).complete, false);
 });
+check('P4 wrong label with intact chunk and neighbouring witness stays clean with a clock note', () => {
+  const c = chunk(); c.callbacks[1].frame -= 128;
+  const neighbours = reference.slice(0, 6144);
+  assert.equal(inspectCaptureWitness(neighbours, reference).complete, true);
+  const result = inspectNativeCallbacks(c, {}, inspectCaptureWitness(neighbours.subarray(2048, 4096), reference));
+  assert.equal(result.complete, true);
+  assert.deepEqual(result.clockNotes, [{actualFrame: c.frame, expectedFrame: c.frame + 128, chunkOffset: 128}]);
+});
+check('P4 wrong label with damaged witness remains disturbed', () => {
+  const c = chunk(); c.callbacks[1].frame -= 128;
+  const damaged = reference.slice(2048, 4096); damaged[128] = damaged[127];
+  assert.equal(inspectNativeCallbacks(c, {}, inspectCaptureWitness(damaged, reference)).complete, false);
+});
+for (const [name, offset] of [['repeated', 0], ['missing', 2176]]) check('P4 ' + name + ' neighbouring witness fails continuity', () => {
+  const samples = new Float32Array(4096); samples.set(reference.subarray(0, 2048));
+  samples.set(reference.subarray(offset, offset + 2048), 2048);
+  assert.equal(inspectCaptureWitness(samples, reference).complete, false);
+});
 check('P4 short callback/witness is disturbed', () => {
   const c = chunk(); c.callbacks.pop(); assert.equal(inspectNativeCallbacks(c).complete, false);
   const w = chunk(); w.callbacks[1].witnessFrames = 0; assert.equal(inspectNativeCallbacks(w).complete, false);

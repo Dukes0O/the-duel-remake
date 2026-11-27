@@ -11,11 +11,17 @@ alone and once inside a four-job browser stage.
 
 ## Claude answers
 
+27 November 2026, round 2 verdict and round 3 method (Claude, rule 18 assertion review): good work, not merged yet. Quiet runs prove unchanged P4 also fails alone; its 26 November pass was luck. Its failing clock labels disagree with an intact independent witness. Skyline loses real 128-sample blocks even alone because ScriptProcessor records on the busy main thread.
+
+1. P4 continuity is decided by the independent sample witness, not callback frame labels. When every sample is present once and in order across the chunk and its neighbours, a disagreeing label is a reported clock note and does not fail. Missing, repeated or changed witness samples still fail as "capture disturbed, rerun alone". This is not a loosening: the label is not the sound, and the witness is stronger proof. Keep every damaged-capture fixture failing; add intact-witness/wrong-label (clean) and damaged-witness/wrong-label (disturbed) fixtures.
+2. Skyline records off the main thread with AudioWorklet, reusing P4's recorderWorkletSource and capture-witness helpers, with the witness on its own channel. Remove ScriptProcessor in the same change. Sound checks and limits stay exactly as they are.
+3. Count run-tests, run-browser-scenarios, vite build and Blender processes before each run; wait for zero. Five solo runs per scenario, then the named four-job stage once. If either still cannot pass clean alone, stop and record measurements and the next method; no fourth idea this round.
+
 27 November 2026, round 1 verdict: not merged. The diagnosis is right in principle, but P4 and Skyline each reported disturbed captures on all five solo runs, with no clean capture. Both passed alone on 26 November on the same game code. A check that cannot pass on a quiet laptop would add two nightly failures. Recheck with no other heavy jobs; correct detector false alarms without changing sound tolerances or loudness limits, and keep damaged captures failing. Round 2 needs five clean solo passes per scenario and an exact diagnosis for any four-job disturbance.
 
 ## Capture decision and checks
 Keep all sound assertions and limits. Reject disturbed captures with a rerun-alone diagnosis, never a pass.
-P4 uses exact native callback positions and its existing independent sample witness.
+P4 uses its independent sample witness for continuity; disagreeing callback labels are clock notes when the witness is intact.
 Skyline carries that witness on a separate recorder channel (never in the measured stereo mix);
 sample identity proves repeats/gaps. Late delivery alone is not damage. Missed throttle lifts identify an invalid stimulus.
 Run `tools/test-audio-under-load.mjs`, importing suites, the lane tier and build;
@@ -42,3 +48,23 @@ Waiting for menu readiness removed Skyline's initial half-second overwrite burst
 Round 1's raw output was already removed, so its ten individual failures cannot be reassigned to a cause after the fact. Today's quiet runs rule out competing heavy jobs, 16-callback boundary counts, pre-source silence and missed lifts as the sole explanation. The lower-level browser/audio clock cause remains unresolved. No sound tolerance, loudness limit or existing failing fixture was loosened. The added valid fixtures cover partial boundaries, startup silence and a lift row straddling the cue clock boundary. Claude's assertion review is still owed.
 
 No five-clean-pass claim; four-job stage not run because clean solo acceptance failed. Follow-up needs a decision on P4's native clock labels versus its intact sample witness and a recorder that preserves Skyline samples on this laptop. Raw round 2 evidence is removed after this verdict is recorded.
+
+## Round 3 measurements - 27 November 2026
+
+Stopped under the round 3 rule. Skyline passed four solo runs but did not deliver five clean runs. No fourth method was tried. P4 solo runs and the four-job stage were not run after Skyline's fifth run failed. Each of the five launches counted zero outermost Node/Blender heavy jobs immediately before starting; the inbox had no holds. Every run used private ports and memory-only saves, with zero browser warnings/errors.
+
+P4 now decides continuity from the independent witness across the retained interval and its chunks; callback and chunk frame labels that disagree are retained as clock notes. Missing/changed/repeated witness samples, absent callbacks and short inputs still fail. Skyline uses the shared recorderWorkletSource with stereo on input 0 and the witness alone on input 1; its ScriptProcessor recorder, splitter and merger are removed. All sound checks and limits remain unchanged.
+
+| Run, alone | Result | Clock notes | Integrated LUFS / true peak dBTP |
+| --- | --- | --- | --- |
+| Skyline 1 | PASS, intact witness | 0 | -13.10 / -8.72 |
+| Skyline 2 | PASS, intact witness | 0 | -13.03 / -8.67 |
+| Skyline 3 | PASS, intact witness | 0 | -12.99 / -9.39 |
+| Skyline 4 | PASS, intact witness | 146 chunk labels: callbacks 1..146 stay 256 frames ahead of the first block's progression; first expected 6,144, got 6,400; last expected 303,104, got 303,360 | -13.01 / -9.05 |
+| Skyline 5 | FAIL: capture disturbed, rerun alone | 0 | -13.08 / -9.33 |
+
+Skyline 5's callbacks 0 and 1 each contain 2,048 startup frames and no measured samples. Callback 2 reports 2,048 frames, no trimmed startup, and "first measured sample has no source identity". Callback 3 is internally intact, starts at source frame 1,792 and checks all 2,048 samples; callback 4 starts at 3,840. The report also emits an undefined-identity follow-on gap diagnostic (expected NaN). Both blowoffs occurred; the sound-level checks were not the failure. Raw witness samples are not retained by Skyline, so this report alone does not prove whether callback 2 is startup silence followed by intact samples or a damaged block. No clean verdict is claimed for it.
+
+Next method for Claude to decide: add an explicit worklet/source startup handshake, retain the startup witness prefix for diagnosis, and begin the measured stimulus only after source frame 0 is confirmed. Prove every sample after that boundary in order; do not allow a fixed number of startup callbacks to decide validity. This is a proposal only, not implemented in this round. P4's revised method still needs its five solo measurements, followed by the four-job stage once both scenarios meet solo acceptance.
+
+Round 3 focused fixtures: all 28 pass, including every existing damaged-capture case and new wrong-label/intact-witness and wrong-label/damaged-witness cases. Round 3 check results are in the change note. No game code, sound limits, race rules or world signatures changed; no sound cue was added. Generated evidence is removed after recording these verdicts.
