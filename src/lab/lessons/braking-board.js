@@ -28,7 +28,7 @@ const LEVER = Object.freeze({x: 920, y: 186, w: 360, h: 140, back: [970, 300], f
 const LEFT = Object.freeze({x: 40, y: 40, w: 840, h: 310});
 // The road is tarmac from 40 to 1280 across the wide board. The test strip is still 80 m long, marked every 10 m from the brakes
 // going on at 0 m (130 px in, where a car arrives); the road carries on past its end, at the largest scale at which the longest
-// stop the lesson allows (the Falcone from 240 km/h, 104.9 m) still ends 40 px short of the board's edge.
+// stop the lesson allows (the Falcone from 150 km/h at a real car's braking, 95.4 m) still ends inside it, 110 px short of the board's edge.
 const ROAD_LEFT = 40, ROAD_WIDTH = 1240;
 const STRIP = Object.freeze({x0: 130, perM: 10.9, metres: 80, top: 400, bottom: 650});
 const CAR_SCALE = .48 * STRIP.perM / 10;

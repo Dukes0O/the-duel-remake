@@ -20,7 +20,7 @@ import {headingsBench, leg} from '../src/lab/benches/headings.js';
 import {launchBench, rangeOf, bestAngle} from '../src/lab/benches/launch.js';
 import {waxBench, SNOWS, WAXES, glideSeconds} from '../src/lab/benches/wax.js';
 import {TUNNEL_BENCHES, gripBench, downforceBench, brakingBench, suspensionBench, fuelBench, stopDistance, bestSlideDegrees,
-  slipAtAngle, downforce, frontLoadShare, shake, zeroToSixty, PETROL_KG_PER_LITRE, FUEL_RIG} from '../src/lab/benches/tunnel.js';
+  slipAtAngle, downforce, frontLoadShare, BRAKE_RIG, shake, zeroToSixty, PETROL_KG_PER_LITRE, FUEL_RIG} from '../src/lab/benches/tunnel.js';
 
 // docs/LAB.md section 2, "the rule for truth": every number a bench shows is the game's own rule run on the same
 // inputs, and every number in Brian's explanation (section 4) is a number the bench produces.
@@ -324,19 +324,33 @@ test('wind tunnel downforce: twice the speed, four times the push, and the wing 
   assert.equal(downforceBench.goalMet(history(downforceBench, [{speedMph: 50, wing: 'big'}, {speedMph: 100, wing: 'big'}])), true);
 });
 
-test('wind tunnel braking: the car\'s own braking, a hundred needs four times the road of fifty, weight tips forward', () => {
+// LAB-BRAKING-REAL: the rig brakes at a real car's deceleration (brake strength x g, and the passive drag), not the race's.
+test('wind tunnel braking: a real car\'s braking, a hundred needs four times the road of fifty, weight tips forward at that braking', () => {
   const id = Object.keys(CARS)[0];
-  near(brakingBench.facts().hundredOverFifty, 4, 0.01, 'stopping distance ratio');
-  for (const carId of [id, 'koenigsegg_jesko', 'banshee_muscle']) {
-    const a = DRIVE.brakeAccel * CARS[carId].braking * DRIVE.mphToWorld;
-    near(stopDistance(carId, 100).metres, (100 * DRIVE.mphToWorld) ** 2 / (2 * a), 0.02, `${carId} stops as v squared over 2a`);
-    near(stopDistance(carId, 100).metres / stopDistance(carId, 50).metres, 4, 0.03, `${carId}: four times`);
+  near(brakingBench.facts().hundredOverFifty, 4, 1e-12, 'stopping distance ratio');
+  for (const carId of Object.keys(CARS)) {
+    const a = BRAKE_RIG.g * CARS[carId].braking + BRAKE_RIG.dragMs2;
+    near(stopDistance(carId, 100).metres, (100 * DRIVE.mphToWorld) ** 2 / (2 * a), 1e-12, `${carId} stops as v squared over 2a`);
+    near(stopDistance(carId, 100).seconds, 100 * DRIVE.mphToWorld / a, 1e-12, `${carId} stops in v over a`);
+    near(stopDistance(carId, 100).metres / stopDistance(carId, 50).metres, 4, 1e-12, `${carId}: four times`);
+    // Road cars brake at about 1 g; only racing tyres with downforce, and the fan car, brake harder.
+    const racing = ['viper_proto', 'koenigsegg_jesko', 'bugatti_bolide', 'mcmurtry_speirling'].includes(carId);
+    assert.ok(racing ? a / BRAKE_RIG.g > 1.2 && a / BRAKE_RIG.g < 2.5 : a / BRAKE_RIG.g > 0.85 && a / BRAKE_RIG.g < 1.25, `${carId} brakes at ${(a / BRAKE_RIG.g).toFixed(2)} g`);
+    // The weight split at that braking: 0.5 + (a / g) x h / L, the fan car's shared with its fans' push.
+    const tip = a / BRAKE_RIG.g * BRAKE_RIG.centreHeightM / BRAKE_RIG.wheelbaseM;
+    near(frontLoadShare(carId), carId === 'mcmurtry_speirling' ? 0.5 + tip / 3 : 0.5 + tip, 1e-12, `${carId}: front share`);
+    assert.equal(brakingBench.run({car: carId, frontShare: 90}).frontLoadShare, frontLoadShare(carId), `${carId}: the bench shows the split of the car it brakes`);
   }
+  // A road car on good tyres needs about 35 to 45 m from 100 km/h.
+  const kmh100 = 100 / 3.6 / DRIVE.mphToWorld;
+  assert.ok(stopDistance(id, kmh100).metres > 35 && stopDistance(id, kmh100).metres < 45, `the bench car needs ${stopDistance(id, kmh100).metres.toFixed(1)} m from 100 km/h`);
   assert.ok(stopDistance('koenigsegg_jesko', 100).metres < stopDistance('stuttgart_959s', 100).metres === (CARS.koenigsegg_jesko.braking > CARS.stuttgart_959s.braking), 'better brakes stop shorter');
   assert.equal(brakingBench.run({car: id, speedMph: 100}).stopMetres, stopDistance(id, 100).metres);
   assert.ok(frontLoadShare() > 0.5 && frontLoadShare() < 1, 'braking tips weight onto the front tyres');
+  assert.equal(frontLoadShare(), frontLoadShare(id), 'the bench car is the default');
   const share = frontLoadShare() * 100;
   assert.equal(brakingBench.run({frontShare: Math.ceil(share / 5) * 5}).rearSlides, false, 'enough front brake keeps the back from sliding');
+  assert.equal(brakingBench.run({frontShare: Math.floor(share / 5) * 5}).rearSlides, true, 'a little less front brake slides the back');
   assert.equal(brakingBench.run({frontShare: 40}).rearSlides, true, 'too much rear brake slides the back');
   assert.equal(brakingBench.goalMet(history(brakingBench, [{speedMph: 50}])), false);
   assert.equal(brakingBench.goalMet(history(brakingBench, [{speedMph: 50}, {speedMph: 100}])), true);
@@ -388,8 +402,12 @@ test('the explanations in docs/LAB.md section 4 quote numbers the benches produc
   quoted('Aluminium weighs about a third as much as steel');
   // Braking: four times the road from 100 as from 50.
   quoted('from 100 mph a car needs four times the road it needs from 50');
-  quoted('shows that weight shift at a gentle 1 g stop; the stopping distances use the car\'s full braking');
-  near(frontLoadShare(), 0.5 + 0.5 / 2.6, 1e-12, 'the weight shift at 1 g');
+  quoted('brakes each car at a real car\'s deceleration, its brake strength times 9.81 m/s²');
+  quoted('so a road car stops from 100 km/h in about 40 m');
+  quoted('and the weight shift is worked out at that same braking');
+  near(BRAKE_RIG.g, 9.81, 1e-12, '9.81 m/s²');
+  near(stopDistance(Object.keys(CARS)[0], 100 / 3.6 / DRIVE.mphToWorld).metres, 40, 0.1, 'about 40 m');
+  near(stopDistance('stuttgart_959s', 100 / 3.6 / DRIVE.mphToWorld).metres, 40, 0.1, 'about 40 m');
   // Fuel: three quarters of a kilo a litre, 52 kg in 70 litres.
   quoted('about three quarters of a kilo a litre'); quoted('a 70-litre tank holds about 52 kg');
   // G-force: twice the speed, four times the push; half the radius, twice the push; the game's 2.5 g.

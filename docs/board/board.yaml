@@ -403,16 +403,6 @@ tasks:
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
 
-  - id: LAB-BRAKING-REAL
-    title: "Lab: the braking rig stops at real car decelerations, and its weight split follows that braking"
-    owner: "claude"
-    lane: "UI"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/LAB-BRAKING-REAL.md"
-
   - id: LAB-UX-FIXES
     title: "Lab: routine fixes from the 11 November survey"
     owner: "claude"

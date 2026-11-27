@@ -328,6 +328,10 @@ card hides a rising arc for ramps of 70 degrees or more; Wax's three-strip step 
 - The older five-step lesson frame (`lesson-frame.js`, `lesson-pictures.js`, the `.lab-teaching` styles) still ships
   with no lesson in it. Remove it if `node tools/repo-audit.mjs` agrees.
 
+- Voice owed from LAB-BRAKING-REAL (27 November 2026): `lab.brian.braking.intro` still says "eighty" and "a hundred
+  and thirteen"; the watch now shows 50 and 80 km/h. Re-record as "...one from fifty kilometres per hour and one from
+  eighty. The third brakes from fifty kilometres per hour...". `explain` and `pass` are unchanged.
+
 ## Checks
 
 - Each change: the tests of the lessons whose boards it touches, and their `lab-classroom-<id>` browser scenarios.
