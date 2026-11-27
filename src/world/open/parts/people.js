@@ -14,6 +14,7 @@ import {runawayTalkScene} from '../content/talk-threads.js';
 import {routineFor} from '../routine-run-rule.js';
 import {marketPeople} from '../market-day-rule.js';
 import {scoutPeople} from '../content/burned-scout.js';
+import {penPeople} from '../content/burned-pen.js';
 import {haulerPeople} from '../content/stranded-hauler-places.js';
 import {lightsTalkScene} from '../content/talk-lights.js';
 import {haulerTalkScene} from '../content/talk-hauler.js';
@@ -87,7 +88,9 @@ export const peoplePart = {
         active = null;
       }
     }
-    const runaways = view.checkpointsEnabled ? runawayPeople(world, view.threadSearchCast, view.sitePositions, partOfDay) : [];
+    // A guard's lamp (OPEN-BURNED-PEN) is drawn as a search lamp is, but nobody is being searched for.
+    const search = view.threadSearchCast?.guards ? null : view.threadSearchCast;
+    const runaways = view.checkpointsEnabled ? runawayPeople(world, search, view.sitePositions, partOfDay) : [];
     const toll = view.checkpointsEnabled && world.open.threads[TOLL_ID];
     const tollPeople = toll ? TOLL_CAST.filter(row => {
       if (runaways.some(person => person.id === row.id)) return false;
@@ -98,7 +101,7 @@ export const peoplePart = {
       return true;
     }) : [];
     const storyPeople = view.checkpointsEnabled ? [...flagPeople(world), ...tollPeople] : [];
-    const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []),
+    const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []), ...penPeople(world),
       ...haulerPeople(world, {...view, seconds: context.seconds}), ...storyPeople,
       ...radioPeople(world, view.checkpointSites?.[POCKET_ID] ?? sitePosition(POCKET_ID, world.open.landSeed))] : [];
     const learner = view.dayClock ? routineFor(world).learner : null;

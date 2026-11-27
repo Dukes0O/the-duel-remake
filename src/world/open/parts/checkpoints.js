@@ -7,6 +7,11 @@ import {haulerStop, haulerMarked} from '../content/stranded-hauler-places.js';
 import voice from '../../../story/threads/content/radio-hill-voice.js';
 import {RADIO_ID, radioMarked} from '../content/radio-hill-voice-places.js';
 import hauler from '../../../story/threads/content/stranded-hauler.js';
+import burnedCamp from '../../../story/threads/content/burned-camp.js';
+
+// The `later` rows Sump's rider says at a checkpoint, each asking only facts of the land.
+const RIDER_ROWS = [burnedCamp].flatMap(thread => (thread.later ?? []).filter(row => row.by === 'sumps-rider')
+  .map(row => ({thread, row})));
 
 const MASTHEAD_LEAD_SECONDS = 60;
 function mastheadPreview(world, view, point, camps, inside) {
@@ -55,6 +60,8 @@ export const checkpointsPart = {
     const choices = [], requests = [];
     const missionLoss = events.find(event => event.type === 'threadMissionOutcome' &&
       event.id.startsWith(hauler.id + '/') && ['lost', 'caught', 'car-wrecked'].includes(event.outcome));
+    // A player taken to a pen after a lost fight is not towed home, and nothing is waived for a later tow (OPEN-BURNED-PEN).
+    const taken = events.some(event => event.type === 'threadMissionTaken');
     if (missionLoss) next.missionLossPaid = true;
     if (banked)
       choices.push({id: 'checkpoint/bank/' + world.ledger.night, effects: [{type: 'rest', clear: true}]});
@@ -66,7 +73,7 @@ export const checkpointsPart = {
       choices.push(...(out.choices ?? []));
       requests.push(...(out.requests ?? []));
     }
-    if (!held && !missionLoss && (state.recovery || view.combatWrecking && !view.deferCheckpointRecovery)) {
+    if (!held && !missionLoss && !taken && (state.recovery || view.combatWrecking && !view.deferCheckpointRecovery)) {
       if (!state.recovery) next.recoveries = recoveryNumber(world, state.recoveries);
       const out = stepRecovery(state.recovery, current, view.combatWrecking && !state.recovery ? camps() : [], next.recoveries);
       if (next.missionLossPaid) out.choices = out.choices?.map(choice => ({...choice,
@@ -103,6 +110,15 @@ export const checkpointsPart = {
         requests.push({type: 'say', lineId: 'open/hauler/remembered-payer',
           text: "Sump's rider: " + hauler.later.find(row => row.id === 'rats-remember-the-payer').lines[0].words});
         effects.push({type: 'mark', id: hauler.id + '/said/rats-remember-the-payer'});
+      } else if (draw.group === 'road-rats') {
+        // Other storylines' ties back that Sump's rider says when the Road Rats are next met at a checkpoint.
+        const said = RIDER_ROWS.find(({thread, row}) => isTrue(row.when, world) &&
+          !world.ledger.marks.includes(thread.id + '/said/' + row.id));
+        if (said) {
+          requests.push({type: 'say', lineId: 'open/' + said.thread.id + '/' + said.row.id,
+            text: "Sump's rider: " + said.row.lines[0].words});
+          effects.push({type: 'mark', id: said.thread.id + '/said/' + said.row.id});
+        }
       }
     }
     choices.push({id: 'checkpoint/' + inside.id + '/crossing-' + number, effects});
