@@ -33,3 +33,14 @@ open land's buildings give a walker an inside. Keep "the drain runs under uncut 
 lane's good parts: its new check that samples the route and walks it with the real foot mover (on the pipe's floor),
 and the scenario that walks the drain with real inputs round the lean-to and the pen wreck. Claude's card; Codex's
 model was at capacity when the lane stopped.
+
+## Round 2 build decision and checks
+
+Restore integration's terrain and its uncut-land assertion exactly. Install a Rats' Nest pipe interior with the site's
+ground lease: absolute floor, two mouths, inner radius and short open aprons. Height selects the inside, as for a building
+room; the foot mover respects the bore and ceiling, and both camera modes stay inside it. No new event or sound cue.
+Owned hooks: `site-ground.js`, new `pipe-rule.js`, `scablands-ground.js`, `onfoot.js`, `onfoot-camera.js`, its `render3d.js` pose hook, the look and check
+named above, `test-open-pen-drain-bank`, and round 1's real-input `open-burned-pen` scenario. No signatures re-recorded.
+The `scablands-scene.js` ground hook passes the bore to its existing terrain opening shader, clearing only the pipe mouths.
+Checks: `test-open-pen-drain-bank`, `test-rats-nest-look`, `test-burned-camp-pen`, `test-burned-camp`,
+`test-world-composition`, core and both replay guards (`--jobs 2`), then build; Claude runs browser scenarios.

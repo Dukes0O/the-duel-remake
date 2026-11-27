@@ -36,7 +36,7 @@ const GULLY=Object.freeze({line:Object.freeze([[47.5,20],[61,21.5],[71,28],[77,3
 const GULLY_LENGTH=GULLY.line.slice(1).reduce((sum,[x,z],index)=>sum+Math.hypot(x-GULLY.line[index][0],z-GULLY.line[index][1]),0);
 // The hollow north-west of the rim where a car is left: nothing in the cutting, on the road or on the rim's walk can see into it.
 const HOLLOW=Object.freeze({x:-58,z:-36,radius:11,depth:2.6});
-const DRAIN=Object.freeze({z:20,inner:.9,shell:.15,from:wallX(20,1)-.35,to:GULLY.line[0][0]-GULLY.half+.25});
+const DRAIN=Object.freeze({z:20,inner:.9,shell:.15});
 
 // How far a point lies inside the cutting's rim line, in metres (less than nothing outside it). The rim wanders by about a metre.
 function insideRim(x,z){
@@ -70,17 +70,11 @@ function gullyDepth(x,z){
   return bed*(1-smooth((off-GULLY.half)/gullySideRun(bed)));
 }
 const hollowDepth=(x,z)=>HOLLOW.depth*smooth(1-Math.hypot(x-HOLLOW.x,z-HOLLOW.z)/HOLLOW.radius);
-// The height field has one surface: the pipe needs a continuous trench, not uncut earth between its two mouths.
-// Keep its bed level and blend only its banks into the yard, gully and surrounding land on the metre grid.
-function drainDepth(x,z){
-  const off=Math.hypot(x-clamp(x,DRAIN.from-1.3,DRAIN.to+1.6),z-DRAIN.z);
-  return CUT.depth*(1-smooth((off-DRAIN.inner-DRAIN.shell)/CUT.run));
-}
 
-/** How far the ground lies below the land around it: the cutting, road, drain, gully and hollow. */
+/** How far the ground lies below the land around it at a point of the site, in metres: the cutting, its road, the gully and the hollow. */
 export function ratsNestGround(x,z){
   if(!Number.isFinite(x)||!Number.isFinite(z))throw new TypeError('The Rats\' Nest needs finite site coordinates.');
-  return Math.max(CUT.depth*smooth(insideRim(x,z)/CUT.run),roadDepth(x,z),gullyDepth(x,z),hollowDepth(x,z),drainDepth(x,z));
+  return Math.max(CUT.depth*smooth(insideRim(x,z)/CUT.run),roadDepth(x,z),gullyDepth(x,z),hollowDepth(x,z));
 }
 // Where a wall of the cutting reaches `level` metres inside the rim line (the foot of the wall by default), on the west (-1) or east
 // (1) side at a given z, or on the north (-1) or south (1) side at a given x.
@@ -177,7 +171,7 @@ function makeLayout(){
   }
 
   // The drain: a concrete pipe as tall as a man under the east wall, from the yard to the head of the gully.
-  const mouthX=DRAIN.from,outX=DRAIN.to;
+  const mouthX=wallX(DRAIN.z,1)-.35,outX=GULLY.line[0][0]-GULLY.half+.25;
   const drain=Object.freeze({z:DRAIN.z,from:mouthX,to:outX,length:outX-mouthX,inner:DRAIN.inner,shell:DRAIN.shell,floor:-CUT.depth});
   for(const side of [-1,1])solid(`drain-wing-${side<0?'north':'south'}`,'wall','box',mouthX-.75,DRAIN.z+side*2.45,1,.3,side*.558,2.4);
   spot('drain-in',mouthX-1.3,DRAIN.z,{heading:Math.PI/2,looksAt:Object.freeze({x:mouthX+2,z:DRAIN.z,y:-CUT.depth+.9})});

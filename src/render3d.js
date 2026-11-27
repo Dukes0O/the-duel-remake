@@ -967,6 +967,7 @@ export function attachRenderer(host, app) {
       const footMode=wastelandRulesActive(st)?app.footCameraMode:'first-person';
       firstPersonView=footMode!=='overhead';
       let pose=onFootCameraPose(course,st.fighter,footMode);
+      if(pose.insidePipe)firstPersonView=true;
       // HOME-GROUND-1: one key lifts the camera straight above his ground and the same key brings it back.
       homeLift=stepHomeLift(homeLift,st.arena?.worldJob?.open?.parts.home?.above===true,dt);
       if(homeLift>0){pose=homeCameraPose(pose,homeLift,st.fighter.groundY??st.fighter.y);if(homeLift>.15)firstPersonView=false;}

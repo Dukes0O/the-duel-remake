@@ -1,4 +1,5 @@
 import {Vector3} from 'three';
+import {scablandsInteriorAt} from './world/scablands-ground.js';
 
 const EYE_HEIGHT_METERS = 1.62;
 const GROUND_CLEARANCE_METERS = .65;
@@ -14,15 +15,18 @@ function gearFov(fighter, normal) {
 // this module changes neither, and the renderer can use the result directly.
 export function onFootCameraPose(course, fighter, mode = 'first-person') {
   if (!course || !fighter) return null;
-  if(mode === 'overhead') return overheadPose(course, fighter);
+  const interior = course.def?.scablands && scablandsInteriorAt(fighter.x, fighter.z, fighter.groundY ?? fighter.y);
+  // A low pipe has no room for the overhead boom. Keep either mode at the walker's eyes.
+  if(mode === 'overhead' && !Number.isFinite(interior?.ceiling)) return overheadPose(course, fighter);
   const near = course.nearest(fighter.x, fighter.z, fighter.s);
-  const ground = course.groundAt(near.s, near.lateral);
+  const ground = course.groundAt(near.s, near.lateral, interior ? fighter.y : undefined);
   const eye = {
     x: fighter.x,
     y: Math.max(fighter.y + EYE_HEIGHT_METERS,
       ground.y + GROUND_CLEARANCE_METERS),
     z: fighter.z,
   };
+  if (interior) eye.y = Math.min(eye.y, interior.ceiling - .08);
   const pitch = Math.max(-1.25, Math.min(1.25, fighter.pitch || 0));
   const yaw = fighter.yaw || 0;
   const reach = 8;
@@ -34,6 +38,7 @@ export function onFootCameraPose(course, fighter, mode = 'first-person') {
       z: eye.z + Math.cos(yaw) * Math.cos(pitch) * reach,
     },
     fov: gearFov(fighter, 72),
+    ...(Number.isFinite(interior?.ceiling) ? {insidePipe: true} : {}),
   };
 }
 
