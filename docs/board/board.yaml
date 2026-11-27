@@ -1256,18 +1256,6 @@ tasks:
     locks: []
     details: "docs/board/cards/AGENTS-REWRITE.md"
 
-  - id: OPEN-BURNED-RESCUE
-    title: "Open Scablands: the burned camp, the choice at home, the rescue party and where the growers live"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-BURNED-RESCUE.md"
-
   - id: OPEN-LOOK-DACE
     title: "Open Scablands: Dace's pickup, the stones, the Deep Sign, the Hangar and the Crow's Step look real"
     owner: "claude"

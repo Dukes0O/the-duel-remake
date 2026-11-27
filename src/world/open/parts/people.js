@@ -15,6 +15,7 @@ import {routineFor} from '../routine-run-rule.js';
 import {marketPeople} from '../market-day-rule.js';
 import {scoutPeople} from '../content/burned-scout.js';
 import {penPeople} from '../content/burned-pen.js';
+import {heldGrowers, GROWERS} from '../burned-rescue-rule.js';
 import {haulerPeople} from '../content/stranded-hauler-places.js';
 import {lightsTalkScene} from '../content/talk-lights.js';
 import {haulerTalkScene} from '../content/talk-hauler.js';
@@ -105,8 +106,29 @@ export const peoplePart = {
     const dace = view.checkpointsEnabled ? dacePeople(world, daceSignIsOut(context), view.threadMission) : [];
     const storyPeople = view.checkpointsEnabled ? [...flagPeople(world), ...tollPeople].filter(row =>
       !dace.some(person => person.id === row.id)).concat(dace) : [];
+    const convoy = view.checkpointsEnabled && view.threadConvoy;
+    const burnt = world.open.threads['burned-camp'];
+    const remaining = convoy && !convoy.truck ? (convoy.allFreed ? GROWERS : heldGrowers(world)) : [];
+    const walkers = remaining.slice(0, convoy?.people ?? 0).map((name, index) => {
+      const {x, z, heading} = convoy.place;
+      const behind = 3 + index * 1.5;
+      const at = {x: x - Math.sin(heading) * behind, z: z - Math.cos(heading) * behind};
+      return {id: 'rescued/' + name, figure: STORY_FIGURES[name] ? name : 'grower-' + (1 + index % 3),
+        position: {...at, y: scablandsActorHeightAt(at.x, at.z)}, yaw: heading, task: 'walk'};
+    });
+    const homeGrowers = view.checkpointsEnabled && burnt && (burnt.beat === 'gate' && !burnt.end ||
+      world.ledger.marks.includes('burned-camp/stayed-inside')) ? GROWERS.map((name, index) => ({
+        id: 'rescued/' + name, figure: STORY_FIGURES[name] ? name : 'grower-' + (1 + index % 3), talk: null, routine: {day: {kind: 'post',
+          at: ['tin-town', -6 - index % 4 * 1.85, 44 + Math.floor(index / 4) * 2], task: 'stand'}}})) : [];
+    const finchAtHome = view.checkpointsEnabled && ['home', 'party'].includes(burnt?.beat) && !burnt.end && !heldGrowers(world).includes('finch');
+    if (finchAtHome) homeGrowers.push({id: 'rescued/finch', figure: 'finch', talk: null,
+      routine: {day: {kind: 'post', at: ['tin-town', 24.8, 8.4], task: 'sit'}}});
+    const finchCar = view.finchRide && view.road?.id === view.finchRide && view.road.cars.find(car => !car.wrecked);
+    if (finchCar) homeGrowers.push({id: 'checkpoint/finch', figure: 'finch', position: {
+      x: finchCar.x - Math.sin(finchCar.heading) * 1.3, z: finchCar.z - Math.cos(finchCar.heading) * 1.3, y: finchCar.y + .65,
+    }, yaw: finchCar.heading, task: 'sit'});
     const extras = view.checkpointsEnabled ? [...scoutPeople(view.missionLookoutPosts ?? []), ...penPeople(world),
-      ...haulerPeople(world, {...view, seconds: context.seconds}), ...storyPeople,
+      ...haulerPeople(world, {...view, seconds: context.seconds}), ...storyPeople, ...walkers, ...homeGrowers,
       ...radioPeople(world, view.checkpointSites?.[POCKET_ID] ?? sitePosition(POCKET_ID, world.open.landSeed))] : [];
     const learner = view.dayClock ? routineFor(world).learner : null;
     const pump = view.checkpointsEnabled && world.open.threads['dry-pump'];

@@ -21,7 +21,8 @@ export function openMapMarks(world, positionOf) {
         !['bought', 'driven-off'].includes(world.open.threads[FLAG_ID]?.end);
       const broken = site.id === TOLL_GATE && isTrue({fact: 'mark', id: TOLL_ID + '/gate-broken'}, world);
       const name = drilling ? flagStory.notes.sign.mapName : broken ? site.name + ' (broken)' :
-        stageOf(world, site.id) === 'burned' ? site.name + ' (burned)' : site.name;
+        stageOf(world, site.id) === 'burned' || site.id === 'glasshouse' && stageOf(world, site.id) === 'empty'
+          ? site.name + ' (burned)' : site.name;
       sites.push({id: site.id, name, x, z});
     } else {
       // Each axis is 70 or 135 metres off, so even the longest diagonal is within 200 m.

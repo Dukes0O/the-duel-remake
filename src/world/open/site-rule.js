@@ -72,8 +72,8 @@ export function busRingSolids() {
 export function siteLookStage(id, stage, secondSet = false, night = false) {
   if (id === 'rats-nest') return stage === 'den' ? (night ? 'night' : 'day') : null;
   if (id === 'radio-hill' && stage === 'second-set') return stage;
+  if (id === 'glasshouse' && ['burned', 'empty'].includes(stage)) return 'burned';
   if (!hasSiteServices(stage) && stage !== 'burned') return null;
-  if (id === 'glasshouse' && stage === 'burned') return 'burned';
   return id === 'radio-hill' && secondSet ? 'second-set' : 'camp';
 }
 

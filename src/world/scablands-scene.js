@@ -1097,7 +1097,9 @@ export function createScablandsScene(course,options={}){
       }
       // Big Bess follows her escort actor in the Everburn story and stands in the Boneyard otherwise.
       if(bessRig&&bessPlace){
-        const escort=worldJob?.definition?.storyId==='everburn'?worldJob.actors?.find(item=>item.id==='big-bess'):null;
+        const convoy = worldJob?.threadConvoy;
+        const escort = convoy?.truck ? {position: convoy.place, heading: convoy.place.heading, hasFloorHeight: true} :
+          worldJob?.definition?.storyId === 'everburn' ? worldJob.actors?.find(item => item.id === 'big-bess') : null;
         placeRig(bessRig,escort,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],0,true,bessPlace,BESS_REST);
         bessWear.follow(bessRig);
       }
