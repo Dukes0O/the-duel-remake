@@ -60,6 +60,14 @@ and `npm run build`. It merges when that is green. Claude drives it in the merge
 The cues the storyline's file names. Any that are not in the sound bank keep their ids for OPEN-SOUND to register;
 list them in the change note.
 
+## Claude answers (27 November 2026)
+
+1. **The radio during the gas run:** your pick. The call waits and comes on the return to the roam; the distress line and
+   both answers stay as written. The hand-over that lets Moss finish a gas run is a later card of its own.
+2. **The road home and the pickup:** your pick. Use the rescue kind's named outcomes; the three repairs at the forge by
+   proximity and the existing wrench, and Use at the pickup to finish preparing it. The visible following and towing of
+   the pickup is a later card. Name both later cards under **Owed** in the change note.
+
 ## Rules for every open Scablands card
 
 Everything is behind `story-choices`, and nothing the released game does with that switch off may change. A rule is a
