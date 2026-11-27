@@ -202,6 +202,11 @@ const standAt = (i, j, yaw = Math.PI) => ({...groundPoint(i, j), yaw});
   equal(homeOf(out.open).name, 'G-Town', 'the name he types is on the record');
   check(!out.open.parts.home.naming, 'the name box closes');
   equal([cleanHomeName(''), cleanHomeName('x'.repeat(25)), cleanHomeName('<b>')], [null, null, null], 'an empty, long or odd name is refused');
+  // Every player name the game allows (progression.js: up to 24 characters that are not control characters) gives a
+  // starting name the record can hold.
+  for (const player of ['Gratian', 'Abcdefghijklmnop', 'Kyle_B', 'Dad (Kyle)', 'x'.repeat(24), '   ', '***', 'Zoë 2', '', null])
+    check(readableHome(newHome(defaultHomeName(player))), 'the player name ' + JSON.stringify(player) + ' gives a name the ground can keep');
+  equal([defaultHomeName('Kyle_B'), defaultHomeName('***')], ["KyleB's Ground", 'My Ground'], 'odd marks are left out of the starting name');
   // At the board he can rename it.
   const board = boardSpot(homeOf(out.open).pieces[0]);
   out = run(out.open, viewOf({x: board.x, z: board.z, yaw: 0}, {}, {interact: true}), DT);
@@ -297,10 +302,13 @@ const memory = values => {
   check(record && !Object.hasOwn(record, 'home'), 'the save made before this card is read and has no ground');
   const world = worldForProfile(old, 0);
   check(!Object.hasOwn(world.open, 'home'), 'reading the older save makes no ground');
-  // An outing with the switch off settles the record exactly as it was read.
-  const settled = settleOpenWorld(old, world, {atStart: world, savedAtStart: {ledger: old.story.ledger, open: record}});
+  // An outing with the switch off, stepped through the open land, settles the record exactly as it was read.
+  const offView = {...viewOf({...groundPoint(5, 5), yaw: 0}, {build: true, view: true, burst: true, forward: true}), homeGround: undefined};
+  const offRun = run(beginOpenLand({id: 'roam-off', steps: [{kind: 'roam'}], open: {world}}), offView, 2);
+  const settled = settleOpenWorld(old, offRun.open.world, {atStart: world, savedAtStart: {ledger: old.story.ledger, open: record}});
   check(settled.ok, 'the older save settles');
   equal(settled.profile.story.open, record, 'with the switch off the saved open land is unchanged');
+  equal(JSON.stringify(settled.profile), JSON.stringify(old), 'with the switch off the whole profile is unchanged');
   equal(store.getItem(PLAYERS_KEY), before, 'reading the older save writes nothing to storage');
 
   // With the switch on: given the ground, a fence and the gate, then saved, then read back from storage.

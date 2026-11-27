@@ -963,6 +963,7 @@ export function attachRenderer(host, app) {
       const compact=host.clientHeight<850;
       lookTarget.set(aim.x, pp.y + (tall ? (compact ? .95 : 1.8) : compact ? -1.1 : .95), aim.z); camera.fov = 48;
     } else if(st.onFoot && st.fighter){
+      if(!st.arena?.worldJob?.open)homeLift=0; // HOME-GROUND-1: a lift left from an outing that ended is not carried over
       const footMode=wastelandRulesActive(st)?app.footCameraMode:'first-person';
       firstPersonView=footMode!=='overhead';
       let pose=onFootCameraPose(course,st.fighter,footMode);

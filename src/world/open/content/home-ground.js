@@ -89,6 +89,11 @@ const wrongWords = [...Object.values(HOME_WORDS), ...HOME_OFFER.lines.map(line =
   ...HOME_OFFER.choices.map(choice => choice.words)].flatMap(checkSentence);
 if (wrongWords.length) throw new Error('Home ground words:\n  ' + wrongWords.join('\n  '));
 
-// The name he starts with, until he types his own.
-export const defaultHomeName = playerName => (typeof playerName === 'string' && playerName.trim()
-  ? playerName.trim().slice(0, 16) + "'s Ground" : 'My Ground');
+// The name he starts with, until he types his own. It keeps only the letters a ground's name may have
+// (src/world/open/home-rule.js, cleanHomeName), and is short enough to be one: "Kyle_B" gives "KyleB's Ground".
+const NAME_SUFFIX = "'s Ground";
+export function defaultHomeName(playerName) {
+  const kept = typeof playerName === 'string' ? playerName.replace(/[^\p{L}\p{N} -]/gu, '').replace(/\s+/g, ' ').trim() : '';
+  const short = kept.slice(0, HOME_NAME_LONGEST - NAME_SUFFIX.length).trim();
+  return short ? short + NAME_SUFFIX : 'My Ground';
+}
