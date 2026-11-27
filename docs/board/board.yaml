@@ -1215,7 +1215,8 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "M"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     claimed_by: "Claude Opus session (local)"
     needs: []
     locks: []
