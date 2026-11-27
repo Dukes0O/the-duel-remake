@@ -259,6 +259,11 @@ test('fence: Rats at a stop keep the fence on the truck until they are beaten or
   const easy = run(stepFence, step, coming.state, 30, view(30, 0, {difficulty:'easy', actors:[rat('fence-rats-1', 0, 40, 5)]}));
   assert.equal(easy.state.index, 2, 'on Easy a driver who only waits is through in under half a minute');
   assert.ok(types(easy).includes('ratsGone'));
+  // The Rats of a stop never outlive it: when its fence is down they are sent away, wherever they were standing.
+  const distant = run(stepFence, step, coming.state, 8, view(30, 0, {actors:[rat('fence-rats-1', 0, 30, 60)]}));
+  assert.equal(distant.state.index, 2, 'a Rat more than 30 m off does not stop the work');
+  assert.ok(distant.requests.some(request => request.type === 'clearWave' && request.key === 'ambush:fence-rats-1'));
+  assert.deepEqual(dismissRats({}, 'gang'), {state:{}, requests:[]}, 'a gang that never came has nothing to send away');
 });
 
 // ---- clear ----------------------------------------------------------------------------------------------------------------
@@ -354,6 +359,7 @@ import {TOWN_CHAPTER_JOBS, TOWN_REPEAT_JOBS, TOWN_JOB_ROWS} from '../src/town/co
 import {townMissionResult, townMissionDropCell} from '../src/town/town-missions.js';
 import {townMissionCardModel, townMissionCardMarkup} from '../src/town/ui/town-mission-card.js';
 import {openTownJobs, townJobDefinition, townJobResult, townChapterJobOpen} from '../src/world/jobs/town-jobs.js';
+import {dismissRats} from '../src/world/jobs/town-rats.js';
 import {jobForRun} from '../src/world/jobs/job-vehicle.js';
 import {keepTownStepResults} from '../src/world/jobs/town-step-results.js';
 import {douseAim} from '../src/world/jobs/steps/douse.js';
@@ -498,6 +504,10 @@ test('only a clear result is taken, and a refused one changes nothing', () => {
   for (const bad of [{sacks:11, pies:0}, {sacks:-1, pies:0}, {sacks:1.5, pies:0}, {sacks:10, pies:999}, {goats:3}, {sacks:'10', pies:0}, null])
     assert.equal(townMissionResult(town, jobResult('town-flour-run', bad, 'run-bad')).ok, false, JSON.stringify(bad));
   assert.equal(townMissionResult(town, jobResult('town-no-such-job', {})).ok, false);
+  // Every amount of the job must be there, and the job must be the one open in this town (the save's reviewer, 27 November).
+  assert.equal(townMissionResult(town, jobResult('town-flour-run', {sacks:10}, 'run-part')).ok, false, 'a missing amount is not zero');
+  assert.equal(townMissionResult(town, jobResult('town-dot-fence', {stops:4}, 'run-early')).message, 'That job is not open in this town.');
+  assert.equal(townMissionResult(town, jobResult('town-fuel-escort', {fuelL:900, stolen:0}, 'run-early-2')).ok, false, 'nor a job whose chapter has not come');
   assert.equal(townMissionResult(town, {...jobResult('town-flour-run', {sacks:10, pies:120}), runId:''}).ok, false);
   assert.equal(serializeTown(town), before);
   // An unfinished job hands the town nothing.
@@ -506,6 +516,13 @@ test('only a clear result is taken, and a refused one changes nothing', () => {
   assert.equal(townJobResult({definition, job:{done:true}, townResults:{out:{deliveredKg:500}}}, 'run-x'), null, 'half a trade is not a trade');
   assert.deepEqual(townJobResult({definition, job:{done:true}, townResults:{out:{deliveredKg:450}, back:{deliveredKg:54}}}, 'run-x'),
     {runId:'run-x', jobId:'town-flour-run', kind:'job', amounts:{sacks:9, pies:108}});
+  // A truck that lost sacks and went back for the spares has still delivered Dot's order and no more, so the town takes it.
+  const spares = townJobResult({definition, job:{done:true}, townResults:{out:{deliveredKg:950}, back:{deliveredKg:114}}}, 'run-spares');
+  assert.deepEqual(spares.amounts, {sacks:10, pies:120});
+  assert.equal(townMissionResult(townFor('town-flour-run'), spares).settled, true);
+  const done = townFor('town-flour-run');
+  assert.equal(townMissionResult(done, jobResult('town-flour-run', {sacks:10, pies:120}, 'run-once')).settled, true);
+  assert.equal(townMissionResult(done, jobResult('town-flour-run', {sacks:10, pies:120}, 'run-again')).ok, false, 'a chapter is finished once');
 });
 
 test('a town saved before this card loads unchanged, reading the jobs writes nothing, and the new records survive a save', () => {
@@ -895,6 +912,7 @@ test('a fuel truck hurt badly enough is taken: the escort ends there and the job
   const done = {definition, job:{done:true}, townResults:{escort:{kind:'escort', stolen:true}}, actors:[{id:'fuel-truck', health:24}]};
   assert.deepEqual(townJobResult(done, 'run-fuel').amounts, {fuelL:480, stolen:1});
   assert.deepEqual(townJobResult({...done, townResults:{}, actors:[{id:'fuel-truck', health:85}]}, 'run-fuel').amounts, {fuelL:1700, stolen:0});
+  assert.equal(townJobResult({...done, actors:[]}, 'run-fuel'), null, 'with no truck to measure there is no result, and the job stays open');
 });
 
 test('child pace on Easy: the rescue in the dust, the pipe patch and the road clear are won at least 8 times in 10', () => {

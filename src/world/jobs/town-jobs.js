@@ -11,14 +11,14 @@ import {ROAD_NET, ROAD_HALF_WIDTH} from '../scablands-road.js';
 import {sliceLine} from '../scablands-ways.js';
 import {createTownWorld} from '../../town/town-world.js';
 import {TOWN_CELL_METRES} from '../../town/town-world-data.js';
-import {createTownMissionClock, townMissionDropCell, townMissionResult, TOWN_MISSION_MAX_LITRES} from '../../town/town-missions.js';
+import {createTownMissionClock, townMissionDropCell, townMissionResult, TOWN_MISSION_MAX_LITRES, townChapterJobOpen, townRepeatJobOpen,
+  townJobReport} from '../../town/town-missions.js';
 import {stepTown} from '../../town/index.js';
 import {townCaptionText, TOWN_CAPTIONS} from '../../town/content/lines.js';
 import {buildingById} from '../../town/content/registry.js';
 import {fuelHours} from '../../town/town-fire.js';
 import {DOUSE_WATER, tapFlowLpm} from './steps/douse.js';
-import {TOWN_CHAPTER_JOBS, TOWN_REPEAT_JOBS, townJobRow} from '../../town/content/jobs.js';
-import {OUTPOST_CHAPTERS} from '../../town/content/neighbours.js';
+import {TOWN_REPEAT_JOBS, townJobRow} from '../../town/content/jobs.js';
 import {OUTPOSTS_WORLD} from '../../town/content/outposts-world.js';
 import {makeRng} from '../../rng.js';
 
@@ -95,14 +95,15 @@ export function openTownJobs(town) {
   // TOWN-FIRE-JOB: a fire is the most urgent thing the town can ask for, so it comes first.
   if (townFireChapterOpen(town)) open.push({id:'town-fire-first', kind:'fire', chapter:true});
   else if (townBurning(town).length) open.push({id:'town-fire-call', kind:'fire', chapter:false});
-  // TOWN-JOBS-2: a neighbour's chapter comes next (the town's own first haul is done before any of them), then what the town
-  // is short of, then the jobs that come round again, and last the salvage run, which is always there.
+  // TOWN-JOBS-2: a neighbour's chapter comes next. It opens by its year, as the town's NEXT line does
+  // (src/town/content/neighbours.js); while the town's own first haul is the open job, that comes first. Then what the town is
+  // short of, then the jobs that come round again, and last the salvage run, which is always there.
   const neighbour = townSalvageChapterOpen(town) ? null : townChapterJobOpen(town);
   if (neighbour) open.push({id:neighbour.id, kind:neighbour.kind, chapter:true});
   if (townSteelShortage(town)) open.push({id:'town-steel-run', kind:'steel', chapter:false});
   if (townSalvageChapterOpen(town)) open.push({id:'town-haul-salvage', kind:'salvage', chapter:true});
   else {
-    for (const row of TOWN_REPEAT_JOBS) if (townRepeatJobOpen(town, row)) open.push({id:row.id, kind:row.kind, chapter:false});
+    for (const row of TOWN_REPEAT_JOBS) if (repeatJobOpen(town, row)) open.push({id:row.id, kind:row.kind, chapter:false});
     if (townSalvageRunOpen(town)) open.push({id:'town-salvage-run', kind:'salvage', chapter:false});
   }
   return open;
@@ -321,48 +322,12 @@ function holdingFires(step, ids) {
 // land has them (src/town/town-outpost-world.js, read once from the town's layout), so a replay is repeatable from seed, inputs
 // and that layout. Reading the town here writes nothing to it.
 
-const TICKS_A_DAY = 24;
 // Where a job that ends at the gate ends: on the road out, beside the truck bay.
 const TOWN_GATE = Object.freeze({x:26, z:15});
-const outpostChapter = id => OUTPOST_CHAPTERS.find(chapter => chapter.id === id) ?? null;
-const yearOf = town => Number.isFinite(town?.calendar?.year) ? town.calendar.year : 1;
-
-/** The neighbour's chapter job open now, or null: the first chapter not yet done whose year has come, in the story's order. */
-export function townChapterJobOpen(town) {
-  const next = OUTPOST_CHAPTERS.find(chapter => completed(town)[chapter.id] !== true);
-  if (!next || yearOf(town) < (next.year ?? 1)) return null;
-  const rows = TOWN_CHAPTER_JOBS.filter(row => row.chapter === next.id);
-  // A chapter of two jobs (Dot's fire, then her fence): the second waits for the fact the first leaves.
-  return rows.find(row => row.needsFact ? facts(town)[row.needsFact] === true : !row.setsFact || facts(town)[row.setsFact] !== true) ?? null;
-}
-
-/** The tick a repeating job was last done at, or null. */
-function lastDoneTick(town, jobId) {
-  const tick = town?.missions?.totals?.[jobId]?.lastTick;
-  try { return tick === undefined ? null : BigInt(tick); } catch { return null; }
-}
-
-/** The unanswered report that opens a job, or null. */
-export function townJobReport(town, row) {
-  if (!row?.opens?.report) return null;
-  return (town?.reports ?? []).find(report => report?.unanswered && report.eventId === row.opens.report) ?? null;
-}
-
-function townRepeatJobOpen(town, row) {
-  const opens = row.opens ?? {};
-  // A row whose kind has no builder yet is never open, so no job is offered that cannot be started.
-  if (!BUILDERS[row.kind]) return false;
-  if (opens.fact && facts(town)[opens.fact] !== true) return false;
-  if (opens.chapter && completed(town)[opens.chapter] !== true) return false;
-  if (opens.report && !townJobReport(town, row)) return false;
-  if (opens.everyDays) {
-    const last = lastDoneTick(town, row.id);
-    let now = 0n;
-    try { now = BigInt(town?.tick ?? 0); } catch { now = 0n; }
-    if (last !== null && now - last < BigInt(opens.everyDays * TICKS_A_DAY)) return false;
-  }
-  return true;
-}
+// When each job is open is the town's own rule (src/town/town-missions.js), because the town checks a result against it.
+export {townChapterJobOpen, townJobReport};
+// A row whose kind has no builder is never open, so no job is offered that cannot be started.
+const repeatJobOpen = (town, row) => !!BUILDERS[row.kind] && townRepeatJobOpen(town, row);
 
 const spotOf = (id, name, x, z, radius) => place(id, name, {x, z}, radius);
 // A point `metres` from an outpost's middle toward the road (or rail) it faces; a negative distance is the far side.
@@ -536,15 +501,16 @@ function townRowResult(worldJob, runId) {
   const amounts = {};
   if (row.kind === 'trade') {
     if (!results.out || !results.back) return null;
-    amounts.sacks = Math.floor(whole(results.out.deliveredKg) / row.out.piece.kg);
-    amounts.pies = Math.floor(whole(results.back.deliveredKg) / row.back.piece.kg) * row.back.piesEach;
+    // Dot ordered ten sacks and sends ten crates: a truck that went back for spares still counts as the order, no more.
+    amounts.sacks = Math.min(row.out.count, Math.floor(whole(results.out.deliveredKg) / row.out.piece.kg));
+    amounts.pies = Math.min(row.back.count, Math.floor(whole(results.back.deliveredKg) / row.back.piece.kg)) * row.back.piesEach;
   } else if (row.kind === 'delivery') {
     if (!results.out) return null;
-    amounts.kg = whole(results.out.deliveredKg);
+    amounts.kg = Math.min(row.out.kg, whole(results.out.deliveredKg));
   } else if (row.kind === 'goats') {
     if (!results.salt || !results.goats) return null;
-    amounts.saltKg = whole(results.salt.deliveredKg);
-    amounts.goats = Math.floor(whole(results.goats.deliveredKg) / row.goats.piece.kg);
+    amounts.saltKg = Math.min(row.salt.count * row.salt.piece.kg, whole(results.salt.deliveredKg));
+    amounts.goats = Math.min(row.goats.count, Math.floor(whole(results.goats.deliveredKg) / row.goats.piece.kg));
   } else if (row.kind === 'outpost-fire') {
     if (!results.douse || !results.watch) return null;
     amounts.saved = results.douse.mainSaved === true ? 1 : 0;
@@ -569,7 +535,9 @@ function townRowResult(worldJob, runId) {
     amounts.wrecks = whole(results.clear.wrecks);
   } else if (row.kind === 'road-fight' && row.side === 'defend') {
     // The town gets the fuel she still has: her 2,000 litres by the share of her health she came home with.
-    const truck = (worldJob.actors ?? []).find(actor => actor.id === 'fuel-truck'), health = Math.max(0, Math.min(row.health, truck?.health ?? 0));
+    const truck = (worldJob.actors ?? []).find(actor => actor.id === 'fuel-truck');
+    if (!truck) return null;
+    const health = Math.max(0, Math.min(row.health, Number.isFinite(truck.health) ? truck.health : 0));
     amounts.fuelL = whole(row.litres * health / row.health);
     amounts.stolen = results.escort?.stolen === true ? 1 : 0;
   } else if (row.kind === 'road-fight') {

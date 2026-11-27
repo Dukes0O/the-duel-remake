@@ -13,7 +13,7 @@
 //   truck's 9,000 kg.
 // - Two people lift a rail or a post off a truck in a few seconds; a bundle is about 40 lifts. The game's clock runs a bundle
 //   in `seconds`, as loading runs faster than life (section 2: "nothing makes you wait around").
-import {stepRats} from '../town-rats.js';
+import {stepRats, dismissRats} from '../town-rats.js';
 
 export const FENCE_RULE = Object.freeze({seconds:5, easySeconds:4, stillKmh:1.5, radius:10, bundleKg:600, kgPerMetre:24});
 
@@ -85,6 +85,13 @@ export function stepFence(step, state, view, dt = 0) {
         }
       }
     }
+  }
+  // The Rats of a stop that is done go away with it.
+  for (const [key, gang] of Object.entries(next.rats)) {
+    const stopIndex = Number(key.slice(key.lastIndexOf('-') + 1));
+    if (!(stopIndex < next.index)) continue;
+    const sent = dismissRats(gang, key);
+    next.rats = {...next.rats, [key]:sent.state}; requests.push(...sent.requests);
   }
   next.loadKg = fenceLoadKg(step, next.index);
   const complete = next.index >= stops.length;

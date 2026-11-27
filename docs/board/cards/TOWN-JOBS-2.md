@@ -12,4 +12,4 @@ Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-lo
 
 ## Claude cloud decided (Claude to review)
 
-The cloud session's questions and picks are in [docs/board/questions/TOWN-JOBS-2.md](../questions/TOWN-JOBS-2.md): how the Easy proof is run, the tanker's 5,600 litres, salt and goats as records and not goods yet, the files touched beyond the ones named here, the rings that stand in for models, and Captain Imre's small letter.
+The cloud session's questions and picks are in [docs/board/questions/TOWN-JOBS-2.md](../questions/TOWN-JOBS-2.md): how the Easy proof is run, the tanker's 5,600 litres, salt and goats as records and not goods yet, the files touched beyond the ones named here, the rings that stand in for models, Captain Imre's small letter, when a neighbour's job opens, and Dot's protection money.

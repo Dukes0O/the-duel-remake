@@ -8,7 +8,8 @@
 import {goodDefinition, storeGood, stockpileAt} from './town-goods.js';
 import {answerReport} from './town-reports.js';
 import {stepTown} from './town-sim.js';
-import {townJobRow} from './content/jobs.js';
+import {townJobRow, TOWN_CHAPTER_JOBS} from './content/jobs.js';
+import {OUTPOST_CHAPTERS} from './content/neighbours.js';
 import {changeTownNeighbourStanding, setTownOutpostProtection} from './town-outposts.js';
 
 export const TOWN_MISSION_SETTLED_LIMIT = 500;
@@ -164,6 +165,51 @@ export function createTownMissionClock(town, {secondsPerTick = 10, radioGapSecon
   return Object.freeze({advance, get ticks() { return ticks; }, get waiting() { return waiting.length; }});
 }
 
+// TOWN-JOBS-2: when each job that is a row of src/town/content/jobs.js is open. Reading only: nothing here writes to the town.
+const facts = town => town?.story?.facts ?? {};
+const completed = town => town?.story?.completed ?? {};
+const TICKS_A_DAY = 24;
+const outpostChapter = id => OUTPOST_CHAPTERS.find(chapter => chapter.id === id) ?? null;
+const yearOf = town => Number.isFinite(town?.calendar?.year) ? town.calendar.year : 1;
+
+/** The neighbour's chapter job open now, or null: the first chapter not yet done whose year has come, in the story's order. */
+export function townChapterJobOpen(town) {
+  const next = OUTPOST_CHAPTERS.find(chapter => completed(town)[chapter.id] !== true);
+  if (!next || yearOf(town) < (next.year ?? 1)) return null;
+  const rows = TOWN_CHAPTER_JOBS.filter(row => row.chapter === next.id);
+  // A chapter of two jobs (Dot's fire, then her fence): the second waits for the fact the first leaves.
+  return rows.find(row => row.needsFact ? facts(town)[row.needsFact] === true : !row.setsFact || facts(town)[row.setsFact] !== true) ?? null;
+}
+
+/** The tick a repeating job was last done at, or null. */
+function lastDoneTick(town, jobId) {
+  const tick = town?.missions?.totals?.[jobId]?.lastTick;
+  try { return tick === undefined ? null : BigInt(tick); } catch { return null; }
+}
+
+/** The unanswered report that opens a job, or null. */
+export function townJobReport(town, row) {
+  if (!row?.opens?.report) return null;
+  return (town?.reports ?? []).find(report => report?.unanswered && report.eventId === row.opens.report) ?? null;
+}
+
+/** True when a job that comes round again is open in this town. `report:false` leaves out the report it answers, which may have
+ * run out while the job was being driven. */
+export function townRepeatJobOpen(town, row, {report = true} = {}) {
+  const opens = row.opens ?? {};
+  if (opens.fact && facts(town)[opens.fact] !== true) return false;
+  if (opens.chapter && completed(town)[opens.chapter] !== true) return false;
+  if (report && opens.report && !townJobReport(town, row)) return false;
+  if (opens.everyDays) {
+    const last = lastDoneTick(town, row.id);
+    let now = 0n;
+    try { now = BigInt(town?.tick ?? 0); } catch { now = 0n; }
+    if (last !== null && now - last < BigInt(opens.everyDays * TICKS_A_DAY)) return false;
+  }
+  return true;
+}
+
+
 // TOWN-JOBS-2: the result of a job that is a row of src/town/content/jobs.js: {runId, jobId, kind:'job', amounts}. `amounts` is
 // what the run really did, each a whole number inside what one run could do. What the town gets is the row's own: a chapter
 // done and its fact, a neighbour who thinks better of the town, pies or fuel or salvage on the pile, a fence round Dot's, a
@@ -172,7 +218,8 @@ export function createTownMissionClock(town, {secondsPerTick = 10, radioGapSecon
 const AMOUNT_LIMITS = Object.freeze({sacks:10, pies:240, kg:1000, saltKg:1000, goats:12, saved:1, waterL:TOWN_MISSION_MAX_LITRES, stops:8, litres:TOWN_MISSION_MAX_LITRES,
   bolts:8, people:8, joints:8, wrecks:24, fuelL:2000, stolen:1, lootKg:3000});
 const AMOUNTS_OF = Object.freeze({trade:['sacks', 'pies'], delivery:['kg'], goats:['saltKg', 'goats'], 'outpost-fire':['saved', 'waterL'], fence:['stops'],
-  water:['litres'], crane:['bolts'], rescue:['people'], 'pipe-patch':['joints'], 'road-clear':['wrecks'], 'road-fight':['fuelL', 'stolen', 'lootKg']});
+  water:['litres'], crane:['bolts'], rescue:['people'], 'pipe-patch':['joints'], 'road-clear':['wrecks'], 'road-fight:defend':['fuelL', 'stolen'],
+  'road-fight:attack':['lootKg']});
 function storyOf(town) {
   if (!record(town.story)) town.story = {};
   if (!record(town.story.facts)) town.story.facts = {};
@@ -181,12 +228,15 @@ function storyOf(town) {
 }
 function townRowResult(town, result) {
   const {runId, jobId, amounts} = result, row = typeof jobId === 'string' ? townJobRow(jobId) : null;
-  const names = row ? AMOUNTS_OF[row.kind] ?? [] : [];
+  const names = row ? AMOUNTS_OF[row.side ? `${row.kind}:${row.side}` : row.kind] ?? [] : [];
   const clear = typeof runId === 'string' && runId && runId.length <= 128 && row && record(amounts) &&
     Object.keys(amounts).every(name => names.includes(name)) &&
     Object.entries(amounts).every(([name, value]) => Number.isSafeInteger(value) && value >= 0 && value <= AMOUNT_LIMITS[name]);
-  if (!clear) return {ok:false, settled:false, message:'That job result is not clear.'};
+  if (!clear || !names.every(name => Object.hasOwn(amounts, name))) return {ok:false, settled:false, message:'That job result is not clear.'};
   if (townMissionSettled(town, runId)) return {ok:true, settled:false, message:'That job already has a result.'};
+  // Only a job that is open in this town has a result: a chapter cannot be finished out of its turn, or twice.
+  const open = row.chapter ? townChapterJobOpen(town)?.id === row.id : townRepeatJobOpen(town, row, {report:false});
+  if (!open) return {ok:false, settled:false, message:'That job is not open in this town.'};
   const state = missionsFor(town), cell = townMissionDropCell(town), get = name => amounts[name] ?? 0;
   // What reached the town, by the kind of job.
   let done = true, message = `${row.name} is done.`;

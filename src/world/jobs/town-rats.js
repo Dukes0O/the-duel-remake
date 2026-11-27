@@ -13,6 +13,12 @@ export const RATS_RULE = Object.freeze({nearMetres:30, giveUpSeconds:40, easyGiv
 
 const at = place => place?.position ?? place ?? {};
 
+/** Send a gang away because its work is over: {state, requests}. A gang that never came, or has gone, is left as it is. */
+export function dismissRats(state = {}, key) {
+  if (state.came !== true || state.gone === true || !key) return {state, requests:[]};
+  return {state:{...state, gone:true}, requests:[{type:'clearWave', key:`ambush:${key}`}]};
+}
+
 /** How many Rats this gang has at this difficulty: one fewer on Easy, never fewer than one. */
 export function ratsCount(rats, difficulty = 'medium') {
   const count = Math.max(1, Math.floor(rats?.count ?? RATS_RULE.count));

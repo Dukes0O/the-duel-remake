@@ -13,7 +13,7 @@
 // - The water tanker's pump gives 600 litres a minute (src/town/content/work-vehicles.js), so its 5,600 litre tank takes nine
 //   minutes to empty. The game's clock runs that in the gauge's `seconds`, as loading runs faster than life (section 2:
 //   "nothing makes you wait around").
-import {stepRats} from '../town-rats.js';
+import {stepRats, dismissRats} from '../town-rats.js';
 
 export const HOLD_RULE = Object.freeze({stopSpeed:.5, radius:12, seconds:45, easyRadiusBonus:4});
 
@@ -102,6 +102,7 @@ export function stepHold(step, state, view, dt = 0) {
   // A tank pumps out as the gauge fills: what is left is the truck's weight too (1 kg a litre).
   if (step.tank) next.tankL = Math.round((step.tank.startL ?? 0) * (1 - next.share));
   const complete = next.share >= 1;
+  if (complete && step.rats) { const sent = dismissRats(next.rats, step.rats.id ?? step.id ?? 'hold'); next.rats = sent.state; requests.push(...sent.requests); }
   if (complete && !next.reported) {
     next.reported = true;
     const gauge = holdGauge(step, next);

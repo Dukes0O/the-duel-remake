@@ -10,7 +10,7 @@
 // Real numbers, and where they come from:
 // - A seized pipe union or flange takes a fitter a few minutes with a long wrench. The game's clock runs each joint in
 //   `seconds` (2 by default, 1.5 on Easy), as building runs faster than life (section 2: "nothing makes you wait around").
-import {stepRats} from '../town-rats.js';
+import {stepRats, dismissRats} from '../town-rats.js';
 
 export const REPAIR_RULE = Object.freeze({seconds:2, easySeconds:1.5, jointRadius:3, carRadius:14, stillKmh:1.5});
 
@@ -99,6 +99,7 @@ export function stepRepair(step, state, view, dt = 0) {
     }
   }
   const complete = next.index >= joints.length;
+  if (complete && step.rats) { const sent = dismissRats(next.rats, step.rats.id ?? step.id ?? 'repair'); next.rats = sent.state; requests.push(...sent.requests); }
   if (complete && !next.reported) {
     next.reported = true;
     const sentence = next.downs === 0 ? `You fixed all ${NUMBER[joints.length] ?? joints.length} ${step.jointName ?? 'joint'}s.`

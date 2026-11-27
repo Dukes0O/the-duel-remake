@@ -54,3 +54,16 @@ The wrecks, the towed van and the fence bundles are shown as amber rings, becaus
 - **B.** Give a number that begins a line a capital letter (three lines in `townCaptionText`), and change the older suite's one assertion to "Thirty-one".
 
 **Pick: A for this card.** B is the better game, and it needs your written review of the changed assertion (rule 18).
+
+## 7. When does a neighbour's job open?
+
+`OUTPOST_CHAPTERS` in `src/town/content/neighbours.js` opens each neighbour's chapter by the town's year alone, and the NEXT line follows it. The story says the first neighbours call after "A Proper Town" (chapter 10). The save's reviewer also found that no code sets the Act 1 facts `wellBuilt` or `towerRunning` yet, and nothing raises a `dust-storm` report yet.
+
+- **A.** Open each neighbour's job as the NEXT line does: by its year, one at a time, in the story's order.
+- **B.** Also wait for chapter 10, which no town can reach until the Act 1 facts are set.
+
+**Pick: A.** While the town's own first haul is the open job, it comes first. The pipe patch (needs `towerRunning`) and the rescue (needs a `dust-storm` report) will open as soon as the cards that set those land; their rules and Easy proofs are in the suite now.
+
+## 8. Dot's fence turns on her protection money
+
+Finishing the fence calls the existing `setTownOutpostProtection`, so Dot pays the town her 12 a month (TOWN-OUTPOSTS's own rule and number). That touches money, so the whole card had the lane tier and the save review, and not only rule 23's small set. **Pick: use the existing rule unchanged.**
