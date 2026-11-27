@@ -7,7 +7,7 @@
 //   airliners, and home with what it will carry. After Chapter 3 the same drive is the salvage run, open whenever you like.
 // - The steel run opens when a building site has stopped for want of steel: the flatbed to Tin Town's steel stack and back.
 import {LAND} from '../scablands-names.js';
-import {ROAD_NET} from '../scablands-road.js';
+import {ROAD_NET, ROAD_HALF_WIDTH} from '../scablands-road.js';
 import {sliceLine} from '../scablands-ways.js';
 import {createTownWorld} from '../../town/town-world.js';
 import {TOWN_CELL_METRES} from '../../town/town-world-data.js';
@@ -322,6 +322,8 @@ function holdingFires(step, ids) {
 // and that layout. Reading the town here writes nothing to it.
 
 const TICKS_A_DAY = 24;
+// Where a job that ends at the gate ends: on the road out, beside the truck bay.
+const TOWN_GATE = Object.freeze({x:26, z:15});
 const outpostChapter = id => OUTPOST_CHAPTERS.find(chapter => chapter.id === id) ?? null;
 const yearOf = town => Number.isFinite(town?.calendar?.year) ? town.calendar.year : 1;
 
@@ -452,6 +454,58 @@ const BUILDERS = Object.freeze({
     return [{kind:'repair', id:'crane', requiresExit:true, jointName:'bolt', seconds:row.seconds, carPlace:spotOf('halt-yard', NAMES_OF[row.outpostId], park.x, park.z, 14),
       joints, what:"Drive to Pim's Rail Halt and stop in the ring.", startLineId:row.lines.start, startedLineId:row.lines.started, closing:[...row.closing]}];
   },
+  // Section 7: three people out in a dust storm, on the flats south of the East Road. Where they are comes from the job's seed.
+  rescue(town, row, {seed}) {
+    const rng = makeRng(((seed >>> 0) ^ 0x52455343) >>> 0 || 1), road = ROAD_NET.road('east-road').points;
+    const people = Array.from({length:row.people}, (_, index) => {
+      const along = row.nearMetres + (row.farMetres - row.nearMetres) * (index + rng.float()) / row.people;
+      const [a, b] = sliceLine(road, along, along + 20), dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz) || 1, side = 60 + rng.float() * 80;
+      return spotOf(`stranded-${index + 1}`, 'someone lost in the dust', a.x - dz / length * side, a.z + dx / length * side, 6);
+    });
+    return [{kind:'rescue', id:'rescue', what:'Find the people lost in the dust. Stop right beside each one, then bring them to the gate.', people, seats:row.people, boardSeconds:row.boardSeconds,
+      radius:6, stopSpeed:.5, home:spotOf('gate', 'the gate', TOWN_GATE.x, TOWN_GATE.z, 14), homeRadius:14, weather:'dust',
+      startLineId:row.lines.start, afterFirstLineId:row.lines.first, closing:[...row.closing]}];
+  },
+  // Section 7: a leak on the Water Road's main by the gate. Three joints, on foot, with Rats about.
+  'pipe-patch'(town, row) {
+    const tap = TOWN_FIRE_GATE_TAP;
+    const joints = Array.from({length:row.joints}, (_, index) => spotOf(`joint-${index + 1}`, 'the main', tap.x + 12 + index * row.spacingMetres, tap.z - 6, 3));
+    return [{kind:'repair', id:'patch', requiresExit:true, jointName:'joint', seconds:row.seconds, carPlace:spotOf('leak', 'the leak on the main', tap.x, tap.z, 12), joints,
+      rats:{...row.rats, place:spotOf('pipe-rats', 'the Rats', tap.x + 30, tap.z - 22, 12)}, what:'Drive to the ring by the leak and stop.',
+      startLineId:row.lines.start, closing:[...row.closing]}];
+  },
+  // Section 7: wrecks across the trade road.
+  'road-clear'(town, row) {
+    const line = roadLine(row.road, row.fromMetres, row.toMetres), middle = alongRoad(row.road, (row.fromMetres + row.toMetres) / 2);
+    return [{kind:'clear', id:'clear', place:spotOf('road-block', 'the wrecks on the East Road', middle.x, middle.z, 30), line, halfWidth:ROAD_HALF_WIDTH,
+      wrecks:row.wrecks, easyWrecks:row.easyWrecks, spreadMetres:Math.abs(row.toMetres - row.fromMetres) - 20, what:'Drive out along the East Road to the wrecks.',
+      startLineId:row.lines.start, sayAt:[{progress:.5, lineId:row.lines.half}], closing:[...row.closing]}];
+  },
+  // Section 7: one road fight, run from either side (`side`). Defend: the town's fuel truck comes home along the road with Rats
+  // waiting for her; hurt badly enough she is taken, and the job turns into a chase. Attack: the Rats' truck is the one on the
+  // road; stop it and take its load.
+  'road-fight'(town, row) {
+    const path = roadLine(row.road, row.fromMetres, row.toMetres);
+    if (row.side === 'defend') {
+      const ambushes = row.ambushMetres.map((metres, index) => { const at = alongRoad(row.road, metres);
+        return {id:`fuel-rats-${index + 1}`, place:spotOf(`fuel-rats-${index + 1}`, 'the Rats by the road', at.x, at.z, 12), count:row.raiders}; });
+      // The Rats run for their camp on the flats, off the road to the south.
+      const [a, b] = sliceLine(ROAD_NET.road(row.road).points, 1500, 1520), dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz) || 1;
+      const away = [{x:a.x, z:a.z}, {x:a.x - dz / length * 420, z:a.z + dx / length * 420}].map(Object.freeze);
+      const truck = {id:'fuel-truck', renderCar:'titan_monster', health:row.health};
+      return [{kind:'escort', id:'escort', what:'Stay near the fuel truck and keep the Rats off her.', actorId:truck.id,
+        actor:{...truck, escort:true, speed:row.speed, path}, path, speed:row.speed, health:row.health, destination:spotOf('gate', 'the gate', path.at(-1).x, path.at(-1).z, 14),
+        ambushes, raidLineId:row.lines.raid, stolen:{belowHealth:row.stolenBelow, lineId:row.lines.stolen, goto:'chase'}, then:'done',
+        startLineId:row.lines.start, closing:[...row.closing]},
+      {kind:'chase', id:'chase', what:'They have the fuel truck. Catch her and touch her.', targetId:truck.id, actor:{...truck, speed:row.chaseSpeed, path:away}, path:away,
+        targetSpeed:row.chaseSpeed, contactRadius:row.catchMetres, closing:[row.lines.back]}];
+    }
+    return [{kind:'chase', id:'chase', what:"Catch the Rats' truck and touch it.", targetId:'rat-truck',
+      actor:{id:'rat-truck', renderCar:'dusthawk_rally', health:row.health, speed:row.speed, path}, path, targetSpeed:row.speed, contactRadius:8,
+      startLineId:row.lines.start, closing:[row.lines.stopped]},
+    {kind:'hold', id:'take', what:"Pull up beside the Rats' truck and hold still.", placeActorId:'rat-truck', placeName:"the Rats' truck", radius:12,
+      gauge:{label:'kilograms taken', total:row.lootKg, seconds:row.takeSeconds}, rats:{...row.rats}, closing:[...row.closing]}];
+  },
 });
 
 function townRowDefinition(town, row, {seed, ember}) {
@@ -504,6 +558,23 @@ function townRowResult(worldJob, runId) {
   } else if (row.kind === 'crane') {
     if (!results.crane) return null;
     amounts.bolts = whole(results.crane.joints);
+  } else if (row.kind === 'rescue') {
+    if (!results.rescue) return null;
+    amounts.people = whole(results.rescue.people);
+  } else if (row.kind === 'pipe-patch') {
+    if (!results.patch) return null;
+    amounts.joints = whole(results.patch.joints);
+  } else if (row.kind === 'road-clear') {
+    if (!results.clear) return null;
+    amounts.wrecks = whole(results.clear.wrecks);
+  } else if (row.kind === 'road-fight' && row.side === 'defend') {
+    // The town gets the fuel she still has: her 2,000 litres by the share of her health she came home with.
+    const truck = (worldJob.actors ?? []).find(actor => actor.id === 'fuel-truck'), health = Math.max(0, Math.min(row.health, truck?.health ?? 0));
+    amounts.fuelL = whole(row.litres * health / row.health);
+    amounts.stolen = results.escort?.stolen === true ? 1 : 0;
+  } else if (row.kind === 'road-fight') {
+    if (!results.take) return null;
+    amounts.lootKg = whole(results.take.total);
   } else return null;
   return {runId, jobId:definition.id, kind:'job', amounts};
 }

@@ -2,8 +2,9 @@
 // stretch of road; push each one off the road with the vehicle's nose, or hit it fast enough to flatten it. Pure: no DOM, no
 // Three.js, nothing from app.js; repeatable from the job's seed and what the vehicle did.
 //
-// A wreck moves when the vehicle's nose is against it: it is shoved ahead, away from the vehicle, so it goes where the
-// vehicle is pointed. It is clear of the road once the whole of it is past the road's edge (or, with `pushOutTo`, once it is
+// A wreck moves when the vehicle's nose is against it and the vehicle is driving into it: it is carried along on the nose,
+// so it goes where the vehicle goes. Turn away from it or back off and it stays where it is. It is clear of the road once
+// the whole of it is past the road's edge (or, with `pushOutTo`, once it is
 // in that heap's ring). A wreck met at `crushKmh` or more is flattened where it lies, and a flat wreck is no longer in
 // anybody's way. What is being pushed is weight on the vehicle (the mode reads `state.loadKg`): steel dragged over dirt
 // resists with about six tenths of its weight. There is no clock and nothing can be lost.
@@ -14,7 +15,7 @@
 // - The Scablands' roads are 28 m wide (src/world/scablands-road.js: a half width of 14 m).
 import {makeRng} from '../../../rng.js';
 
-export const CLEAR_RULE = Object.freeze({halfWidth:14, noseMetres:2.2, crushKmh:40, easyCrushKmh:30, friction:.6, spreadMetres:60, wrecks:6});
+export const CLEAR_RULE = Object.freeze({halfWidth:14, noseMetres:2.2, touchSlack:.5, crushKmh:40, easyCrushKmh:30, friction:.6, spreadMetres:60, wrecks:6});
 
 export const CLEAR_WRECKS = Object.freeze([
   Object.freeze({kind:'shell', name:'stripped car body', kg:350, radius:2.2}),
@@ -95,11 +96,15 @@ export function stepClear(step, state, view, dt = 0, seed = 0) {
   const events = [], requests = [];
   const say = lineId => { if (lineId) requests.push({type:'say', lineId}); };
   const before = wrecks.filter(wreck => wreck.cleared).length;
+  // How far the vehicle has come since the last step: what is on its nose comes with it.
+  const moved = !view.onFoot && finite(here.x) && finite(here.z) && state.last ? {x:here.x - state.last.x, z:here.z - state.last.z} : {x:0, z:0};
+  if (finite(here.x) && finite(here.z)) next.last = {x:here.x, z:here.z};
   let pushedKg = 0;
   if (!view.onFoot && finite(here.x) && finite(here.z)) for (const wreck of wrecks) {
     if (wreck.cleared) continue;
-    const dx = wreck.x - here.x, dz = wreck.z - here.z, apart = Math.hypot(dx, dz), reach = wreck.radius + (step.noseMetres ?? CLEAR_RULE.noseMetres);
-    if (apart > reach) continue;
+    let dx = wreck.x - here.x, dz = wreck.z - here.z, apart = Math.hypot(dx, dz);
+    const reach = wreck.radius + (step.noseMetres ?? CLEAR_RULE.noseMetres);
+    if (apart > reach + CLEAR_RULE.touchSlack) continue;
     next.touching.push(wreck.id);
     if (!(state.touching ?? []).includes(wreck.id)) {
       if (step.crush !== false && kmh >= crushKmh) {
@@ -110,9 +115,12 @@ export function stepClear(step, state, view, dt = 0, seed = 0) {
       }
       events.push({type:'clearPush', cue:CLEAR_CUES.clearPush, id:wreck.id, position:{x:wreck.x, z:wreck.z}});
     }
-    // Shoved ahead of the nose: it stays a nose and its own half-length from the vehicle's middle, on the line from one to the other.
-    const ux = apart > 0 ? dx / apart : 1, uz = apart > 0 ? dz / apart : 0;
-    wreck.x = here.x + ux * reach; wreck.z = here.z + uz * reach;
+    // Carried on the nose: while the vehicle drives into it, the wreck comes along by as much as the vehicle moved. It is
+    // never nearer the vehicle's middle than a nose and its own half-length.
+    if (moved.x * dx + moved.z * dz <= 0) continue;
+    wreck.x += moved.x; wreck.z += moved.z;
+    dx = wreck.x - here.x; dz = wreck.z - here.z; apart = Math.hypot(dx, dz);
+    if (apart < reach) { const ux = apart > 0 ? dx / apart : 1, uz = apart > 0 ? dz / apart : 0; wreck.x = here.x + ux * reach; wreck.z = here.z + uz * reach; }
     const off = heap ? Math.hypot(wreck.x - heap.x, wreck.z - heap.z) <= heap.radius : onLine(line, wreck).across >= half + wreck.radius;
     if (off) {
       wreck.cleared = 'off';

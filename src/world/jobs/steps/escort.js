@@ -116,7 +116,7 @@ export function stepEscort(step, state, view, dt = 0) {
   if (step.stolen && truck && (state.stolen === true || (truck.health ?? 100) <= step.stolen.belowHealth)) {
     const clear = (step.ambushes ?? []).filter(ambush => (state.spawned ?? []).includes(ambush.id) && !(state.gone ?? []).includes(ambush.id))
       .map(ambush => ({type: 'clearWave', key: `ambush:${ambush.id}`}));
-    return {state: {...state, stolen: true, gone: [...(state.spawned ?? [])]}, complete: true, goto: step.stolen.goto,
+    return {state: {...state, stolen: true, gone: [...(state.spawned ?? [])]}, complete: true, goto: step.stolen.goto, closingLines: [],
       events: state.stolen ? [] : [{type: 'escortStolen', actorId: step.actorId, cue: 'raider.warning', result: {kind: 'escort', stolen: true}}],
       requests: [{type: 'follow', path: step.path, speed: 0}, ...(state.stolen ? [] : [...clear, {type: 'say', lineId: step.stolen.lineId}])]};
   }

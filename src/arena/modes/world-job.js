@@ -2280,7 +2280,11 @@ export function stepWorldJob(duel, dt) {
     for (const event of next.events) playTownStepEvent(duel, worldJob, currentStep, event, point);
   }
   // A town job of several steps keeps what each step reported, by the step's id (src/world/jobs/town-step-results.js).
-  if (worldJob.definition.kind === 'town-job' && currentStep) worldJob.townResults = keepTownStepResults(worldJob.townResults, currentStep, next.events);
+  if (worldJob.definition.kind === 'town-job' && currentStep) {
+    worldJob.townResults = keepTownStepResults(worldJob.townResults, currentStep, next.events);
+    // A fuel truck taken on an escort is heard as the raiders' own warning.
+    for (const event of next.events) if (event.type === 'escortStolen') playTownStepEvent(duel, worldJob, currentStep, event, point);
+  }
   if (next.events.some(event => event.type === 'burn') && (currentStep?.ember || currentStep?.gasLoad)) {
     const burnt = next.stepState.burntBarricades ?? [];
     worldJob.solidGrid.setBarricades((currentStep.barriers ?? []).filter(barrier => !burnt.includes(barrier.id)));

@@ -78,11 +78,12 @@ export const TOWN_CHAPTER_JOBS = list([
   row({id:'town-goats', kind:'goats', name:'Mind the Goats', neighbourId:'tam', outpostId:'hermit-camp', chapter:'town.act2.tam',
     // Only the Titan or the rally car gets up the Ridge. A driver who owns neither is lent Big Mo's show truck (Claude, on the card).
     vehicle:row({oneOf:list(['titan_monster', 'dusthawk_rally']), lendIfNone:'titan_monster', lendLineId:'tam.tam.lent', lendInsteadOf:'tam.tam'}),
-    card:row({lineId:'tam.tam', lentLineId:'tam.tam.lent', later:LATER, facts:list([
-      "Drive up the Ridge to Old Tam's hut. The salt for his goats is already in the back.",
-      'Stop in the ring and hold still while the salt comes off and the goats get in.',
+    card:row({lineId:'tam.tam', later:LATER, facts:list([
+      'Hold still at the pile by the truck bay while eight sacks of salt for his goats go on.',
+      "Drive up the Ridge to Old Tam's hut, stop in the ring and hold still while the salt comes off and the goats get in.",
       'Bring the goats down to the town and stop at the pile to let them out.',
       'A hard knock tips a goat out. A goat that falls out walks back up to Tam, so go down slowly.',
+      'Only the Titan or the rally car gets up the Ridge. If you own neither, Big Mo lends you his show truck for this job.',
     ])}),
     salt:row({piece:row({id:'salt', name:'sack of salt', kg:25}), count:8}),
     goats:row({piece:row({id:'goat', name:'goat', kg:60}), count:8, lines:row({atPile:'tam.up', setOff:'tam.down'}), loadingLineId:'tam.sea', closing:list(['tam.won']),
@@ -113,11 +114,12 @@ export const TOWN_CHAPTER_JOBS = list([
 ]);
 
 // ---- Section 7's jobs that come round again --------------------------------------------------------------------------------
-// `opens`: `chapter` is the chapter that must be done first, `report` an unanswered report of that event, and `everyDays` how
+// `opens`: `fact` is a fact of the town's story that must be true, `chapter` a chapter that must be done, `report` an unanswered
+// report of that event, and `everyDays` how
 // long after the job was last done it comes round again (game days; none means it is open whenever its need is).
 export const TOWN_REPEAT_JOBS = list([
   row({id:'town-storm-rescue', kind:'rescue', name:'Out in the Dust', vehicle:null,
-    opens:row({chapter:'town.act1.salvage', report:'dust-storm'}), answers:'shelter',
+    opens:row({fact:'wellBuilt', report:'dust-storm'}), answers:'shelter',
     card:row({lineId:'town.rescue.card', later:'If you leave it, they wait out the storm where they are.', facts:list([
       'Three people are out on the flats south of the East Road, within a kilometre of the gate. The dust is thick, so follow the marker.',
       'Stop right beside each one and hold still for two seconds while they climb in.',
@@ -127,9 +129,9 @@ export const TOWN_REPEAT_JOBS = list([
     lines:row({start:'town.rescue.card', first:'town.rescue.one'}), closing:list(['town.rescue.won']), resultLineId:'town.rescue.won'}),
 
   row({id:'town-pipe-patch', kind:'pipe-patch', name:'Pipe Patch', vehicle:null,
-    opens:row({chapter:'town.act1.pipes', everyDays:90}),
+    opens:row({fact:'towerRunning', everyDays:90}),
     card:row({lineId:'town.patch.card', later:'If you leave it, the main keeps leaking a little.', facts:list([
-      'Drive to the ring by the leak and get out.',
+      "Drive to the ring by the Water Road's tap at the gate and get out. The leak is on the main beside it.",
       'There are three joints to tighten. Stand at each one and hold F until it is done. What you have done to a joint is kept if you let go.',
       'Road Rats come when you start. No wrench turns while one of them is close.',
       'If they knock you down you get up at the same joint, and the joints you have finished stay finished.',

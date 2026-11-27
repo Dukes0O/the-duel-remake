@@ -278,7 +278,7 @@ test('clear: the wrecks are laid out from the seed, on the road, and fewer of th
   for (const a of wrecks) for (const b of wrecks) if (a !== b) assert.ok(Math.hypot(a.x - b.x, a.z - b.z) > 2, 'no two on top of each other');
 });
 
-test('clear: a wreck is shoved ahead of the nose until it is past the road\'s edge, and what is pushed is weight', () => {
+test('clear: a wreck is carried on the nose until it is past the road\'s edge, and what is pushed is weight', () => {
   const start = stepClear(clearStep, {}, view(0, 0), .1, 11);
   const target = start.state.wrecks[0];
   // Drive at it across the road at walking pace: it goes ahead of the nose and off the far edge.
@@ -293,6 +293,10 @@ test('clear: a wreck is shoved ahead of the nose until it is past the road\'s ed
   assert.deepEqual(events.map(event => event.type), ['clearPush', 'clearOff']);
   assert.equal(pushedKg, Math.round(target.kg * CLEAR_RULE.friction), 'steel dragged over dirt resists with six tenths of its weight');
   assert.equal(state.loadKg, 0, 'and nothing is pushed once it is off');
+  // Backing away from a wreck, or driving past its side, leaves it where it is.
+  const beside = stepClear(clearStep, start.state, view(start.state.wrecks[1].x, start.state.wrecks[1].z - 4), .1, 11);
+  const backed = stepClear(clearStep, beside.state, view(start.state.wrecks[1].x, start.state.wrecks[1].z - 4.3, {speedKmh:5}), .1, 11);
+  assert.deepEqual([backed.state.wrecks[1].x, backed.state.wrecks[1].z], [start.state.wrecks[1].x, start.state.wrecks[1].z], 'a wreck is pushed, never pulled');
   assert.match(clearLine(clearStep, state), /Five wrecks to go\.$/);
 });
 
@@ -369,6 +373,12 @@ const ACT2 = ['town.act2.dot-flour', 'town.act2.dot-fire', 'town.act2.quill', 't
 // The town in which a chapter job is the one open.
 function townFor(jobId, seed = 77) {
   const row = TOWN_JOB_ROWS.find(item => item.id === jobId), index = ACT2.indexOf(row.chapter);
+  if (!row.chapter) {
+    // A job that comes round again: every neighbour met, the tower running, and the report it answers on the table.
+    const town = townAt(9, {done:ACT2, known:{towerRunning:true}, seed});
+    if (row.opens.report === 'dust-storm') raiseTownReport(town, 'dust-storm', {dustStorm:true});
+    return town;
+  }
   return townAt(8, {done:ACT2.slice(0, index), known:row.needsFact ? {[row.needsFact]:true} : {}, seed});
 }
 const definitionOf = (jobId, seed = 5, ember = {}) => townJobDefinition(townFor(jobId, 70 + seed), jobId, {seed, ember});
@@ -536,6 +546,7 @@ function childRun(definition, seed, {difficulty = 'easy', minutes = 45} = {}) {
   let job = createJob(definition, definition.seed ?? seed);
   const car = {x:HOME.x, z:HOME.z, heading:0, mps:0};
   const cruise = (36 + rng.int(0, 10)) / 3.6, waitsForRats = rng.float() < .5, careful = rng.float() < .5;
+  let pushing = null, chosen = null;
   let onFoot = false, walker = null, downFor = 0, marker = null, follow = null, results = {}, actors = [], lastKmh = 0;
   let nextKnock = 30 + rng.float() * 60, speedingUntil = -1, nextSpeeding = 40 + rng.float() * 40, wobble = 0, nextWobble = 0, letGoUntil = -1, nextLetGo = 4 + rng.float() * 4;
   const heard = [], said = [];
@@ -553,7 +564,7 @@ function childRun(definition, seed, {difficulty = 'easy', minutes = 45} = {}) {
     car.heading += Math.max(-rate * DT, Math.min(rate * DT, turn));
     const speeding = t < speedingUntil ? 1.25 : 1;
     let speed = distance <= stopWithin ? 0 : Math.min((crawl ? 12 / 3.6 : top) * speeding, Math.max(1.7, (distance - stopWithin) * .125));
-    if (Math.abs(turn) > 1.2) speed = Math.min(speed, 3);
+    if (Math.abs(turn) > 1.2) speed = Math.min(speed, distance < 20 ? 1 : 3);
     car.mps = speed > car.mps ? Math.min(speed, car.mps + 1.2 * DT) : Math.max(speed, car.mps - 3.5 * DT);
     car.x += Math.sin(car.heading) * car.mps * DT; car.z += Math.cos(car.heading) * car.mps * DT;
   };
@@ -593,15 +604,25 @@ function childRun(definition, seed, {difficulty = 'easy', minutes = 45} = {}) {
     } else if (ratsNear.length && !waitsForRats && ['hold', 'fence', 'escort'].includes(step.kind)) {
       drive(ratsNear[0].position, {top:8});
     } else if (step.kind === 'clear' && state.wrecks) {
-      const wreck = state.wrecks.filter(item => !item.cleared).reduce((best, item) => !best || gapTo(item) < gapTo(best) ? item : best, null);
+      // The driver picks the nearest wreck and stays with it until it is dealt with.
+      const left = state.wrecks.filter(item => !item.cleared);
+      const wreck = left.find(item => item.id === chosen) ?? left.reduce((best, item) => !best || gapTo(item) < gapTo(best) ? item : best, null);
+      if (wreck?.id !== chosen) { chosen = wreck?.id ?? null; pushing = null; }
       if (!wreck) stop();
-      else if (!careful) drive(wreck);
-      else {
-        // The careful way: line up on the road's middle side of the wreck, then push it straight over the nearer edge.
+      else if (!careful) {
+        // The quick way: straight at it without slowing, which flattens it.
+        const distance = gapTo(wreck) || 1;
+        drive({x:wreck.x + (wreck.x - car.x) / distance * 200, z:wreck.z + (wreck.z - car.z) / distance * 200});
+      } else {
+        // The careful way: line up on the road's middle side of the wreck, then push it over the nearer edge, steering to keep
+        // it going outward.
         const line = step.line, dx = line.at(-1).x - line[0].x, dz = line.at(-1).z - line[0].z, length = Math.hypot(dx, dz) || 1;
         const nx = dz / length, nz = -dx / length, side = ((wreck.x - line[0].x) * nx + (wreck.z - line[0].z) * nz) >= 0 ? 1 : -1;
-        const staging = {x:wreck.x - nx * side * 9, z:wreck.z - nz * side * 9}, lined = gapTo(staging) < 3 || gapTo(wreck) < 8;
-        drive(lined ? {x:wreck.x + nx * side * 40, z:wreck.z + nz * side * 40} : staging, {crawl:lined});
+        const staging = {x:wreck.x - nx * side * 10, z:wreck.z - nz * side * 10};
+        if (gapTo(staging) < 4) pushing = wreck.id;
+        else if (gapTo(wreck) > 14) pushing = null;
+        if (pushing !== wreck.id) drive(staging, {top:6});
+        else drive({x:wreck.x + nx * side * 8, z:wreck.z + nz * side * 8}, {crawl:true});
       }
     } else if (step.kind === 'escort' || step.kind === 'chase') {
       const truck = actors.find(actor => actor.id === (step.actorId ?? step.targetId));
@@ -615,8 +636,9 @@ function childRun(definition, seed, {difficulty = 'easy', minutes = 45} = {}) {
     if (!onFoot && car.mps >= 4) for (const actor of standing()) if (Math.hypot(actor.position.x - car.x, actor.position.z - car.z) <= 2.2) actor.health = 0;
     // -- the world moves --
     if (follow) {
-      const actor = actors.find(item => item.id === follow.actorId);
-      const path = (step.actor?.path ?? follow.path ?? []).map(at);
+      // Only the current step's own truck moves, as in the mode: a truck whose step is over stays where it stopped.
+      const actor = step.actor ? actors.find(item => item.id === follow.actorId && item.id === step.actor.id) : null;
+      const path = (step.actor?.path ?? []).map(at);
       if (actor && path.length) {
         const index = Math.min(actor.pathIndex ?? 0, path.length - 1), target = path[index], distance = Math.hypot(target.x - actor.position.x, target.z - actor.position.z);
         const travel = Math.max(0, follow.speed ?? 0) * DT;
@@ -794,4 +816,118 @@ test('the water run is driven for real: a full tanker to Deck Town, lighter as i
     assert.equal(townMissionResult(town, result).settled, true);
     assert.equal(town.story.completed['town.act2.imre'], true);
   } finally { cleanupWorldJobLoan(duel); clearScablandsTownLayout(); }
+});
+
+// ==== Section 7's jobs that come round again ==================================================================================
+import {stepEscort} from '../src/world/jobs/steps/escort.js';
+
+test('the jobs that come round again open from the town\'s own facts, and stay away for their days once done', () => {
+  const young = townAt(9, {done:ACT2});
+  assert.deepEqual(openTownJobs(young).map(job => job.id), ['town-road-clear', 'town-fuel-escort', 'town-truck-raid', 'town-salvage-run']);
+  const piped = townAt(9, {done:ACT2, known:{towerRunning:true}});
+  assert.ok(openTownJobs(piped).some(job => job.id === 'town-pipe-patch'), 'a leak needs pipes');
+  assert.equal(openTownJobs(townAt(2)).some(job => TOWN_REPEAT_JOBS.some(row => row.id === job.id)), false, 'none before the neighbours');
+  // The rescue is open only while a dust storm's report is unanswered, and bringing them home answers it.
+  assert.equal(openTownJobs(piped).some(job => job.id === 'town-storm-rescue'), false);
+  const stormy = townFor('town-storm-rescue');
+  assert.equal(openTownJobs(stormy)[0].id, 'town-storm-rescue', 'people out in the dust come first');
+  assert.equal(townMissionResult(stormy, jobResult('town-storm-rescue', {people:3})).settled, true);
+  assert.equal(stormy.reports.find(report => report.eventId === 'dust-storm').unanswered, false);
+  assert.equal(stormy.reports.find(report => report.eventId === 'dust-storm').answerId, 'shelter');
+  assert.equal(openTownJobs(stormy).some(job => job.id === 'town-storm-rescue'), false);
+  // Done today, the road is clear for 120 days and then blocked again.
+  const town = townFor('town-road-clear');
+  assert.equal(townMissionResult(town, jobResult('town-road-clear', {wrecks:6})).settled, true);
+  assert.equal(openTownJobs(town).some(job => job.id === 'town-road-clear'), false);
+  town.tick += BigInt(24 * 119);
+  assert.equal(openTownJobs(town).some(job => job.id === 'town-road-clear'), false);
+  town.tick += BigInt(24);
+  assert.equal(openTownJobs(town).some(job => job.id === 'town-road-clear'), true);
+  assert.deepEqual(town.missions.totals['town-road-clear'], {runs:1, lastTick:String(BigInt(YEAR_TICKS * 8)), wrecks:6});
+});
+
+test('what the road fights bring home goes on the town\'s pile: fuel by the litre, loot by the kilogram', () => {
+  const town = townFor('town-fuel-escort'), cell = townMissionDropCell(town);
+  assert.equal(townMissionResult(town, jobResult('town-fuel-escort', {fuelL:1700, stolen:0})).settled, true);
+  assert.equal(stockpileAt(town, cell).fuel, 1700);
+  assert.equal(townMissionResult(town, jobResult('town-truck-raid', {lootKg:3000})).settled, true);
+  assert.equal(stockpileAt(town, cell).salvage, 3000);
+  for (const bad of [{fuelL:2001, stolen:0}, {fuelL:100, stolen:2}, {lootKg:3001}])
+    assert.equal(townMissionResult(town, jobResult('town-fuel-escort', bad, 'run-bad-fuel')).ok, false, JSON.stringify(bad));
+  const loaded = deserializeTown(serializeTown(town));
+  assert.deepEqual(loaded, town);
+  for (const row of TOWN_REPEAT_JOBS) {
+    const fresh = townFor(row.id), before = serializeTown(fresh), definition = townJobDefinition(fresh, row.id, {seed:4});
+    assert.ok(definition, row.id);
+    assert.doesNotThrow(() => createJob(definition, 4));
+    assert.deepEqual(townJobDefinition(fresh, row.id, {seed:4}).steps, definition.steps, 'repeatable from the town and the seed');
+    const card = townMissionCardModel(fresh);
+    assert.equal(serializeTown(fresh), before, `${row.id}: opening and building it writes nothing`);
+    if (openTownJobs(fresh)[0].id === row.id) assert.equal(card.title, row.name);
+    for (const [id, text] of Object.entries(definition.captions)) { assert.ok(TOWN_CAPTIONS[id], id); plainSentence(text.replace(/^[^:]+: /, '')); }
+  }
+  assert.equal(townJobDefinition(townFor('town-fuel-escort'), 'town-fuel-escort').side, 'defend');
+  assert.equal(townJobDefinition(townFor('town-truck-raid'), 'town-truck-raid').side, 'attack', 'the same fight from the other side');
+});
+
+test('a fuel truck hurt badly enough is taken: the escort ends there and the job goes on as a chase', () => {
+  const definition = townJobDefinition(townFor('town-fuel-escort'), 'town-fuel-escort', {seed:2}), [escort, chase] = definition.steps;
+  const truckAt = (health, extra = {}) => ({id:'fuel-truck', position:{...at(escort.path[3])}, health, pathIndex:4, ...extra});
+  const fine = stepEscort(escort, {}, view(0, 0, {actors:[truckAt(80)]}), .1);
+  assert.equal(fine.complete, false);
+  assert.equal(fine.goto, undefined);
+  const taken = stepEscort(escort, fine.state, view(0, 0, {actors:[truckAt(30)]}), .1);
+  assert.equal(taken.complete, true);
+  assert.equal(taken.goto, 'chase');
+  assert.deepEqual(taken.events.map(event => event.type), ['escortStolen']);
+  assert.ok(taken.requests.some(request => request.type === 'say' && request.lineId === 'town.fuel.stolen'));
+  assert.deepEqual(taken.closingLines, [], 'nobody says the fuel is in');
+  assert.equal(stepEscort(escort, taken.state, view(0, 0, {actors:[truckAt(60)]}), .1).goto, 'chase', 'taken is taken');
+  // On the engine: arriving whole ends the job without the chase; being taken goes to it.
+  let job = createJob(definition, 2);
+  for (let t = 0; t < 30 && !job.done; t += .1) job = stepJob(job, view(0, 0, {actors:[truckAt(90, {atDestination:true})]}), .1);
+  assert.equal(job.done, true, 'home whole: no chase');
+  job = createJob(definition, 2);
+  for (let t = 0; t < 30 && job.stepIndex === 0; t += .1) job = stepJob(job, view(0, 0, {actors:[truckAt(20)]}), .1);
+  assert.equal(job.steps[job.stepIndex].id, 'chase');
+  assert.equal(chase.targetId, 'fuel-truck');
+  // What the town gets is the fuel she still has.
+  const done = {definition, job:{done:true}, townResults:{escort:{kind:'escort', stolen:true}}, actors:[{id:'fuel-truck', health:24}]};
+  assert.deepEqual(townJobResult(done, 'run-fuel').amounts, {fuelL:480, stolen:1});
+  assert.deepEqual(townJobResult({...done, townResults:{}, actors:[{id:'fuel-truck', health:85}]}, 'run-fuel').amounts, {fuelL:1700, stolen:0});
+});
+
+test('child pace on Easy: the rescue in the dust, the pipe patch and the road clear are won at least 8 times in 10', () => {
+  proveOnEasy('town-storm-rescue', {check(runs) {
+    assert.ok(runs.filter(run => run.won).every(run => run.result.amounts.people === 3));
+    assert.ok(runs.find(run => run.won).said.includes('town.rescue.one'));
+  }});
+  proveOnEasy('town-pipe-patch', {check(runs) {
+    assert.ok(runs.filter(run => run.won).every(run => run.result.amounts.joints === 3));
+    assert.ok(runs.every(run => run.heard.includes('ratsCame')), 'the Rats come every time');
+    assert.ok(runs.some(run => run.heard.includes('repairDown')), 'and somebody gets knocked down and still finishes');
+  }});
+  proveOnEasy('town-road-clear', {check(runs) {
+    assert.ok(runs.filter(run => run.won).every(run => run.result.amounts.wrecks === 4), 'four wrecks on Easy');
+    assert.ok(runs.some(run => run.heard.includes('clearOff')) && runs.some(run => run.heard.includes('clearCrushed')), 'pushed off by some, flattened by others');
+  }});
+});
+
+test('child pace on Easy: the fuel escort and the truck raid are won at least 8 times in 10; on Medium a taken truck is caught', () => {
+  proveOnEasy('town-fuel-escort', {check(runs) {
+    assert.ok(runs.filter(run => run.won).every(run => run.result.amounts.fuelL > 0 && run.result.amounts.fuelL <= 2000));
+    assert.ok(runs.some(run => run.heard.includes('ratsCame') === false && run.said.includes('town.fuel.raid')), 'the Rats by the road are the escort\'s own ambushes');
+  }});
+  proveOnEasy('town-truck-raid', {check(runs) {
+    assert.ok(runs.filter(run => run.won).every(run => run.result.amounts.lootKg === 3000));
+    assert.ok(runs.find(run => run.won).said.includes('town.raid.stopped'));
+  }});
+  // Medium: a driver who only follows lets the Rats hurt her until they take her, then chases her down and gets some of it back.
+  const taken = Array.from({length:6}, (_, index) => childRun(definitionOf('town-fuel-escort', index + 1), index + 1, {difficulty:'medium'}))
+    .find(run => run.heard.includes('escortStolen'));
+  assert.ok(taken, 'on Medium the truck is taken from a driver who does not fight');
+  assert.equal(taken.won, true, 'and the chase is won');
+  assert.equal(taken.result.amounts.stolen, 1);
+  assert.ok(taken.result.amounts.fuelL > 0 && taken.result.amounts.fuelL <= 600, `some of it comes home (${taken.result.amounts.fuelL} L)`);
+  assert.ok(taken.said.includes('town.fuel.stolen') && taken.said.includes('town.fuel.back') && !taken.said.includes('town.fuel.won'));
 });
