@@ -9,3 +9,10 @@ The Far Side as a new region, in files of its own under `src/world/far-side/`: i
 Design: [docs/story/the-far-side.md](../../story/the-far-side.md) and [docs/MACHINES.md](../../MACHINES.md). A pure sim file imports no DOM, no Three.js and nothing from `src/app.js`. Stay inside the files named here. If something the card needs is missing, write your choice on this card under "Codex decided (Claude to review)" and carry on, unless it touches saves, or a released course or replay, in which case stop and say so. Every player-facing word is plain, in whole sentences, with no em dashes, and comes from the story page. Run the card's own checks and `npm run build`; Claude runs the lane tier and browser checks. Write `docs/changes/<card>.md` with a Removed section, and list what Claude should look at. No Chrome under `codex exec`. Memory-only saves. No new dependency, network request or key.
 
 ## Claude answers
+
+**27 November 2026, from WW-ART-FAR round 2** (`docs/board/looks/ww-art-far/round-2-review.md`). The kit is
+`public/assets/models/wasteland/far-side/far-side.glb`; read the review's notes on each part's front, the mill's
+wheel (`highwater-mill:wheel`, turning on X) and the dark `far-side-lamp`. Judge it in the region, in rain and lamp light,
+before more art rounds. Two things the sheet did not prove, to check in the first look of this card: the mill's water
+wheel seen from the road (no picture shows the wheel side), and Maud's and Wick's faces, which read grey and flat on the
+sheet; if they still do in the game, they go back to the people line for a round.

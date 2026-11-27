@@ -953,18 +953,6 @@ tasks:
     locks: []
     details: "docs/board/cards/SEA-FINISH.md"
 
-  - id: WW-ART-FAR
-    title: "Art: Highwater, the mill, PRUDENCE and the green"
-    owner: "claude"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    waiting_on: "kyle"
-    needs: ["TUNNEL-TRIAL"]
-    locks: []
-    flag: "wasteland-town"
-    details: "docs/board/cards/WW-ART-FAR.md"
-
   - id: FAR-RAIN
     title: "Rain: the first anyone has seen out here"
     owner: "claude-cloud"
@@ -982,7 +970,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["MACHINE-BORER","WW-ART-FAR"]
+    needs: ["MACHINE-BORER"]
     locks: []
     details: "docs/board/cards/FAR-REGION.md"
 

@@ -1821,3 +1821,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge WW-ART-MULE (Claude session): the Iron Mule, round 2 passes; blender output 445 checks, board, hygiene, build
 - Merge CAR-DRIVE-WASTE (Codex, laptop lane): four Wasteland cars built in the Workshop behind wasteland-cars; reviewed; two review faults fixed at the merge
 - Merge OPEN-LOOK-DACE (Claude session): Dace's places drawn as real things, round 2 passes
+- Merge WW-ART-FAR (Claude session): the Far Side kit, round 2 passes
