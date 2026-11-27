@@ -111,7 +111,9 @@ const reach = {
         posts.length !== (rule.lookouts ?? 0) || posts.some(post => !post) ||
         starts.length !== (rule.riders ?? 0) || starts.some(start => !start) ||
         (posts.length && !(rule.seenAfterSeconds > 0))) return null;
-    if (!rule.moments?.length) return {destination, via, posts, starts};
+    // Named cue moments belong to timed reach; route moments carry places to visit in order.
+    if (!rule.moments?.length || rule.moments.every(moment => typeof moment === 'string'))
+      return {destination, via, posts, starts};
     const moments = rule.moments.map(row => ({...row, point: place(row.at)}));
     const recover = rule.recoverAt && place(rule.recoverAt);
     if (moments.some(row => !row.point || !(row.within > 0)) || rule.recoverAt && !recover ||
