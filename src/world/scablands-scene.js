@@ -43,6 +43,7 @@ import {BUILDINGS} from './open/content/buildings.js';
 import {createOpenView} from './open/open-view.js';
 import {createDustNightLook} from './dust-night-look.js';
 import {dustNightOf} from './dust-night.js';
+import {lightsWeather} from './open/content/lights-on-the-whites-places.js';
 import {saltLeanToShape} from './salt-lean-to-look.js';
 import {BARRICADE_LENGTH} from './jobs/barricade.js';
 import {createEverburnProps} from './everburn-props.js';
@@ -721,7 +722,7 @@ export function createScablandsScene(course,options={}){
   let openLand;   // OPEN-SHARED: the open land's drawn parts, made the first time a job begins in the open
   let peopleSeconds = 0;
   // SHIPS-DECKS: the night storm, made the first time a step asks for it. Its beam and dust keep the view's own clock.
-  let dustNight = null, dustSeconds = 0;
+  let dustNight = null, stormLook = null, dustSeconds = 0;
   const dustHere = {x: 0, y: 0, z: 0};
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
@@ -1004,8 +1005,14 @@ export function createScablandsScene(course,options={}){
         group.add(openLand.group);
       }
       openLand?.update(worldJob, here, presentationDt, drawnShift);
-      const storm = featureFlags.enabled('wasteland-town') ? dustNightOf(state) : null;
-      if (storm && !dustNight) { dustNight = createDustNightLook(storm); group.add(dustNight.group); }
+      const storm = lightsWeather(state?.arena?.worldJob?.open) ??
+        (featureFlags.enabled('wasteland-town') ? dustNightOf(state) : null);
+      if (storm && stormLook !== storm) {
+        dustNight?.dispose();
+        dustNight = createDustNightLook(storm);
+        stormLook = storm;
+        group.add(dustNight.group);
+      }
       if (dustNight) {
         if (storm) dustSeconds += Math.max(0, presentationDt);
         const fighter = state?.onFoot ? state.fighter : null;

@@ -7,6 +7,7 @@ import {sees} from '../../scablands-ways.js';
 import {BRAND_RULE} from '../../jobs/brand-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {nameOf} from '../register.js';
+import {rescueByCar} from './rescue-by-car.js';
 
 const height = (view, point) => (view.missionHeightAt ?? scablandsSurfaceHeightAt)(point.x, point.z);
 const atGround = (view, point) => ({...point, y: height(view, point)});
@@ -23,6 +24,41 @@ export function lookoutSees(post, car, heightAt = scablandsSurfaceHeightAt) {
   return sees(post, car, {heightAt, eye: post.eye ?? 1.8, range: post.range ?? Infinity, step: 4});
 }
 
+// Named moments keep mission presentation in the authored rows.
+function missionMoment(mission, name, requests, events, cue) {
+  for (const [index, row] of [...(mission.lines ?? []), ...(mission.thoughts ?? [])].entries()) {
+    if (row.moment !== name) continue;
+    const text = row.words ? (nameOf(row.speaker) ?? row.speaker) + ': ' + row.words : row.thought;
+    requests.push({type: 'say', lineId: mission.id + '/' + name + '/' + index, text});
+    if (row.cue) events.push({type: 'threadMissionMoment', id: mission.id, moment: name, cue: row.cue});
+  }
+  if (cue) events.push({type: 'threadMissionMoment', id: mission.id, moment: name, cue});
+}
+
+function stepTimedReach(mission, state, view, dt) {
+  const {rule} = mission, {destination, via} = state.route;
+  const next = {...state, elapsed: state.elapsed + dt};
+  const requests = [], events = [];
+  for (const {after, name, cue} of rule.timedMoments ?? []) {
+    if (state.elapsed < after && next.elapsed + 1e-9 >= after) missionMoment(mission, name, requests, events, cue);
+  }
+  if (rule.nearCue && !state.heard && isNear(view.carPosition, destination, rule.nearCue.within)) {
+    next.heard = true;
+    events.push({type: 'threadMissionMoment', id: mission.id, moment: 'near', cue: rule.nearCue.cue, position: destination});
+  }
+  const driving = !view.onFoot && view.carPosition;
+  const late = rule.arrivalAfter && next.elapsed >= rule.arrivalAfter.seconds;
+  const reached = driving && isNear(view.carPosition, destination, late ? rule.arrivalAfter.within ?? rule.within : rule.within);
+  const stopped = reached && Math.abs(view.carSpeedMph ?? 0) <= 2;
+  next.stoppedFor = stopped ? state.stoppedFor + dt : 0;
+  if (reached && (!rule.holdSeconds || next.stoppedFor + 1e-9 >= rule.holdSeconds)) {
+    next.followed = true;
+    if (!state.followed && via) missionMoment(mission, 'turn-back', requests, events);
+  }
+  const returned = next.followed && (!via || driving && isNear(view.carPosition, via, rule.viaWithin));
+  const timedOut = rule.failure && next.elapsed + 1e-9 >= rule.limitSeconds;
+  return {state: next, requests, events, outcome: returned ? (late ? rule.arrivalAfter.outcome : rule.success) : timedOut ? rule.failure : null};
+}
 
 // Ordered route moments are optional. Ordinary reach missions keep their lookout/via rules.
 function reachMoments(mission, state, view) {
@@ -68,14 +104,16 @@ const reach = {
     const {rule = {}, by} = mission;
     if (by === 'car' && (rule.destinations || rule.breakout)) return prepareRoad(rule, place);
     const destination = place(rule.destination);
-    const via = rule.via && place(rule.via);
+    const via = (rule.returnTo ?? rule.via) && place(rule.returnTo ?? rule.via);
     const posts = (rule.lookoutSpots ?? []).map(place);
     const starts = (rule.riderStarts ?? []).map(place);
-    if (by !== 'car' || !destination || !(rule.within > 0) || (rule.via && (!via || !(rule.viaWithin > 0))) ||
+    if (by !== 'car' || !destination || !(rule.within > 0) || ((rule.via || rule.returnTo) && (!via || !(rule.viaWithin > 0))) ||
         posts.length !== (rule.lookouts ?? 0) || posts.some(post => !post) ||
         starts.length !== (rule.riders ?? 0) || starts.some(start => !start) ||
         (posts.length && !(rule.seenAfterSeconds > 0))) return null;
-    if (!rule.moments?.length) return {destination, via, posts, starts};
+    // Named cue moments belong to timed reach; route moments carry places to visit in order.
+    if (!rule.moments?.length || rule.moments.every(moment => typeof moment === 'string'))
+      return {destination, via, posts, starts};
     const moments = rule.moments.map(row => ({...row, point: place(row.at)}));
     const recover = rule.recoverAt && place(rule.recoverAt);
     if (moments.some(row => !row.point || !(row.within > 0)) || rule.recoverAt && !recover ||
@@ -89,14 +127,15 @@ const reach = {
     if (moments) return {state: {route, momentIndex: 0, warned: false},
       requests: [marker(view, moments[0].point, moments[0].within)]};
     return {
-      state: {route, sight: posts.map(() => 0), followed: !via, seen: false, sentRiders: false},
+      state: mission.rule.success ? {route, elapsed: 0, stoppedFor: 0, followed: false, heard: false} :
+        {route, sight: posts.map(() => 0), followed: !via, seen: false, sentRiders: false},
       requests: [
         ...(posts.length ? [lookoutsRequest(mission, posts.map(post => atGround(view, post)))] : []),
         {type: 'solids', id: mission.id + '/lookouts', solids: posts.filter(post => post.heap).map((post, i) => ({
           id: mission.id + '/heap/' + i, kind: 'wreck', shape: 'box', x: post.x, z: post.z,
           heading: post.heading ?? 0, base: height(view, post), ...post.heap,
         }))},
-        marker(view, via ?? destination, via ? mission.rule.viaWithin : mission.rule.within),
+        ...(mission.rule.marker === false ? [] : [marker(view, via ?? destination, via ? mission.rule.viaWithin : mission.rule.within)]),
       ],
     };
   },
@@ -105,6 +144,7 @@ const reach = {
     if (state.route.moments) return reachMoments(mission, state, view);
     if (state.route.road) return stepRoad(mission, state, view, dt);
     const {rule} = mission;
+    if (rule.success) return stepTimedReach(mission, state, view, dt);
     const {destination, via, posts, starts} = state.route;
     const car = view.carPosition;
     const driving = !view.onFoot && car;
@@ -407,19 +447,60 @@ const truckRequest = (mission, state, view) => ({type: 'solids', id: mission.id 
   {id: mission.id + '/truck', kind: 'wreck', shape: 'box', x: state.truck.x, z: state.truck.z,
     halfX: 1.5, halfZ: 4, height: 3.4, base: height(view, state.truck), heading: state.truck.heading},
 ]});
+function walkingEscortRoute(rule, place) {
+  const start = place(rule.pickup), home = place(rule.home);
+  return start && home && rule.stretches > 0 && rule.secondsEach > 0 && rule.followersLoseLampsMetres > 0
+    ? {start, home, path: [start, home], posts: []} : null;
+}
+
+function stepWalkingEscort(mission, state, view, dt) {
+  const {rule} = mission, {route} = state;
+  const requests = [], events = [];
+  const car = view.carPosition;
+  const stopped = car && !view.onFoot && Math.abs(view.carSpeedMph ?? 0) <= 2;
+  const gap = distance(car, state.walkers);
+  const withinLamps = car && !view.onFoot && gap <= rule.followersLoseLampsMetres;
+  const next = {...state};
+  if (!withinLamps && !state.lampsLost && !rule.guide)
+    missionMoment(mission, 'lamps-lost', requests, events);
+  next.lampsLost = !withinLamps;
+  // Each playable stretch is walked at about two knots; the long middle is passed over.
+  const stretch = rule.secondsEach, total = rule.stretches * stretch;
+  const length = distance(route.start, route.home);
+  const pace = Math.min(1, length / total);
+  if (withinLamps || rule.guide) next.walked = Math.min(total, state.walked + dt);
+  const middle = (length - total * pace) / Math.max(1, rule.stretches - 1);
+  const passed = Math.min(rule.stretches - 1, Math.floor((next.walked + 1e-9) / stretch));
+  const metBeforeSkip = state.walked < stretch && next.walked + 1e-9 >= stretch && rule.stretches > 1;
+  if (metBeforeSkip) {
+    missionMoment(mission, 'between-stretches', requests, events);
+    missionMoment(mission, 'second-stretch', requests, events);
+  }
+  const along = next.walked * pace + passed * middle;
+  next.walkers = escortPoint(route.path, along);
+  if (metBeforeSkip) requests.push({type: 'threadCarPosition', place: escortPoint(route.path, along + 6)});
+  if (passed && stopped && view.interact && gap <= (rule.pickupWithin ?? 8)) next.riderPickedUp = true;
+  const arrived = next.walked + 1e-9 >= total && isNear(car, route.home, rule.homeWithin ?? 40);
+  if (arrived && rule.usesTheNight) events.push({type: 'threadMissionUsedNight', id: mission.id});
+  return {state: next, requests, events, outcome: arrived ? (next.riderPickedUp ? rule.success : rule.walkedIn) : null};
+}
+
 const escort = {
   prepare(mission, place) {
+    if (mission.rule?.stretches) return walkingEscortRoute(mission.rule, place);
     const riders = prepareRiders(mission, place), path = place(mission.rule?.path);
     if (!riders || !Array.isArray(path) || path.length < 2 || path.some(point => !point) ||
         !(mission.rule?.load?.count > 0)) return null;
     return {...riders, path, length: path.slice(1).reduce((sum, point, i) => sum + distance(path[i], point), 0)};
   },
   begin(mission, route, view) {
+    if (mission.rule.stretches) return {state: {route, walkers: route.start, walked: 0, lampsLost: false, riderPickedUp: false}};
     const state = {route, elapsed: 0, metres: 0, truck: escortPoint(route.path, 0), speed: 0,
       tyres: mission.rule.load.count, hooks: {}, wrecked: [], moments: [], sentRiders: false};
     return {state, requests: [truckRequest(mission, state, view)]};
   },
   step(mission, state, view, dt) {
+    if (mission.rule.stretches) return stepWalkingEscort(mission, state, view, dt);
     const next = {...state, hooks: {...state.hooks}, wrecked: [...state.wrecked], moments: [...state.moments],
       elapsed: state.elapsed + dt};
     const requests = [], events = [];
@@ -463,6 +544,7 @@ const escort = {
     return {state: next, requests, events, outcome};
   },
   end(mission, state, view) {
+    if (mission.rule.stretches) return missionEnd(mission, state, view);
     return [...missionEnd(mission, state, view), {type: 'solids', id: mission.id + '/truck', solids: []},
       ...(view.combatWrecking && (view.missionHome ?? mission.rule.home)
         ? [{type: ROAD_REQUEST, action: 'recover-car', at: view.missionHome ?? mission.rule.home}] : [])];
@@ -816,4 +898,5 @@ export const MISSION_KINDS = Object.freeze({
   market: Object.freeze(market),
   lookout: Object.freeze(lookout),
   squeeze: Object.freeze(squeeze),
+  rescue: Object.freeze(rescueByCar),
 });

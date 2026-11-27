@@ -12,6 +12,8 @@ const site = (id, positions, rules) => ({
   ...rules,
 });
 
+export const BUOY_POSITIONS = [['ships-in-sand', 2600, 150], ['ships-in-sand', 3500, 250], ['ships-in-sand', 2900, 700]];
+
 export const LAND_SITES = Object.freeze(requireSound([
   site('glasshouse', [['ships-in-sand', 2000, 700], ['dead-mall', -1500, -2150], ['tin-town', -200, 1900]],
     {foundWithin: 160, tell: 'dusk-smoke', tellWithin: 1500, leader: 'marigold', meeting: 'marigold', ashWary: true}),
@@ -25,6 +27,7 @@ export const LAND_SITES = Object.freeze(requireSound([
     leader: 'gasket', meeting: BUS_RING.meeting, hostileTo: ['glasshouse'], storyOnly: true, storyChoices: true}),
   TOLL_SITE,
   site(POCKET_ID, POCKET_POSITIONS, {foundWithin: 80, tell: 'lamp', tellWithin: 4000, storyChoices: true}),
+  site('bell-buoy', BUOY_POSITIONS, {foundWithin: 24, tell: 'bell', tellWithin: 400, storyChoices: true}),
 ], checkSite, 'Open Scablands sites'));
 
 export const CAMP_SITES = Object.freeze(LAND_SITES.filter(site => site.kind === 'camp'));

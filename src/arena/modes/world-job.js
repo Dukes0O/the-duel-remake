@@ -2180,6 +2180,7 @@ export function stepWorldJob(duel, dt) {
       deferCheckpointRecovery, threadSearchCast: worldJob.threadSearchCast, missionLookoutPosts: threadMission?.state.route.posts,
       roadEncounter: worldJob.open.parts.checkpoints?.encounter,
       ...(threadMission?.mission.kind === 'squeeze' ? {missionWeapons: state.combat?.cooldowns} : {}),
+      ...(checkpointsEnabled && {threadMission}),
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
       campSiteState: worldJob.open.parts.sites,
       serviceSheds: worldJob.serviceSheds,
@@ -2192,7 +2193,8 @@ export function stepWorldJob(duel, dt) {
     worldJob.ashHit = false;
     worldJob.open = openStep.open;
     if (openStep.leave) worldJob.roamExit = openStep.leave;
-    view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave};
+    view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave,
+      ...(checkpointsEnabled && openRoam && {lightsLadder: worldJob.open.world.ledger.made.includes('way/patience-ladder')})};
   }
   const next = stepJob(worldJob.job, view, dt);
   if (worldJob.open) {
@@ -2331,7 +2333,7 @@ export function stepWorldJob(duel, dt) {
       if(event.ladderId)Object.assign(state.fighter,{airHeight:0,verticalSpeed:0});
     }
     if(event.type==='deckGround'&&state.fighter)putFighterOnGround(duel,state.fighter,event.position);
-    if(currentStep?.climbs&&DECK_CUES[event.type])duel.emit({arenaTell:{id:'deck-climb', targetId:'player', seconds:0,
+    if((currentStep?.climbs || view.open?.lightsLadder)&&DECK_CUES[event.type])duel.emit({arenaTell:{id:'deck-climb', targetId:'player', seconds:0,
       cue:DECK_CUES[event.type], position:state.fighter ? {x:state.fighter.x, y:state.fighter.y, z:state.fighter.z} : {...point}}});
     if (event.type === 'done') {
       if (currentStep?.arrivalHold) {
@@ -2373,11 +2375,14 @@ export function stepWorldJob(duel, dt) {
     // OPEN-CHECKPOINTS: carry out the part's road requests in the same order as its lines.
     for (const request of openStep.requests.filter(request => !isTalk(request))) {
       if (checkpointsEnabled && request.type === 'threadCarPosition' && !state.onFoot) {
-        const at = duel.course.nearest(request.place.x, request.place.z, state.s);
-        const ground = duel.course.groundAt(at.s, at.lateral);
-        Object.assign(state, {s: at.s, prevS: at.s, lateral: at.lateral, prevLateral: at.lateral,
-          groundHeight: ground.y, prevGroundHeight: ground.y, speedMph: 0, headingError: 0, combatWrecking: false,
-          armor: request.armour});
+        const {place} = request;
+        const nearest = duel.course.nearest(place.x, place.z, state.s);
+        const ground = duel.course.groundAt(nearest.s, nearest.lateral);
+        Object.assign(state, {s: nearest.s, prevS: nearest.s, lateral: nearest.lateral, prevLateral: nearest.lateral,
+          groundHeight: ground.y, prevGroundHeight: ground.y, speedMph: 0, pushVelocity: 0,
+          airHeight: 0, verticalSpeed: 0,
+          headingError: Number.isFinite(place.heading) ? place.heading - duel.course.at(nearest.s).heading : 0,
+          ...(request.armour !== undefined && {combatWrecking: false, armor: request.armour})});
       } else if (checkpointsEnabled && request.type === 'threadFootPosition' && state.onFoot && state.fighter) {
         putFighterOnGround(duel, state.fighter, request.place);
       } else if (checkpointsEnabled && request.type === 'missionLookouts') {
@@ -2438,7 +2443,7 @@ function putFighterOnGround(duel, fighter, at) {
 function standOnDeck(duel, next, previousStepState) {
   const fighter = duel.state.onFoot ? duel.state.fighter : null;
   if (!fighter) return;
-  const step = next.steps[next.stepIndex], plate = !next.done && step?.climbs ? next.stepState.plate ?? null : null;
+  const step = next.steps[next.stepIndex], plate = !next.done && (step?.climbs || step?.kind === 'roam') ? next.stepState.plate ?? null : null;
   if (plate) { fighter.deckPlate = plate; return; }
   if (!fighter.deckPlate) return;
   const left = previousStepState?.plate === fighter.deckPlate && next.stepState.plate !== fighter.deckPlate && !next.done &&

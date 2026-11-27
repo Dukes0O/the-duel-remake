@@ -7,6 +7,7 @@ import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
 import {applySaltStormFog} from './world/the-whites-scene.js';
+import {LIGHTS_ID, lightsWeather} from './world/open/content/lights-on-the-whites-places.js';
 import {dustNightOf, applyDustNightFog} from './world/dust-night-look.js'; // SHIPS-DECKS: the night storm, view only
 import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
@@ -878,8 +879,13 @@ export function attachRenderer(host, app) {
     yardPresentation?.setRexOrnament?.(app.bowlRexInYard?.() === true); // BOWL-REX-FIGHT
     const chapter = !menu ? st.arena?.worldJob?.night2 : null;
     if (litChapter !== chapter) { litChapter = chapter; chapterNightShare = 0; }
-    const dustNight = !menu && (app._switches?.() ?? app.duel.featureFlags).enabled('wasteland-town') ? dustNightOf(st) : null;
-    chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night || !!dustNight, st.paused ? 0 : dt);
+    const open = !menu && st.arena?.worldJob?.open;
+    const choices = open?.parts?.threads?.places;
+    const lightsNight = choices?.checkpointsEnabled && choices.partOfDay === 'dark' &&
+      !!open.world.open.threads[LIGHTS_ID] && !open.world.open.threads[LIGHTS_ID].end;
+    const dustNight = lightsWeather(open) ??
+      (!menu && (app._switches?.() ?? app.duel.featureFlags).enabled('wasteland-town') ? dustNightOf(st) : null);
+    chapterNightShare = night2LightBlend(chapterNightShare, chapter?.night || lightsNight || !!dustNight, st.paused ? 0 : dt);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st),
       chapterNight: chapterNightShare,

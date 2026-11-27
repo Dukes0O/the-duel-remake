@@ -38,7 +38,10 @@ import {TOLL_GATE, TOLL_ID, TOLL_SITE, stagedToll, tollPlace, tollTalk, tollOffe
   tollGateStanding, tollGateSolids, tollIgnored, tollPoleUp, atTollPerson,
   tollAfterEnd, tollParkedCars, unusedTollPass, pastTollPole} from '../content/mall-road-toll-places.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway, mallRoadToll, radioHillVoice], checkThread, 'Open Scablands storylines');
+import {lightsLater} from '../content/talk-lights.js';
+import {LIGHTS_ID, lightsStory, lightsPlace, lightsRoad, lightsGo, lightsMission} from '../content/lights-on-the-whites-places.js';
+
+export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway, mallRoadToll, radioHillVoice, lightsStory], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -57,14 +60,17 @@ function withPlaces(context) {
       if (toll) return toll;
       const radio = view.checkpointsEnabled && Array.isArray(place) && ['radio-hill', POCKET_ID].includes(place[0])
         && radioPlace(place, position('radio-hill'), position(POCKET_ID));
-      const point = radio || runawayPlace(place, cast) || mallPlace(place) || placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
+      const point = lightsPlace(place, world.open.landSeed) || radio || runawayPlace(place, cast) || mallPlace(place) || placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
-    allowsStart: thread => thread.id !== RADIO_ID || view.checkpointsEnabled && view.openRoam && view.partOfDay === 'dark' &&
-      !view.onFoot && view.onRoad && witnessSign({sign: thread.sign, at: position('radio-hill'), call: {range: thread.notes.sign.onRoadWithin}}, view, 0, 0).witnessed,
+    allowsStart: thread => (thread.id !== LIGHTS_ID || (view.checkpointsEnabled && view.openRoam && !view.missionActive && view.outingAvailable !== false &&
+      view.partOfDay === 'dark' && !view.onFoot && lightsRoad(playerPoint(view)) && !context.holds?.some(hold => hold.holder.startsWith('thread:')))) &&
+      (thread.id !== RADIO_ID || view.checkpointsEnabled && view.openRoam && view.partOfDay === 'dark' &&
+      !view.onFoot && view.onRoad && witnessSign({sign: thread.sign, at: position('radio-hill'), call: {range: thread.notes.sign.onRoadWithin}}, view, 0, 0).witnessed),
+    dormant: (thread, record) => thread.id === LIGHTS_ID && record?.beat === 'shelved',
     signFor: thread => thread === runaway ? RUNAWAY_SIGN : thread.sign,
     allowsCast: (thread, role, id, cast) => thread === marketDay ? allowsMarketCast(role, id, cast, world) :
       role === 'camp' && thread === dryPump ?
@@ -86,6 +92,7 @@ export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
 
 export function openThreadSigns(context) {
   const threads = OPEN_THREADS.filter(thread => (thread !== runaway || context.view?.runawayVisible) &&
+    (thread.id !== LIGHTS_ID || context.view?.checkpointsEnabled === true) &&
     (thread.id !== RADIO_ID || context.view?.checkpointsEnabled === true) &&
     (thread.id !== HAULER_ID || context.view?.checkpointsEnabled !== false) &&
     (thread.id !== TOLL_ID || context.view?.checkpointsEnabled === true) &&
@@ -126,6 +133,9 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const beat = isRunaway ? runawayBeat(record, context) : hill ? radioBeat(record.beat, world) : thread.beats[record.beat];
   const beatId = beat?.id ?? record.beat;
   const hauling = thread.id === HAULER_ID;
+  const lights = thread.id === LIGHTS_ID;
+  const atDeck = view.onFoot && view.fighter?.deckPlate === 'whites-patience-deck';
+  const byCar = lights && !view.onFoot && beatId !== 'aboard';
   const visit = hauling && haulerMarked(world, 'second-truck') ? '/again' : '';
   if (state.visit !== visit) { state.reading = {}; state.mending = 0; state.lifting = false; }
   state.visit = visit;
@@ -147,10 +157,15 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const cue = (id, sound) => { if (sound) out.events.push({type: 'threadCue', id, cue: sound}); };
   const move = (id, row, effects = [], authoredEffects = row.effects) => {
     const cast = row.cast ? {...record.cast, ...row.cast} : undefined;
-    choose(id, [...effects, ...rule.effects(authoredEffects, cast), ...rule.move(row.next, cast)]);
+    const next = rule.move(row.next, cast);
+    // Some authored end names also have a report scene on the way out.
+    const travel = lights ? next.map(effect => effect.end && effect.end !== beatId && thread.beats[effect.end] ?
+      {type: 'thread', id: thread.id, to: effect.end} : effect) : next;
+    choose(id, [...effects, ...rule.effects(authoredEffects, cast), ...travel]);
   };
 
   if (!beat) return out;
+  if (lights && beatId === 'shelved') return out;
   if (hauling && beatId === 'between' && !haulerMarked(world, 'second-truck')) {
     if (!state.clearedLookouts) {
       out.requests.push({type: 'missionLookouts', id: HAULER_ID + '/sign', group: 'road-rats', posts: []});
@@ -263,7 +278,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const exploring = entered && view.onFoot && beat.explore?.length && rule.ask({reach: thread.sign.at, within: 45});
   if (staging && !atTalk && !exploring) return out;
   if (opening && isHeld(context.holds, 'signs') && !ownedHold) return out;
-  const approachedCold = !hill && !isRunaway && opening && beat.when === 'sign-seen' && !isFresh(thread, signRecord(thread, record, world), world.ledger.night) &&
+  const approachedCold = !lights && !hill && !isRunaway && opening && beat.when === 'sign-seen' && !isFresh(thread, signRecord(thread, record, world), world.ledger.night) &&
     rule.ask({reach: thread.sign.at});
   if (hauling && beatId === 'gate' && !entered &&
       (!haulerAtGate(world) || distanceBetween(playerPoint(view), haulerGate) > 40)) return out;
@@ -277,10 +292,11 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const returningToRadio = hill && beatId === 'second-voice' && !state.beatSeconds['first-call'] && rule.has('entered', 'first-call');
   const tollPayment = toll && beatId === 'paying';
   const ready = approachedCold || returningToRadio || rule.ask(beat.when);
-  if ((!entered || startingMission || returning || tollPayment) && ready) {
+  if ((!entered || startingMission || returning || tollPayment) && (!lights || beatId !== 'aboard' || atDeck) && ready) {
     if (mission) {
       if (!startingMission) return out;
       const authored = hill ? radioMission(mission, context, record) : hauling ? haulerMission(mission, world) :
+        lights ? lightsMission(mission, world, state, seconds) :
         {...mission, enemy: resolveRoles(mission.enemy, record.cast)};
       const route = prepareThreadMission(authored, place => context.placeAt(place, record.cast));
       if (!route) return out;
@@ -308,7 +324,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     (beat.lines ?? []).filter(row => (!isRunaway || !(beat.walked || beat.choices?.some(choice => choice.by !== 'go'))) && rule.ask(row.when) && !(opening && thread.sign.kind === 'smoke' && row.radio)).forEach((row, index) => line(`${beatId}/${index}`, row));
     if (!approachedCold) cue(beatId, beat.cue ?? (opening && !(hill && !beat.choices?.length) ? thread.sign.cue : undefined));
     if (toll) (beat.cues ?? []).forEach((sound, index) => cue(beatId + '/' + index, sound));
-    if (!beat.walked && beat.next && !beat.choices?.length && !beat.mission && !beat.explore?.length && !beat.questions?.length && !beat.mend && !beat.mends?.length)
+    if (!lights && !beat.walked && beat.next && !beat.choices?.length && !beat.mission && !beat.explore?.length && !beat.questions?.length && !beat.mend && !beat.mends?.length)
       entry.push(...rule.move(beat.next));
     const paidCount = tollPayment ? world.ledger.marks.filter(id => id.startsWith(TOLL_ID + '/paid-')).length : 0;
     const enteredId = hill ? beatId + '/' + world.open.journal.filter(row => row.type === 'thread' && row.key === RADIO_ID).length : beatId + (tollPayment ? '/' + paidCount : '');
@@ -568,13 +584,13 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const radio = isRunaway ? null : radioScene(thread, beat, rule);
   const asked = new Set([
     ...(completed.find(event => event.id === `${thread.id}/radio-done`)?.asked ?? []),
-    ...(view.jobEvents ?? []).filter(event => event.type === 'openTalkQuestion' && event.scene === radio?.id).map(event => event.id),
+    ...(view.jobEvents ?? []).filter(event => event.type === 'openTalkQuestion' && event.scene === (lights ? `${thread.id}/radio` : radio?.id)).map(event => event.id),
   ]);
   for (const question of radio?.questions ?? []) if (asked.has(question.id)) {
     const authored = beat.questions.find(row => row.id === question.id);
     once('asked', question.id, rule.effects(authored.effects));
   }
-  if (!asked.size && radio && atTalk && rule.ask(beat.when) && (view.onFoot || hauling && beatId.endsWith('-road')) && decision.interact) {
+  if (!asked.size && radio && atTalk && rule.ask(beat.when) && (view.onFoot || byCar || hauling && beatId.endsWith('-road')) && decision.interact && !lights) {
     decision.interact = false;
     if (view.openRoam) out.requests.push({type: 'talk', id: radio.id, scene: radio, speaker: radio.questions[0].lines[0]?.speaker, radio: true});
     else {
@@ -593,7 +609,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     });
     (beat.mission.thoughts ?? []).forEach((row, index) => {
       const thought = typeof row === 'string' ? {thought: row} : row, id = `${beatId}-mission-${index}`;
-      if (rule.ask(thought.when) && !rule.has('thought', id)) { once('thought', id); text(id, thought.thought); }
+      if ((!lights || !thought.moment) && rule.ask(thought.when) && !rule.has('thought', id)) { once('thought', id); text(id, thought.thought); }
     });
     return out;
   }
@@ -618,17 +634,29 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
 
   const available = beat.choices?.filter(row => (!rule.has('chose', row.id) || !hauling && row.by === 'do' && row.next) && rule.ask(row.when)) ?? [];
   const spoken = available.filter(row => row.by === 'say' || !hauling && row.by === 'do' || !row.by);
-  if (spoken.length && atTalk && view.onFoot && view.openRoam && view.checkpointsEnabled && decision.interact) {
+  const lightsTalk = lights && (byCar || atDeck && rule.ask({reach: ['ships-in-sand', 'whites-bridge-wing'], within: 4})) && (beatId !== 'ships' || rule.ask(beat.when)) &&
+    (beatId !== 'crew' && beatId !== 'crew-after-sounding' || rule.ask({reach: ['ships-in-sand', 'whites-crew'], within: 100}));
+  if ((spoken.length || lightsTalk && radio) && atTalk && (lights ? lightsTalk : view.onFoot) && view.openRoam && view.checkpointsEnabled && decision.interact) {
     decision.interact = false;
     const id = `${thread.id}/${beatId}/decision`;
-    const choices = spoken.map(row => ({id: `${id}/${row.id}`, words: rule.line(row.words).replace(/([^.!?])$/, '$1.'),
+    const choices = spoken.map(row => ({id: `${id}/${row.id}`, words: lights ? rule.line(row.words) : rule.line(row.words).replace(/([^.!?])$/, '$1.'),
       ...(row.plain ? {detail: rule.line(row.plain)} : {})}));
-    out.requests.push({type: 'talk', id, scene: {id, choices}, speaker: 'you'});
+    if (lights && radio) {
+      choices.push(...radio.choices);
+      out.requests.push({type: 'talk', id: radio.id, scene: {...radio, choices},
+        speaker: 'you', radio: true, threadPriority: true});
+    } else {
+      const lines = lights && beatId === 'aboard' ? beat.notes.watch : undefined;
+      out.requests.push({type: 'talk', id, scene: {id, choices, ...(lines && {lines})},
+        speaker: 'you', ...(lights && {radio: true, threadPriority: true})});
+    }
   }
-  const option = available.find(row => hauling && row.by === 'do' ? haulerAction(row, context) : row.by === 'go' ? !view.onFoot :
-    ['say', 'do', undefined].includes(row.by) ? atTalk && view.onFoot && completed.some(event => event.id === `${thread.id}/${beatId}/decision/${row.id}`) :
+  const option = available.find(row => hauling && row.by === 'do' ? haulerAction(row, context) : row.by === 'go' ? !view.onFoot &&
+      (!lights || lightsGo(row, playerPoint(view), world.open.landSeed)) :
+    ['say', 'do', undefined].includes(row.by) ? atTalk && (lights ? lightsTalk : view.onFoot) && completed.some(event => event.id === `${thread.id}/${beatId}/decision/${row.id}`) :
       completed.some(event => event.id === row.id));
-  if (!beat.choices?.length && beat.next && (hauling || !beat.questions?.length || completed.some(event => event.id === `${thread.id}/radio-done`))) {
+  if (lights && !beat.choices?.length && beat.next) move('next/' + beatId, {next: beat.next});
+  if (!lights && !beat.choices?.length && beat.next && (hauling || !beat.questions?.length || completed.some(event => event.id === `${thread.id}/radio-done`))) {
     const waitingGate = hauling && beatId === 'gate' &&
       (!haulerAtGate(world) || distanceBetween(playerPoint(view), haulerGate) <= 45);
     const effects = waitingGate ? [] : rule.move(beat.next);
@@ -670,15 +698,18 @@ export function createThreadsPart(threads) {
           sitePositions: view.sitePositions, checkpointsEnabled: view.checkpointsEnabled === true}};
       const enabled = view.checkpointsEnabled === true;
       const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID &&
-        thread.id !== HAULER_ID && thread.id !== RADIO_ID && thread.id !== TOLL_ID && thread !== marketDay && thread !== runaway);
+        thread.id !== HAULER_ID && thread.id !== LIGHTS_ID && thread.id !== RADIO_ID && thread.id !== TOLL_ID && thread !== marketDay && thread !== runaway);
       if (enabled) state.places.dryPumpEnabled = true;
       const canStartRunaway = runawayCanStart(context);
       const region = canStartRunaway ? 'runaway-tin-town' : regionId(view);
       const visit = localCampVisit(context);
       const choices = visit ? [{id: visitId(visit.id, night), effects: [mark(visitId(visit.id, night))]}] : [];
-      if (!isHeld(holds, 'signs') && region && !state.regions.includes(region)) {
-        choices.push(...directThreads(availableThreads.filter(thread => thread !== runaway || canStartRunaway), context, `region-${region}`));
-        state.regions.push(region);
+      const lightsRecord = world.open.threads[LIGHTS_ID];
+      const roadVisit = enabled && availableThreads.includes(lightsStory) && (!lightsRecord || context.dormant(lightsStory, lightsRecord)) &&
+        context.allowsStart(lightsStory);
+      if (!isHeld(holds, 'signs') && (roadVisit || region && !state.regions.includes(region))) {
+        choices.push(...directThreads(availableThreads.filter(thread => thread !== runaway || canStartRunaway), context, roadVisit ? 'salt-road' : `region-${region}`));
+        if (region && !state.regions.includes(region)) state.regions.push(region);
       }
       // The radio has its own opportunity when dusk gives way to darkness, even in
       // a region already visited by day. Recheck on a road until the nightly draw runs.
@@ -799,7 +830,15 @@ export function createThreadsPart(threads) {
           }
         }
         const laterRule = threadRule(thread, threadContext, record);
-        const laterRows = thread === runaway ? [] : thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.id === TOLL_ID ? MALL_ROAD_TALK : thread.later ?? [];
+        if (thread.id === LIGHTS_ID) {
+          const report = lightsLater(world, playerPoint(view), view, signs, distanceBetween, context.placeAt);
+          if (report) {
+            report.lines.forEach((row, index) => requests.push({type: 'say', lineId: LIGHTS_ID + '/' + report.id + '/' + index,
+              text: (row.as ?? nameOf(row.speaker) ?? row.speaker) + ': ' + row.words}));
+            choices.push({id: LIGHTS_ID + '/later/' + report.id, effects: [mark(threadMark(LIGHTS_ID, 'later', report.id))]});
+          }
+        }
+        const laterRows = thread === runaway || thread.id === LIGHTS_ID ? [] : thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.id === TOLL_ID ? MALL_ROAD_TALK : thread.later ?? [];
         const later = laterRows.find(row => {
           if (thread.id === TOLL_ID && row.by === 'sumps-rider') return false;
           if (!view.onFoot || !laterRule.ask(row.when) || laterRule.has('later', row.id)) return false;
@@ -852,7 +891,7 @@ export function createThreadsPart(threads) {
           continue;
         }
         const first = record.beat === firstBeat(thread);
-        const sight = first ? witnessSign(signs.find(sign => sign.id === thread.id), view, previous.seen?.[thread.id] ?? 0, dt) : null;
+        const sight = first ? witnessSign(signs.find(sign => sign.id === thread.id), {...view, seconds: context.seconds}, previous.seen?.[thread.id] ?? 0, dt) : null;
         if (sight?.seconds) state.seen[thread.id] = sight.seconds;
         const details = {...previous.progress?.[thread.id], beatSeconds: {...state.beatSeconds[thread.id]},
           reading: {...previous.progress?.[thread.id]?.reading},

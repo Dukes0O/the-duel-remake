@@ -18,6 +18,7 @@ import {RUNAWAY_PLACES} from './content/runaway-places.js';
 import {sitePosition} from './site-rule.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
 import {createHaulerLook} from './looks/stranded-hauler-look.js';
+import {createLightsLook} from './looks/lights-on-the-whites-look.js';
 import {RADIO_ID, POCKET_ID, RADIO_MARK, radioMarked, radioPlace, pocketWrecks} from './content/radio-hill-voice-places.js';
 import {heistLampPose} from './content/mission-kinds.js';
 import {lookoutHeading} from './content/mission-kinds.js';
@@ -354,7 +355,7 @@ export function createSignView() {
   group.add(campHeap);
   const heaps = new Map();
   const stalls = new Map();
-  let dryPumpLook, tollLook, tollBuggy, tollLamp;
+  let dryPumpLook, lightsLook, tollLook, tollBuggy, tollLamp;
   const flare = lookoutFlare();
   group.add(flare);
   let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
@@ -513,6 +514,11 @@ export function createSignView() {
       if (view.dryPumpEnabled && open.world.open.threads['dry-pump'] && !dryPumpLook)
         dryPumpLook = makeDryPumpLook(group);
       dryPumpLook?.update(open, here, (place, cast) => placeForThread(place, cast, view), drawnShift);
+      if (view.checkpointsEnabled && !lightsLook) {
+        lightsLook = createLightsLook();
+        group.add(lightsLook.group);
+      }
+      lightsLook?.update(open, signs.find(({sign}) => sign.kind === 'lights'), here, drawnShift);
       const columns = signs.filter(({sign, at}) => sign.kind === 'smoke' && at);
       const kept = new Set(columns.map(({id}) => id));
       for (const [id, mesh] of smoke) if (!kept.has(id)) disposeSmoke(id, mesh);
@@ -549,6 +555,7 @@ export function createSignView() {
     dispose() {
       hauler.dispose();
       flagSite.dispose();
+      lightsLook?.dispose();
       radio.dispose();
       if (tollBuggy) disposeMeshes(tollBuggy);
       if (tollLamp) disposeMeshes(tollLamp);

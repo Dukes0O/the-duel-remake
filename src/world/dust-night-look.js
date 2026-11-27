@@ -14,7 +14,8 @@ export function applyDustNightFog(scene, weather, dt, renderer = null) {
   if (!weather || !scene?.fog) return false;
   scene.fog.near = Math.min(scene.fog.near, weather.fogNear);
   scene.fog.far = Math.min(scene.fog.far, weather.fogFar);
-  scene.fog.color.copy(DUST_FOG);
+  if (weather.fogColor === DUST_NIGHT.fogColor) scene.fog.color.copy(DUST_FOG);
+  else scene.fog.color.setHex(weather.fogColor);
   if (renderer) renderer.toneMappingExposure = Math.min(renderer.toneMappingExposure, weather.exposure);
   return true;
 }
@@ -42,34 +43,37 @@ export function createDustNightLook(weather = DUST_NIGHT) {
   // The beam: a long open cone from the lamp, bright at the lamp and fading to nothing at its far end. It is not fogged, because
   // a real beam lights the dust it passes through; that is how it reads in a storm.
   // Narrow at the lamp (its foot, at the origin once moved) and 52 m across at its far end, laid along +z.
-  const beamGeometry = keep(new THREE.CylinderGeometry(26, .5, weather.beamLength, 24, 64, true));
-  beamGeometry.translate(0, weather.beamLength / 2, 0);
-  beamGeometry.rotateX(Math.PI / 2);
-  const along = beamGeometry.attributes.position, shade = [];
-  for (let i = 0; i < along.count; i++) {
-    // It also fades in over its first 18 m, so a camera beside the lamp (in the lamp room) is not inside a bright cone.
-    const share = THREE.MathUtils.clamp(along.getZ(i) / weather.beamLength, 0, 1);
-    const fade = THREE.MathUtils.smoothstep(along.getZ(i), 0, 18) * (1 - share) ** 1.6;
-    shade.push(fade, fade * .94, fade * .78);
+  let turning;
+  if (weather.beam !== false) {
+    const beamGeometry = keep(new THREE.CylinderGeometry(26, .5, weather.beamLength, 24, 64, true));
+    beamGeometry.translate(0, weather.beamLength / 2, 0);
+    beamGeometry.rotateX(Math.PI / 2);
+    const along = beamGeometry.attributes.position, shade = [];
+    for (let i = 0; i < along.count; i++) {
+      // It also fades in over its first 18 m, so a camera beside the lamp (in the lamp room) is not inside a bright cone.
+      const share = THREE.MathUtils.clamp(along.getZ(i) / weather.beamLength, 0, 1);
+      const fade = THREE.MathUtils.smoothstep(along.getZ(i), 0, 18) * (1 - share) ** 1.6;
+      shade.push(fade, fade * .94, fade * .78);
+    }
+    beamGeometry.setAttribute('color', new THREE.Float32BufferAttribute(shade, 3));
+    const beamMaterial = keep(new THREE.MeshBasicMaterial({color: 0xfff1c8, vertexColors: true, transparent: true, opacity: .22,
+      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false}));
+    const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+    beam.name = 'Lighthouse beam';
+    beam.frustumCulled = false;
+    const lamp = new THREE.Group();
+    lamp.name = 'Lighthouse lamp';
+    lamp.position.set(weather.lamp.x, weather.lamp.y, weather.lamp.z);
+    // The beam dips a little toward the ground as it goes, as the light of a lighthouse on a low shore does.
+    beam.rotation.x = .035;
+    turning = new THREE.Group();
+    turning.add(beam);
+    const glow = new THREE.Mesh(keep(new THREE.SphereGeometry(1.1, 16, 10)),
+      keep(new THREE.MeshBasicMaterial({color: 0xfff6dc, fog: false})));
+    glow.name = 'Lamp glow';
+    lamp.add(turning, glow);
+    group.add(lamp);
   }
-  beamGeometry.setAttribute('color', new THREE.Float32BufferAttribute(shade, 3));
-  const beamMaterial = keep(new THREE.MeshBasicMaterial({color: 0xfff1c8, vertexColors: true, transparent: true, opacity: .22,
-    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false}));
-  const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-  beam.name = 'Lighthouse beam';
-  beam.frustumCulled = false;
-  const lamp = new THREE.Group();
-  lamp.name = 'Lighthouse lamp';
-  lamp.position.set(weather.lamp.x, weather.lamp.y, weather.lamp.z);
-  // The beam dips a little toward the ground as it goes, as the light of a lighthouse on a low shore does.
-  beam.rotation.x = .035;
-  const turning = new THREE.Group();
-  turning.add(beam);
-  const glow = new THREE.Mesh(keep(new THREE.SphereGeometry(1.1, 16, 10)),
-    keep(new THREE.MeshBasicMaterial({color: 0xfff6dc, fog: false})));
-  glow.name = 'Lamp glow';
-  lamp.add(turning, glow);
-  group.add(lamp);
 
   // The dust dome: the storm's own colour all round, close enough to hide the sky and the far hills, which the fog does not reach.
   const dome = new THREE.Mesh(keep(new THREE.SphereGeometry(weather.domeRadius, 32, 16)),
@@ -84,7 +88,7 @@ export function createDustNightLook(weather = DUST_NIGHT) {
   const dustGeometry = keep(new THREE.BufferGeometry());
   const dustPositions = new Float32Array(base.length);
   dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
-  const dust = new THREE.Points(dustGeometry, keep(new THREE.PointsMaterial({color: 0x8d6d4e, size: .22, transparent: true,
+  const dust = new THREE.Points(dustGeometry, keep(new THREE.PointsMaterial({color: weather.beam === false ? weather.fogColor : 0x8d6d4e, size: .22, transparent: true,
     opacity: .5, depthWrite: false, sizeAttenuation: true, map: keep(speckTexture()), alphaTest: .02})));
   dust.name = 'Blowing dust';
   dust.frustumCulled = false;
@@ -97,7 +101,7 @@ export function createDustNightLook(weather = DUST_NIGHT) {
     update(active, seconds, here) {
       group.visible = !!active;
       if (!active) return;
-      turning.rotation.y = beamHeading(seconds, weather);
+      if (turning) turning.rotation.y = beamHeading(seconds, weather);
       const driftX = weather.windX * seconds, driftZ = weather.windZ * seconds, fall = -.6 * seconds;
       for (let i = 0; i < base.length; i += 3) {
         dustPositions[i] = wrap(base[i] + driftX);

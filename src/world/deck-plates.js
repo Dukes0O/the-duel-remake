@@ -7,6 +7,8 @@
 // Heights are the job data's own (ships-in-the-sand.md section 5): a place's `y` on a deck or a stair is the height of its plate.
 // Positions are in the job's frame, x east and z south, the same numbers the job's places use. Pure: no DOM, no Three.js.
 
+import {LAND} from './scablands-names.js';
+
 const TAU = Math.PI * 2;
 const point = (x, z) => Object.freeze({x, z});
 
@@ -56,6 +58,15 @@ export const DECK_LADDERS = Object.freeze([
   ladder('stairs-3', 'lighthouse', 'stairs-landing-2', 'lamp-room', point(166.8, -396.5), point(170, -395)),
 ]);
 
+// The same ship pieces laid out on the Scablands, for the open-land ladder.
+const whitesPoint = ({x, z}) => LAND.at('ships-in-sand', x, z - PATIENCE.z);
+const whitesId = id => 'whites-' + id;
+export const WHITES_DECKS = Object.freeze(DECK_PLATES.filter(row => row.id.endsWith('-deck')).map(row =>
+  Object.freeze({...row, id: whitesId(row.id), structure: whitesId(row.structure), outline: row.outline.map(whitesPoint)})));
+const patienceSide = DECK_LADDERS.find(row => row.id === 'patience-side');
+export const WHITES_LADDER = Object.freeze({...patienceSide, id: whitesId(patienceSide.id), structure: whitesId(patienceSide.structure),
+  to: whitesId(patienceSide.to), foot: whitesPoint(patienceSide.foot), top: whitesPoint(patienceSide.top)});
+
 export const DECK_RULE = Object.freeze({
   // How far below its plate the fighter may be before that counts as a fall (a jump lands back on the plate).
   fallDrop: 1,
@@ -70,7 +81,7 @@ export const DECK_CUES = Object.freeze({climbed: 'vehicle.landing', climbedDown:
 // Where the lighthouse lamp burns: in the lamp room, two metres over its floor. The night storm's beam sweeps from here.
 export const LIGHTHOUSE_LAMP = Object.freeze({x: LIGHTHOUSE.x, y: 26, z: LIGHTHOUSE.z});
 
-const plateById = new Map(DECK_PLATES.map(item => [item.id, item]));
+const plateById = new Map([...DECK_PLATES, ...WHITES_DECKS].map(item => [item.id, item]));
 export const deckPlate = id => plateById.get(id) ?? null;
 
 // Even-odd test of a point against a closed outline.
@@ -100,7 +111,8 @@ export function plateForPlace(place, plates = DECK_PLATES) {
 // Where the fighter lands after falling from a plate: the foot of the ladder from the ground up that ship.
 export function groundBeside(plateId) {
   const structure = deckPlate(plateId)?.structure;
-  return DECK_LADDERS.find(item => item.structure === structure && item.from === 'ground')?.foot ?? null;
+  return (structure === WHITES_LADDER.structure ? WHITES_LADDER :
+    DECK_LADDERS.find(item => item.structure === structure && item.from === 'ground'))?.foot ?? null;
 }
 
 const flat = (a, b) => Math.hypot((a?.x ?? 0) - (b?.x ?? 0), (a?.z ?? 0) - (b?.z ?? 0));
@@ -142,7 +154,7 @@ export function routeToLevel(level, target, ladders = DECK_LADDERS) {
 // ground) and `state.fHeld` whether F was down last tick, so one press climbs one ladder. Returns the new climbing state and the
 // events for the mode: `roofBoard` (MULE-RAILS's event: put the fighter at this position, standing on that height) after a climb,
 // and `fell` with `deckGround` (put the fighter on the ground at this x and z) after a fall. A fall keeps every place reached.
-export function stepDeckClimb(state, view) {
+export function stepDeckClimb(state, view, ladders = DECK_LADDERS) {
   const fighter = view.fighter, at = fighter?.position ?? fighter;
   const press = view.interact === true && state.fHeld !== true;
   const events = [];
@@ -157,7 +169,7 @@ export function stepDeckClimb(state, view) {
     }
   }
   if (press && at && !events.length) {
-    const reach = ladderWithin(plate ?? 'ground', at);
+    const reach = ladderWithin(plate ?? 'ground', at, ladders);
     if (reach) {
       const height = reach.to === 'ground' ? null : deckPlate(reach.to).y;
       events.push(height === null

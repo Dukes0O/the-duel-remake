@@ -2,6 +2,7 @@ import {isHeld, NO_HOLDS} from '../../world/open/holds.js';
 import {sees} from '../../world/scablands-ways.js';
 import {distanceBetween} from './cast.js';
 import {firstBeat} from './thread-rule.js';
+import {ROAD_NET} from '../../world/scablands-road.js';
 
 export const SMOKE_HEIGHT = 95;
 export const isFresh = (thread, record, night) => night - record.began < (thread.sign.lastsNights ?? (thread.sign.kind === 'thing' ? Infinity : 1));
@@ -23,8 +24,9 @@ export function liveSigns(threads, {world, holds = NO_HOLDS, view = {}, placeAt,
     const record = world.open.threads[thread.id], sign = signFor(thread);
     if (!record || !isSignAlive(thread, signRecord(thread, record, world), world.ledger.night) || (sign.part && sign.part !== (view.partOfDay ?? 'day'))) return [];
     const at = placeAt(sign.at, record.cast);
+    const roadIds = sign.kind === 'lights' ? thread.notes?.sign?.seenFromRoads : undefined;
     const call = contextCall(thread, world);
-    return [{id: thread.id, sign, at, ...(call ? {call} : {}),
+    return [{id: thread.id, sign, at, ...(call ? {call} : {}), ...(roadIds && {roadIds}),
       ...(sign.points ? {points: sign.points.map(key => placeAt(thread.id + ':' + key, record.cast)).filter(Boolean)} : {})}];
   });
 }
@@ -45,6 +47,7 @@ export function witnessSign(entry, view, elapsed, dt) {
   const inRange = !at || distanceBetween(player, at) <= (sign.seenWithin ?? Infinity);
   if (sign.kind === 'call') return witnessCall(entry, view, inRange);
   if (sign.kind === 'wreckage') return witnessWreckage(entry, view, elapsed, dt);
+  if (sign.kind === 'lights') return witnessLights(entry, view, elapsed, dt);
   if (sign.kind === 'thing') return witnessThing(entry, view, elapsed, dt);
   if (sign.kind !== 'smoke' || !at || !player || !inRange) return {seconds: 0, witnessed: false};
   const visible = sees(player, at, {heightAt: view.missionHeightAt, eye: view.onFoot ? 1.6 : 2.5, target: SMOKE_HEIGHT * .7});
@@ -56,6 +59,19 @@ export function witnessThing({sign, at}, view, elapsed, dt) {
   const player = view.player?.position ?? view.player;
   const visible = player && at && distanceBetween(player, at) <= (sign.seenWithin ?? Infinity) &&
     sees(player, at, {eye: view.onFoot ? 1.6 : 2.5, target: sign.at?.checkpoint ? 2.8 : 24, heightAt: view.signHeightAt ?? view.missionHeightAt});
+  const seconds = visible ? elapsed + dt : 0;
+  return {seconds, witnessed: seconds >= 3 - 1e-9};
+}
+
+
+export function lightsVisible({sign, at, roadIds}, player, {onFoot, missionHeightAt} = {}) {
+  if (!at || !player || distanceBetween(player, at) > (sign.seenWithin ?? Infinity)) return false;
+  if (roadIds && !roadIds.includes(ROAD_NET.nearest(player.x, player.z)?.road.id)) return false;
+  return sees(player, at, {eye: onFoot ? 1.6 : 2.5, target: 2.2, heightAt: missionHeightAt, step: 20});
+}
+
+export function witnessLights(entry, view, elapsed, dt) {
+  const visible = lightsVisible(entry, view.player?.position ?? view.player, view);
   const seconds = visible ? elapsed + dt : 0;
   return {seconds, witnessed: seconds >= 3 - 1e-9};
 }

@@ -1303,18 +1303,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-OPEN-DOORS-WASH.md"
 
-  - id: OPEN-T-LIGHTS
-    title: "Open Scablands: Lights on the Whites comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-LIGHTS.md"
-
   - id: OPEN-T-DACE
     title: "Open Scablands: Dace Goes Looking comes into the game (its sign, places, people and missions)"
     owner: "codex"
@@ -1322,7 +1310,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: [OPEN-T-LIGHTS]
+    needs: []
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-T-DACE.md"

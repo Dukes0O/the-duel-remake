@@ -1805,3 +1805,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-26 OPEN-APPRENTICE-RUN-2 (Codex cloud, Sol): the kiln and routine start after Night 2; an unmeasured run still pays; a failed save keeps the earnings. Independent review: nothing blocks; one later fix carded as OPEN-APPRENTICE-RUN-3. 19 suites passed; build passed.
 - 2026-11-26 OPEN-T-RADIO (Codex cloud, then a laptop lane merge): The Voice on Radio Hill plays behind story-choices. Guards and 22 open-land suites passed 27/27; build passed.
 - 2026-11-27 OPEN-LOOK-RADIO-HILL-2 (Claude, Opus session): Radio Hill at night, the red lamp from the road, the hut's glow, the mast from 1,318 m.
+- 2026-11-27 OPEN-T-LIGHTS (Codex): Lights on the Whites plays behind story-choices (rescue kind); Claude moved the Bell Buoy's second position to ships-in-sand (3500, 250), which has a way in from the road. Guards and 21 open-land suites passed 26/26; build passed.
