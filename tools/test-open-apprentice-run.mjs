@@ -4,6 +4,7 @@ import test from 'node:test';
 import {App} from '../src/app.js';
 import {PLAYERS_KEY, activePlayer, loadPlayers, replacePlayerProfile, savePlayers} from '../src/progression.js';
 import {settleArenaResult} from '../src/arena/arena-settlement.js';
+import {arenaResultsScreen} from '../src/screen-arena.js';
 import {EMBER_JOBS, applyArrivedRun, applyBattleEnding, emberFeud, emberRuns} from '../src/story/ember-save.js';
 import {bankHearth, createLedger} from '../src/story/ledger.js';
 import {bankOpenHearth, savedLedger} from '../src/story/ledger-save.js';
@@ -472,6 +473,93 @@ for (const night of [2, 3]) {
     }
   });
 }
+
+test('the pre–Night 2 result action retries a denied write and pays once', () => {
+  const app = appAtYard({night: 2, feud: 2});
+  assert(app.gasRun('long'));
+  app.advance(4);
+  const store = localStorage, before = disk(), runId = app.runId;
+  globalThis.localStorage = {...store, setItem() { throw Error('QA write denied'); }};
+  try {
+    const result = finishGasRun(app), state = app.duel.state;
+    const screen = arenaResultsScreen(state, {
+      metric: () => '', action: (label, action) => `${label} ${action}\n`, escapeHTML: String,
+    });
+    assert(!result.settlementSaved);
+    assert.equal(app.worldJobAgain(), false);
+    assert.equal(app.duel.state, state);
+    assert.match(screen.actions, /DRIVE ANOTHER RUN world-job-retry/);
+    assert.match(screen.description, /Drive Another Run to try saving again/);
+    assert.deepEqual(disk(), before);
+  } finally { globalThis.localStorage = store; }
+  assert(app.worldJobAgain());
+  assert.notEqual(app.runId, runId);
+  const after = disk();
+  assert.equal(after.wasteland.scrap - before.wasteland.scrap, gasRunPay('long', app.cpuDifficulty));
+  assert.equal(emberFeud(after), emberFeud(before) - 1);
+  assert.equal(emberRuns(after), emberRuns(before) + 1);
+  assert.equal(after.wasteland.settledResults.filter(key => key === `arena:${runId}`).length, 1);
+  assert.deepEqual(savedLedger(after), savedLedger(before));
+  assert.deepEqual(savedOpenRecord(after), savedOpenRecord(before));
+});
+
+for (const night of [2, 3]) {
+  test(`unreadable storage on night ${night} keeps earnings and permits a verified retry`, () => {
+    const app = appAtYard({night, feud: 2});
+    assert(app.gasRun('long'));
+    app.advance(4);
+    const store = localStorage, bytes = store.getItem(PLAYERS_KEY), before = disk();
+    const pay = gasRunPay('long', app.cpuDifficulty);
+    let writes = 0;
+    globalThis.localStorage = {...store, getItem() { throw Error('QA read denied'); }, setItem(key, value) {
+      writes++;
+      store.setItem(key, value);
+    }};
+    try {
+      const result = finishGasRun(app);
+      assert(!result.settlementSaved);
+      assert.match(result.routineSaveIssue, /earnings are kept for this session/);
+      assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+      assert.equal(emberFeud(app.profile), emberFeud(before) - 1);
+      assert.equal(emberRuns(app.profile), emberRuns(before) + 1);
+      assert.equal(app.worldJobAgain(), false);
+      assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+      assert.equal(writes, 0);
+      assert.equal(store.getItem(PLAYERS_KEY), bytes);
+    } finally { globalThis.localStorage = store; }
+    assert(app.worldJobAgain());
+    assert.equal(disk().wasteland.scrap, before.wasteland.scrap + pay);
+    assert.equal(emberFeud(disk()), emberFeud(before) - 1);
+    assert.equal(emberRuns(disk()), emberRuns(before) + 1);
+    assert.equal(savedLedger(disk()).stocks.embers, savedLedger(before).stocks.embers + (night === 3 ? 3 : 0));
+  });
+}
+
+test('unreadable storage keeps the result in the yard without overwriting changed saved progress', () => {
+  const app = appAtYard({night: 2, feud: 2});
+  assert(app.gasRun('long'));
+  app.advance(4);
+  const store = localStorage, before = disk(), pay = gasRunPay('long', app.cpuDifficulty);
+  const registry = loadPlayers(store);
+  // A malformed registry is also unreadable, even when storage accepts writes.
+  const broken = '{unreadable';
+  store.setItem(PLAYERS_KEY, broken);
+  finishGasRun(app);
+  assert.equal(store.getItem(PLAYERS_KEY), broken);
+  assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+  assert(savePlayers(replacePlayerProfile(registry, app.player.id, {...before, credits: before.credits + 1}), store));
+  const newer = store.getItem(PLAYERS_KEY);
+  assert.equal(app.worldJobAgain(), false);
+  assert.equal(store.getItem(PLAYERS_KEY), newer);
+  assert(app.returnToYard());
+  app.advance(8);
+  assert(app.isYardHomeActive());
+  assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+  assert.equal(emberFeud(app.profile), emberFeud(before) - 1);
+  assert.equal(app._saveProfile(), false);
+  assert.equal(store.getItem(PLAYERS_KEY), newer);
+  assert.equal(app.profile.wasteland.scrap, before.wasteland.scrap + pay);
+});
 
 test('the open clock cannot cross into dusk while paused', () => {
   const app = appAtYard();
