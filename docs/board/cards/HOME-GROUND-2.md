@@ -51,3 +51,32 @@ and reload, the older save, the switch off); the rule 23 set and the lane tier (
 by hand; then Kyle's and Gratian's try.
 
 ## Claude answers
+
+Settled by the building session on 27 November 2026, before the code:
+
+- **The record** becomes version 2: `{version: 2, name, pieces, marks, hens: [{name, breed, due}], boxes: [{i, j, eggs}],
+  eggs, lastSeen}`. A version 1 record (step 1) is read and saved exactly as it is; the part turns it into version 2,
+  adding only the four new fields, the first time it runs with the switch on. `due` is the seconds until a hen's next
+  egg (0 while she waits for room). `lastSeen` is the real moment, in seconds since 1970, at which the dues are true.
+- **The clock.** `src/app.js` reads `Date.now()` once as an open outing starts, only with the switch on, and the job
+  carries it as `definition.open.homeClock`. The part takes one number from it, `awayFor(lastSeen, clock)`: never below
+  0, never above 3 days. During play the hens lay over the outing's own seconds, and `lastSeen` becomes the clock's
+  reading plus those seconds. A clock set back counts as no time and loses nothing; `lastSeen` then follows the clock,
+  so the time counts again once the clock is put right, and nothing can stall. Gaming the clock can give no more than
+  full boxes, which waiting three days gives anyway.
+- **Laying.** One egg every 4 hours a hen (6 a real day). A box holds 18 (three days of one hen). Each egg goes to the
+  box with fewest eggs. Moss's hens arrive due in 2 and 7 minutes, so the first egg comes before he leaves; a hen with
+  nowhere to lay waits and settles 45 seconds after room is made.
+- **Moss** comes the moment the fence is closed (every edge step and the gate): the crate of hens stands outside the
+  gate with a spare crate, F there is his four-line talk, and his answer brings the hens and asks for each one's name.
+  Moss is heard at the crate; drawing him standing there is left to the look card.
+- **Nest boxes** stand in a cell of the grid, not on its lines; two old crates, two boxes. G cycles panel, gate (while
+  carried), crate (while he has one). F at a box gathers it; B picks it up and gathers it first.
+- **The board** is a second board beside the gate's other post. It shows itself once an outing as he comes within 12 m,
+  for 14 seconds, and F there shows it again. The name board stays where it was.
+- **The drive's fixes.** The outline shows after B, R or G (B also starts the hammering) and goes after 10 seconds
+  without one; facing a built piece within reach always offers to pick it up. On his ground the launcher is lowered and
+  the car-aim words hidden; while he builds the first-person hands hold a claw hammer drawn in code (a wrench for the
+  gate), swinging with each 0.6 s strike, and the real panel, leaves or crate rise out of the ground through the
+  hammering. The fire key takes the launcher back; B gives the tool back. From above: a yellow ring and arrow where he
+  stands, and every built piece as a dark strip of its real length. His ground is tinted a shade darker than the plain.

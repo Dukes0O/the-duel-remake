@@ -23,6 +23,37 @@ function releaseAsset(asset) {
   for (const resource of resources) resource.dispose();
 }
 
+const easeIn = t => t * t, easeOut = t => 1 - (1 - t) * (1 - t);
+// The hammer's turn about the hand, in radians (positive draws the head back toward him), through one blow.
+export function hammerSwing(strike) {
+  if (strike === null || strike === undefined) return 0;
+  if (strike < .55) return .95 * easeOut(strike / .55);
+  if (strike < .68) return .95 - 1.55 * easeIn((strike - .55) / .13);
+  return -.6 * (1 - easeOut((strike - .68) / .32));
+}
+
+// HOME-GROUND-2: a claw hammer in the look of the ground's tin: an ash handle worn dark at the grip and a rusty steel
+// head. In the hands' wrench socket its handle runs up the socket's Y, its face forward (-Z) and its claw back.
+function hammerAsset() {
+  const scene = new THREE.Group();
+  scene.name = 'Home Ground claw hammer';
+  const wood = new THREE.MeshStandardMaterial({name: 'hammer handle', color: 0x8a6440, roughness: .82, metalness: 0});
+  const grip = new THREE.MeshStandardMaterial({name: 'hammer grip', color: 0x3a2e24, roughness: .9, metalness: 0});
+  const steel = new THREE.MeshStandardMaterial({name: 'hammer head', color: 0x5f5a52, roughness: .5, metalness: .75});
+  const face = new THREE.MeshStandardMaterial({name: 'hammer face', color: 0xa8a49a, roughness: .35, metalness: .9});
+  const rust = new THREE.MeshStandardMaterial({name: 'hammer rust', color: 0x7a4a2c, roughness: .9, metalness: .2});
+  const add = (geometry, material, x, y, z, rx = 0) => {
+    const mesh = new THREE.Mesh(geometry, material); mesh.position.set(x, y, z); mesh.rotation.x = rx; scene.add(mesh); return mesh;
+  };
+  add(new THREE.CylinderGeometry(.014, .017, .36, 10), wood, 0, .07, 0);
+  add(new THREE.CylinderGeometry(.019, .019, .12, 10), grip, 0, -.06, 0);
+  add(new THREE.BoxGeometry(.03, .034, .075), steel, 0, .262, -.012);
+  add(new THREE.CylinderGeometry(.019, .021, .03, 12), face, 0, .262, -.062, Math.PI / 2);
+  add(new THREE.BoxGeometry(.034, .02, .02), rust, 0, .262, .012);
+  for (const side of [-1, 1]) add(new THREE.BoxGeometry(.012, .016, .06), steel, side * .009, .252, .052, -.45);
+  return {scene, animations: []};
+}
+
 export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader().loadAsync(
   `/assets/models/wasteland/first-person/${kind === 'hands' ? `hands/${id}` : kind}.glb`)} = {}) {
   const group = new THREE.Group();
@@ -77,6 +108,7 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
     cache.set(key, record);
     records.push(record);
     Promise.resolve().then(() => {
+      if(kind === 'hammer') return hammerAsset();
       if(kind !== 'shock-charge') return loadAsset(kind,id);
       const scene=new THREE.Group(), metal=new THREE.MeshStandardMaterial({color:0x252c31,metalness:.8,roughness:.4});
       const coil=new THREE.Mesh(new THREE.TorusGeometry(.055,.014,6,16),metal);
@@ -134,7 +166,7 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
     if (shownHands !== hands || shownTool !== tool) {
       if (shownHands) shownHands.model.visible = false;
       if (shownTool) shownTool.model.visible = false;
-      hands.model.getObjectByName(`${selected.weapon === 'shock-charge' ? 'wrench' : selected.weapon}-mount`).add(tool.model);
+      hands.model.getObjectByName(`${['shock-charge', 'hammer'].includes(selected.weapon) ? 'wrench' : selected.weapon}-mount`).add(tool.model);
       shownHands = hands;
       shownTool = tool;
     }
@@ -143,7 +175,7 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
     const busy = selected.action !== 'idle';
     const clip = busy ? selected.aim && selected.action !== 'repair'
       ? selected.action === 'fire' ? 'aim-fire' : 'aim-reload' : selected.action
-      : selected.weapon === 'wrench' ? 'wrench-idle' : selected.aim ? 'aim' : 'idle';
+      : ['wrench', 'hammer'].includes(selected.weapon) ? 'wrench-idle' : selected.aim ? 'aim' : 'idle';
     animate(hands, clip, selected.actionProgress, selected.motionTime, busy);
     if (selected.action === 'reload') animate(tool, 'reload', selected.actionProgress, 0, true);
     else if (tool.clip) {
@@ -160,6 +192,13 @@ export function createFirstPersonGear({loadAsset = (kind, id) => new GLTFLoader(
     const low = selected.lowered && !busy;
     motion.position.set(Math.sin(phase) * amount, Math.cos(phase * 2) * amount * .55 - (low ? .16 : 0), 0);
     motion.rotation.x = low ? -.22 : 0;
+    // HOME-GROUND-2: each blow of the hammer: drawn back, brought down hard on the panel, and lifted again.
+    if (selected.weapon === 'hammer') {
+      const swing = hammerSwing(selected.strike);
+      tool.model.rotation.x = swing;
+      motion.rotation.x += swing * .22;
+      motion.position.y += Math.min(0, swing) * .05;
+    }
     const camera = options.camera;
     camera.updateWorldMatrix(true, false);
     camera.getWorldPosition(group.position);

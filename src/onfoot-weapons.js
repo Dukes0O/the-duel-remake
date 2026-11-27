@@ -297,6 +297,10 @@ function stepFootWeaponInput(duel, dt) {
   if (job?.open && job.job.steps[job.job.stepIndex]?.kind === 'roam' && duel.featureFlags?.enabled('story-choices'))
     weapons.lowered = openWeaponLowered(duel, fighter, weapons, input, job.open.world);
   else if (weapons.lowered !== undefined) delete weapons.lowered;
+  // HOME-GROUND-2: on his own ground the launcher is lowered (a hammer is in his hands while he builds) until the fire
+  // key takes it back, as in town (src/world/open/parts/home.js).
+  const home = job?.open?.parts?.home;
+  if (home?.on === true && home.onGround === true && home.armed !== true && !input.fire) weapons.lowered = true;
   if (state.arena?.worldJob?.night2?.holstered) {
     weapons.fireHeld = !!input.fire;
     fighter.flaming = false;

@@ -330,6 +330,19 @@ go into the real game after step 4.
 - The record is `world.open.home` = `{version: 1, name, pieces, marks}`, written by the counting effect `home`. Later
   steps add their own fields to it and keep `readableHome` reading the older ones.
 
+### Step 2 as built (HOME-GROUND-2, behind the switch `home-ground`)
+
+- Rules in `src/world/open/home-rule.js` (`ripen`, `awayFor`, `boardLines`, the boxes); the hens' and Moss's words and
+  numbers in `src/world/open/content/home-ground.js`. A Tin Town Brown lays every 4 hours; a nest box holds 18; two old
+  crates make two boxes. Moss brings two hens the moment the fence is closed all the way round.
+- The record is version 2, `{version: 2, name, pieces, marks, hens, boxes, eggs, lastSeen}`; a version 1 record loads
+  unchanged and gains the four fields the first time the part runs with its switch on.
+- The laptop's clock is read once, as an open outing starts (`src/app.js`, `definition.open.homeClock`). The time away
+  is never below nothing and never above 3 days; during play the hens lay over the outing's own seconds.
+- Keys on foot, added: F at a nest box gathers it, F at a hen renames her, F at the board of news reads it again. B, R
+  or G shows the build outline. On his ground the launcher is lowered; the fire key takes it back, and while he builds
+  he holds a hammer, or a wrench for the gate.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.

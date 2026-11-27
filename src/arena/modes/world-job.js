@@ -346,7 +346,7 @@ function markTownStepThings(duel, requests) {
 const homeKeysOf = state => {
   const input = state.onFoot ? state.fighterInput ?? {} : {};
   return {build: !!input.homeBuild, turn: !!input.homeTurn, piece: !!input.homePiece, view: !!input.homeView,
-    burst: !!input.homeBurst, sprint: !!input.sprint, forward: !!input.forward, back: !!input.back, left: !!input.left,
+    burst: !!input.homeBurst, sprint: !!input.sprint, fire: !!input.fire, forward: !!input.forward, back: !!input.back, left: !!input.left,
     right: !!input.right, turnLeft: !!input.turnLeft, turnRight: !!input.turnRight};
 };
 
@@ -2266,9 +2266,10 @@ export function stepWorldJob(duel, dt) {
       partOfDay: worldJob.definition.open.partOfDay ?? 'day',
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? [],
-      // HOME-GROUND-1: the player's own ground reads its switch, the keys held this tick and a name typed in its box.
+      // HOME-GROUND-1: the player's own ground reads its switch, the keys held this tick and a name typed in its box;
+      // HOME-GROUND-2: and the clock read once as the outing opened (src/app.js).
       ...(duel.featureFlags?.enabled('home-ground') === true ? {homeGround: true, homeKeys: homeKeysOf(state),
-        homeName: worldJob.homeNameInput ?? null} : {})}, dt);
+        homeName: worldJob.homeNameInput ?? null, homeClock: worldJob.definition.open?.homeClock ?? null} : {})}, dt);
     if (worldJob.homeNameInput) worldJob.homeNameInput = null;
     worldJob.ashHit = false;
     const clearings = openStep.open.parts.sites?.clearings;

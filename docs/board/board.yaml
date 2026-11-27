@@ -1211,8 +1211,9 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: "Claude Opus session (local), 27 November 2026"
+    waiting_on: "claude"
     needs: []
     locks: []
     flag: "home-ground"
