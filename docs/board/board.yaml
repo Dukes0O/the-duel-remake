@@ -1292,6 +1292,17 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-TALK-CHOICES.md"
 
+  - id: QA-OPEN-DOORS-WASH
+    title: "test-open-doors: walking into Moss's wash shed after the ash sack leaves 'inside' empty, in the integration folder only"
+    owner: "codex"
+    model: "sol"
+    lane: "QA"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-OPEN-DOORS-WASH.md"
+
   - id: OPEN-T-LIGHTS
     title: "Open Scablands: Lights on the Whites comes into the game (its sign, places, people and missions)"
     owner: "codex"
