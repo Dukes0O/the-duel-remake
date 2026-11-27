@@ -23,3 +23,10 @@ export const SCRAPYARD_MACHINES = Object.freeze([
 ]);
 
 export const MACHINE_PARTS = Object.freeze(SCRAPYARD_MACHINES.flatMap(row => row.parts));
+
+// FAR-JOBS-1: ingredients arrive through the existing Scrapyard inventory. FAR-BORE owns the build and name.
+export const FAR_BORER_PARTS = Object.freeze([
+  part('propeller-shaft', 'The Marigold\'s propeller shaft', 'part-propeller-shaft'),
+  part('cutter-gears', 'Cutter gears', 'part-cutter-gears'),
+  part('landing-rams', 'Twelve landing-gear rams', 'part-landing-rams'),
+]);

@@ -23,7 +23,7 @@ export function stepLines(step,state,view,dt,outcome) {
   const skip=state.lineBlocking&&view.controls?.whistle===true;
   if(remaining>0&&!skip) {
     remaining=Math.max(0,remaining-dt);
-    if(remaining>0)return {...outcome,state:{...base,lineQueue:queue,lineRemaining:remaining,
+    if(remaining>0)return {...outcome,...(step.waitForCaptions?{complete:false}:{}),state:{...base,lineQueue:queue,lineRemaining:remaining,
       lineBlocking:state.lineBlocking===true,lineHistory:[...lineHistory],linesStarted:started,linesClosing:closing},requests:nonCaption};
   }
   if(queue.length) {

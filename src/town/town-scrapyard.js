@@ -1,4 +1,4 @@
-import {SCRAPYARD_MACHINES} from './content/machine-parts.js';
+import {SCRAPYARD_MACHINES, FAR_BORER_PARTS} from './content/machine-parts.js';
 
 const BUILD_MINUTES = 15;
 const SOURCES = new Set(['salvage', 'job', 'trader']);
@@ -46,7 +46,7 @@ export function scrapyardMachines(town) {
 /** Record a single part delivered by a salvage find, a job or a trader. */
 export function addScrapyardPart(town, {partId, source, reference = null} = {}) {
   const yard = scrapyardFor(town);
-  const part = SCRAPYARD_MACHINES.flatMap(machine => machine.parts).find(row => row.id === partId);
+  const part = [...SCRAPYARD_MACHINES.flatMap(machine => machine.parts), ...FAR_BORER_PARTS].find(row => row.id === partId);
   if (!part) return {ok:false, message:'That part is not on a machine list.'};
   if (!SOURCES.has(source)) return {ok:false, message:'Parts come from salvage, jobs or traders.'};
   const stock = yard.inventory[partId] ||= {count:0, arrivals:[]};

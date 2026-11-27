@@ -1032,23 +1032,13 @@ tasks:
     locks: []
     details: "docs/board/cards/FAR-REGION.md"
 
-  - id: FAR-JOBS-1
-    title: "The Far Side: the goat, too high, the long shaft"
-    owner: "codex"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: ["TOWN-SCRAPYARD","TOWN-OUTPOSTS","TOWN-HAUL-JOB","HELI-RUSTWALL"]
-    locks: []
-    details: "docs/board/cards/FAR-JOBS-1.md"
-
   - id: FAR-BORE
     title: "The Far Side: into the rock, the lunch tin, the water, daylight"
     owner: "codex"
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["FAR-JOBS-1","FAR-REGION","FAR-RAIN"]
+    needs: ["FAR-REGION","FAR-RAIN"]
     locks: []
     details: "docs/board/cards/FAR-BORE.md"
 
@@ -1305,4 +1295,3 @@ tasks:
 
   # Two days on the open Scablands (Kyle, 25 November 2026), mostly in the cloud. Claude cloud sessions take the cards
   # with owner claude-cloud, each on its own cloud/<card> branch.
-

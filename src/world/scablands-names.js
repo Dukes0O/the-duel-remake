@@ -18,6 +18,12 @@ const point = (x, z) => Object.freeze({x, z});
 // offset, like any other point (`to` left out means the point is the offset from `from`).
 const named = (id, name, from, to, share, dx = 0, dz = 0) => Object.freeze({id, name, from, to, share, dx, dz});
 const NAMED_POINTS = Object.freeze([
+  // FAR-JOBS-1: the southern Ridge. FAR-REGION shares these names when it builds the portal.
+  named('mabel-portal', 'The southern Ridge face', 'dead-mall', null, 0, 1650, 280),
+  named('mabel-approach', 'The southern Ridge approach', 'mabel-portal', null, 0, -50, -180),
+  named('goat-mud', 'The wet tracks', 'dead-mall', null, 0, 1200, 50),
+  named('goat-thorn', 'The thorn bush', 'dead-mall', null, 0, 2100, 380),
+  named('teeth-lookout', 'The Teeth lookout', 'dead-mall', null, 0, 2400, 620),
   // The dry river (SCABLANDS-LAND round 4, slice 2a): from the Dry Dam's spillway, along the yard's north side, south between the yard
   // and Tin Town, out by the south side east of the Dead Mall. Eleven nodes; the bed is 120 m wide.
   // The head stands 980 m east of the Dry Dam (it was 300), so that the long road and Old Smoke's way, which pass the Dam's east side and turn toward the Ships, do not cross its rounded end (slice 2b).

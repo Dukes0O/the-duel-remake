@@ -23,6 +23,7 @@
 //   lift every 3 seconds, as the town's building runs faster than life (section 2: "nothing makes you wait around").
 // - The flatbed carries 9,000 kg (src/town/content/work-vehicles.js).
 import {makeRng} from '../../../rng.js';
+import {stepLongLoad} from './long-load.js';
 
 export const HAUL_RULE = Object.freeze({
   // Seconds standing still at the pile for each piece, and at the drop for each piece taken off.
@@ -161,6 +162,7 @@ function knock(view) {
 }
 
 export function stepHaul(step, state, view, dt = 0, seed = 0) {
+  if (step.loadLengthMetres > 0) return stepLongLoad(step, state, view, dt);
   const here = view.player?.position ?? {};
   const kmh = Math.abs(finite(view.speedKmh) ? view.speedKmh : 0);
   const still = kmh < HAUL_RULE.stillKmh && !view.onFoot;
