@@ -26,3 +26,9 @@ step to the edge when hanging the gate; tint his ground. Step 1 is ready for Kyl
 **27 November 2026, step 2 merged** (HOME-GROUND-2): hens, nest boxes, the real clock, the board at the gate and the
 six drive fixes. Owed before Kyle and Gratian try it: Claude's drive by hand. Carried to step 3's card: Moss drawn at
 the crate when he brings the hens (he is only heard now), and the hammer in the third-person figure's hands too.
+
+**27 November 2026, Claude's drive of step 2** (`docs/board/looks/home-ground/drive-2.md`): it works end to end, from
+the hens arriving to gathering a day's 13 eggs into the store. Seven things for step 3's card: show the board's lines
+only near the board and update them after gathering; place a nest box a step ahead of him, not at his feet; draw Moss
+at the crate; fix the hen name box's sentence about the board; hide the weapon panel while the hammer is out; leave out
+"You were only away for a moment"; make the hens easier to find. Step 2 is ready for Kyle's and Gratian's try.
