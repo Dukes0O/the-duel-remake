@@ -405,6 +405,18 @@ the game.
 - **A cloth in the truck's own shade reads near black.** The same canvas was pale sand as a heap in the sun and a dark blob hanging on the shaded side. Give a cloth a paler hem, seams and a patch, so that it has a shape in either light.
 - **The look stand stands a thing on the surface the rules read; the open land's own views stand it on the ground as drawn.** A row of the stand that sets `onDrawnGround` is lifted by the difference, as the game's `positionAt` does, so that a mark laid a few centimetres up is judged as the player will see it.
 
+### Trains, and white things (WW-ART-MULE, 27 November 2026)
+
+- **A white subject is photographed on a blue backdrop and cut out by colour.** Ask for one flat saturated blue with no floor line or shadow, and say that nothing on the object is blue. Everything not blue is the subject, so gaps walled in by the subject (between wheels, through a lattice) open with no seed points. `keyed` and `Shot` in `tools/blender/scablands-mule.py` do this and hand the mask to `hull_model.py` in place of its pale-sky flood. Fifteen photographs needed no mask repair.
+- **Read the game's own distances before asking for photographs.** The image generator draws a wagon about three and a half times as long as it is high whatever length the prompt names. The job code stood the tank wagons' roof plates 20 m apart, and the photographed wagon scaled to 12 m. A tank is turned and its frame traced in two lengths of the same photograph, joined on a riveted band (`tank_wagon`), which costs a second truss and valve and no stretching.
+- **The kit gives every face its own points, and the exported file carries each of them.** Joining points that share a place before export (`weld`) took the Mule from 2.97 MB to 1.96 MB with no change to the picture. A traced plate's edge costs four points a corner in `slab`; `plate` shares them and suits anything about 5 cm thick.
+- **A dark box under a wagon, down to the axles, reads as a block the wagon sits on.** Stop it at the solebar's lower edge, so that daylight, axles and rods show between the wheels as in the photograph. An engine with skirts keeps its box low.
+- **A door hung at a carved body's widest measure floats off the wall.** A roof's eaves are wider than the walls. Read the wall's width from the end photograph's mask at wall height.
+- **A wheel half hidden by a skirt or a bogie frame wears its lower half twice** (`lower_only` in `wheelset`), or its upper half shows the frame's picture through every gap.
+- **Bars are traced with the dark between them left open,** taking the dark pixels inside the window out of the door's mask, and the wagon is given a dark wall down its middle: with a barred door on each side, daylight otherwise shows straight through.
+- **A chimney or dome carved with a body comes out as a ridge as wide as the end photograph shows it.** Cut it from the side mask for the carving and turn it (`turned`), its crown wearing the overhead photograph.
+- **Codex's image tool still answers on an older model when its configured one is refused:** `codex exec -m gpt-6.1-sol` made thirteen pictures in about ten minutes on 26 November, with the first picture of each object given to its later views.
+
 ### Bolt-ons and laid strips (COMBAT-ROOF-BOW-LOOK, 26 November 2026)
 
 - **A long straight piece set at its middle's height floats over rolling land and sinks into it.** Each town road was one flat

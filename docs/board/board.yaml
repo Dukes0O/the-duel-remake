@@ -38,7 +38,7 @@ tasks:
 
   - id: QA-ARSENAL-AUDIO-READINESS
     title: "Locate the native Arsenal audio readiness and evaluation timeouts"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "blocked"
@@ -49,7 +49,7 @@ tasks:
 
   - id: QA-AUDIO-BASELINE-CONTROL
     title: "Legacy native audio repeat control is unreliable"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOL"
     size: "S"
     status: "backlog"
@@ -59,7 +59,7 @@ tasks:
 
   - id: GATE-FRAME-DELIVERY
     title: "Explain variable browser frame delivery in fixed native scenes"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOL"
     size: "S"
     status: "backlog"
@@ -68,7 +68,7 @@ tasks:
 
   - id: GATE-CALLBACK-DIAGNOSTICS
     title: "Prove audio capture delivery independently of callback clocks"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOL"
     size: "S"
     status: "backlog"
@@ -163,7 +163,7 @@ tasks:
 
   - id: QA-AUDIO-CLOCK
     title: "Native audio recorder clock diagnosis"
-    owner: "codex"
+    owner: "claude"
     lane: "AUDIO"
     size: "S"
     status: "backlog"
@@ -172,7 +172,7 @@ tasks:
 
   - id: P4-AZURE-GP-COMPARISON
     title: "Azure Grand Prix comparison in the Team Room"
-    owner: "codex"
+    owner: "claude"
     lane: "RACE"
     size: "S"
     status: "backlog"
@@ -223,7 +223,7 @@ tasks:
 
   - id: QA-HARBOUR-PERFORMANCE-PACING
     title: "Harbour Performance fails its one authorized quiet reread"
-    owner: "codex"
+    owner: "claude"
     lane: "RENDER"
     size: "S"
     status: "backlog"
@@ -233,7 +233,7 @@ tasks:
 
   - id: PERF-HARBOUR-AO-HALF
     title: "Daylight follow-up for the retained Harbour AO half-resolution candidate"
-    owner: "codex"
+    owner: "claude"
     lane: "RENDER"
     size: "S"
     status: "backlog"
@@ -244,7 +244,7 @@ tasks:
 
   - id: QA-FACTORY-RECYCLE-JUNCTION
     title: "Factory cleanup prompts on a Windows directory junction"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "backlog"
@@ -253,7 +253,7 @@ tasks:
 
   - id: QA-REVIEW-RUNUP-START
     title: "Review run-up misses a requested view near the start line"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "backlog"
@@ -263,7 +263,7 @@ tasks:
 
   - id: QA-P4-AUDIO-FRAME-GAP
     title: "p4-audio capture sometimes repeats a slice of sound"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "backlog"
@@ -283,7 +283,7 @@ tasks:
 
   - id: QA-RESCUE-FINISH-FLAKY
     title: "rescue-finish browser scenario fails without game changes"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "backlog"
@@ -333,7 +333,7 @@ tasks:
 
   - id: QA-AUDIO-CRASH-PEAK-3
     title: "test-audio-crash-peak fails once in a full tier, passes on rerun (third time)"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "backlog"
@@ -354,17 +354,6 @@ tasks:
 
 
 
-
-  - id: WW-ART-MULE
-    title: "Art: the Iron Mule"
-    owner: "codex"
-    lane: "ART"
-    size: "M"
-    status: "building"
-    needs: []
-    locks: []
-    flag: "scablands"
-    details: "docs/board/cards/WW-ART-MULE.md"
 
 
 
@@ -399,26 +388,6 @@ tasks:
     size: "L"
     status: "building"
     claimed_by: "Claude (Director) with Sonnet helpers, since 11 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/LAB-LOOK.md"
-
-  - id: LAB-BRAKING-REAL
-    title: "Lab: the braking rig stops at real car decelerations, and its weight split follows that braking"
-    owner: "claude"
-    lane: "UI"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/LAB-BRAKING-REAL.md"
-
-  - id: LAB-UX-FIXES
-    title: "Lab: routine fixes from the 11 November survey"
-    owner: "claude"
-    lane: "UI"
-    size: "S"
-    status: "ready"
     needs: []
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
@@ -654,8 +623,7 @@ tasks:
 
   - id: BOWL-TOW
     title: "Bowl: the tow hook for every truck, the crowd ramp, delivery to the crowd and its bonus, rivals on the terraces"
-    owner: "codex"
-    model: "astra"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "backlog"
@@ -667,8 +635,7 @@ tasks:
 
   - id: BOWL-MISSILE
     title: "Bowl: a missile aimed through a sight with the mouse, a lock, a flight across the arena and a hit"
-    owner: "codex"
-    model: "astra"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "backlog"
@@ -704,8 +671,7 @@ tasks:
 
   - id: BOWL-TOUR
     title: "Bowl: nights 6 to 8, the tour (after the first release)"
-    owner: "codex"
-    model: "sol"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -733,7 +699,7 @@ tasks:
 
   - id: SKIN-WASTE
     title: "New paints for the Wasteland"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "S"
     status: "building"
@@ -748,7 +714,7 @@ tasks:
 
   - id: MULE-JOBS
     title: "The Iron Mule, six jobs, proved on Easy"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -760,12 +726,12 @@ tasks:
 
   - id: MULE-SCENE
     title: "The Iron Line and the Dry Dam in the world"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "M"
     status: "ready"
     waiting_on: "kyle"
-    needs: ["MULE-RAILS","WW-ART-MULE","WW-ART-DAM","WW-SCENE"]
+    needs: ["MULE-RAILS","WW-ART-DAM","WW-SCENE"]
     locks: []
     flag: "wasteland-town"
     details: "docs/board/cards/MULE-SCENE.md"
@@ -785,7 +751,7 @@ tasks:
 
   - id: SHIPS-JOBS
     title: "Ships in the Sand, six jobs, proved on Easy"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -797,7 +763,7 @@ tasks:
 
   - id: SHIPS-SCENE
     title: "Deck Town, the lighthouse and the gatehouse in the world"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "M"
     status: "ready"
@@ -848,21 +814,9 @@ tasks:
     flag: "wasteland-town"
     details: "docs/board/cards/TOWN-STORE-RESTORE.md"
 
-  - id: TOWN-RESERVED-OUTPOSTS
-    title: "The town's planning refuses ground under the neighbours' outposts"
-    owner: "codex"
-    lane: "SIM"
-    size: "S"
-    status: "ready"
-    waiting_on: "kyle"
-    needs: []
-    locks: []
-    flag: "wasteland-town"
-    details: "docs/board/cards/TOWN-RESERVED-OUTPOSTS.md"
-
   - id: TOWN-FIRE-STREAM-LOOK
     title: "The fire truck's water drawn as a jet and spray, not a white blob"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "S"
     status: "ready"
@@ -874,7 +828,7 @@ tasks:
 
   - id: TOWN-HAUL-LOAD-LOOK
     title: "The haul's load drawn as real salvage, not grey boxes"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "S"
     status: "ready"
@@ -897,7 +851,7 @@ tasks:
 
   - id: TOWN-JOBS-2
     title: "Town: the jobs that are not fights"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -909,7 +863,7 @@ tasks:
 
   - id: TOWN-SUPPORT
     title: "Town: support vehicles"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -920,7 +874,7 @@ tasks:
 
   - id: TOWN-VANE-JOBS
     title: "Act 3: A Bottle of Her Water, Sand from the Shore, Walk the Bounds"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -931,7 +885,7 @@ tasks:
 
   - id: SEA-WORKS
     title: "Act 5: the Sea Works as town work, years of it"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -941,7 +895,7 @@ tasks:
 
   - id: SEA-JOBS-1
     title: "Act 5: The Long Ember, Finally, The Pour, The Haul"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -951,7 +905,7 @@ tasks:
 
   - id: SEA-LIFT
     title: "Act 5: The Lift, on Kestrel One's hook"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "S"
     status: "ready"
@@ -961,7 +915,7 @@ tasks:
 
   - id: SEA-JOBS-2
     title: "Act 5: The Spillway, The Line, The Wheel, The Convoy"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -971,7 +925,7 @@ tasks:
 
   - id: SEA-FLOOD
     title: "Act 5: the sea on the map, for good"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -981,7 +935,7 @@ tasks:
 
   - id: SEA-RUN
     title: "Act 5: The Last Run, A Fortnight and Bo's answer"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1001,7 +955,7 @@ tasks:
 
   - id: WW-ART-FAR
     title: "Art: Highwater, the mill, PRUDENCE and the green"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
     status: "ready"
@@ -1024,7 +978,7 @@ tasks:
 
   - id: FAR-REGION
     title: "The Far Side: a new region through the tunnel"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -1034,7 +988,7 @@ tasks:
 
   - id: FAR-BORE
     title: "The Far Side: into the rock, the lunch tin, the water, daylight"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "ready"
@@ -1044,7 +998,7 @@ tasks:
 
   - id: FAR-JOBS-2
     title: "The Far Side: Highwater, the Top Pond and Twelve Bar"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1064,7 +1018,7 @@ tasks:
 
   - id: BOARD-JOBS
     title: "The Notice Board: twelve jobs, one story for each of the crew"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1084,7 +1038,7 @@ tasks:
 
   - id: RAIL-JOBS-1
     title: "A railway: Satisfactory, Fireman, the Coal Heap, Passing Place, the Wagons"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1096,7 +1050,7 @@ tasks:
 
   - id: RAIL-JOBS-2
     title: "The 2:15: the letter, the Drift and the Whites"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1108,7 +1062,7 @@ tasks:
 
   - id: RAIL-PROPERTY
     title: "Lost Property: eleven deliveries and the Office at the Halt"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1120,7 +1074,7 @@ tasks:
 
   - id: RAIL-JOBS-3
     title: "Nobody Asked, Downhill and Eleven Minutes"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1132,7 +1086,7 @@ tasks:
 
   - id: RAIL-TIMETABLE
     title: "The Timetable: run trains you have taught people to drive"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "L"
     status: "ready"
@@ -1154,7 +1108,7 @@ tasks:
 
   - id: TOWN-BOWL-LINK
     title: "Town: the Bowl's gate, tickets, crowd and the Rex in the square"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "S"
     status: "ready"
@@ -1168,7 +1122,7 @@ tasks:
 
   - id: TOWN-PEACE
     title: "Town: what became of the warlords"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1180,7 +1134,7 @@ tasks:
 
   - id: TOWN-JOBS-3
     title: "Town: Free Water Day and both sides of the road"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"
@@ -1212,7 +1166,7 @@ tasks:
 
   - id: MACHINE-BORER-APPRENTICE
     title: "The boring machine's apprentice, slice 2: bores, orders and apprentices kept with the town (slice 1 is merged; show Kyle first)"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "L"
     status: "backlog"
@@ -1237,7 +1191,7 @@ tasks:
 
   - id: TOWN-DEFEND
     title: "Town: radar, scouts and defending the works"
-    owner: "codex"
+    owner: "claude"
     lane: "SIM"
     size: "M"
     status: "ready"

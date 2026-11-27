@@ -43,7 +43,12 @@ you buy with credits (some are free). Lessons can be retaken any time.
 **The rule for truth.** Every bench runs the game's own rules (the same
 functions the helicopter and cars use), so what you learn is what the game
 does. Where the game is simpler than the real world, Brian says so in one
-sentence. Every explanation in section 4 is true as written.
+sentence. Every explanation in section 4 is true as written. One bench departs
+on purpose: the braking rig stops cars at real cars' decelerations, about 1 g for
+road cars and more only for racing tyres with downforce, because the race brakes
+at over 2 g and the lesson's tape must show real stopping distances
+(LAB-BRAKING-REAL, Claude, 27 November 2026). Each real figure's source is
+written beside it in `src/lab/benches/tunnel.js`.
 
 ## 3. Which lessons are open
 
@@ -115,7 +120,7 @@ on the course the lesson names.
 | --- | --- | --- | --- |
 | **Grip** | A tyre on the rolling road, slid a little more each run; a graph of grip against slide | A tyre can slide a few degrees and keep all its grip: in the game that is up to 4.3 degrees. Past that the rubber skates and grip falls. A short squeal says you are at the limit; a long screech is lost time | Tyre pressure (Tremblant Woods) |
 | **Downforce** | A wing in the smoke; the fan dial from 50 to 150 mph; the scale reads the push | A racing wing is an aeroplane wing upside down: it pushes the car onto the road. Twice the speed gives four times the push. More push means more grip in fast corners, but the wing also drags, so top speed falls | Wing angle (Panorama Ridge) |
-| **Braking** | The car brakes from 50 and from 100 mph on the rolling road; a slider moves braking between front and back | Stopping distance grows with the square of speed: from 100 mph a car needs four times the road it needs from 50. Braking tips the car's weight forward onto the front tyres, so the front brakes do most of the work. (The bench shows that weight shift at a gentle 1 g stop; the stopping distances use the car's full braking.) Too much rear brake and the back slides | Brake balance (Harbour Lights) |
+| **Braking** | The car brakes from 50 and from 100 mph on the rolling road; a slider moves braking between front and back | Stopping distance grows with the square of speed: from 100 mph a car needs four times the road it needs from 50. Braking tips the car's weight forward onto the front tyres, so the front brakes do most of the work. (The rig brakes each car at a real car's deceleration, its brake strength times 9.81 m/s², so a road car stops from 100 km/h in about 40 m, and the weight shift is worked out at that same braking.) Too much rear brake and the back slides | Brake balance (Harbour Lights) |
 | **Suspension** | A shaker rig under each wheel, a bumpy road and a smooth one; soft and stiff springs; a light glows while the tyre touches | Soft springs let the body ride over a bump, so it is shaken less, but it leans more in a corner. Stiff springs pass every bump up into the car, shaking it harder, but keep it flat and quick to turn on smooth roads | Springs (Tremblant Snow) |
 | **Fuel** (petrol cars) | A jerry can on a scale, then the car timed from 0 to 60 mph full and half full | Petrol weighs about three quarters of a kilo a litre, so a 70-litre tank holds about 52 kg. A lighter car speeds up, brakes and turns a little better. Electric cars carry batteries instead, which weigh the same full or empty | Fuel load (Summit Run, a Grand Prix) |
 

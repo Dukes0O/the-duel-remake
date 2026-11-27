@@ -1,5 +1,5 @@
 import {BUILDINGS, GOODS, buildingById, validateTownContent} from './content/registry.js';
-import {cellIsReserved, ensureTownRegion, getTownChunk, TOWN_REGIONS} from './town-world-data.js';
+import {ensureTownRegion, getTownChunk, reservedGroundSentence, TOWN_REGIONS} from './town-world-data.js';
 
 const handlers = new Map();
 export const TOWN_WORK_STATES=Object.freeze(['plan','foundation','frame','finished','ruined']);
@@ -44,7 +44,9 @@ function placeBuilding(town, command, options) {
   validateTownContent({buildings:[row],goods:options.goods||GOODS});
   const regionId = command.regionId || 'scablands', region = TOWN_REGIONS.get(regionId), regionState=ensureTownRegion(town,regionId);
   if (!region || !Number.isSafeInteger(command.x) || !Number.isSafeInteger(command.z)) return result(false, 'Choose a place on the map first.');
-  if (cellIsReserved(regionId, command.x, command.z, row.width, row.depth)) return result(false, 'That ground is kept clear.');
+  // A neighbour's outpost answers with whose place it is; the Dome and the old roads say the ground is kept clear.
+  const kept = reservedGroundSentence(regionId, command.x, command.z, row.width, row.depth);
+  if (kept) return result(false, kept);
   for (let dx=0; dx<row.width; dx++) for (let dz=0; dz<row.depth; dz++) {
     if((town.homePlots||[]).some(plot=>plot.regionId===regionId&&plot.x===command.x+dx&&plot.z===command.z+dz))
       return result(false,PAINTED_HOME_MESSAGE);

@@ -448,6 +448,8 @@ for (const [carId, options] of [['ferrari_enzo', {}], ['mclaren_f1', {}], ['buga
     'src/lab/lab-challenges.js': name => /^heli\/heli-(?:flight|fire|search)\.js$/.test(name),
     // TOWN-VIEW-LIFE: town fires are drawn in the helicopter's fire look (its drawing file only, never its rules).
     'src/town/view/town-fx.js': name => name === 'heli/heli-fire-view.js',
+    // FAR-JOBS-1: Too High's ceiling step reads the helicopter's own thrust and mass (its flight rules only).
+    'src/world/jobs/steps/heliceiling.js': name => name === 'heli/heli-flight.js',
   };
   // LAB-BENCHES: each bench runs the helicopter's own rules (never its drawing files).
   const labBench = name => !drawingFile.test(name);
