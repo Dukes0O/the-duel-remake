@@ -1059,9 +1059,10 @@ export function createThreadsPart(threads) {
               text: nameOf(row.speaker) + ': ' + laterRule.line(row.words)}));
           }
         }
-        if (thread === burnedCamp && enabled && view.openRoam &&
+        if (thread === burnedCamp && enabled && view.openRoam && !previous.parkedAtNest &&
             world.ledger.marks.includes('burned-camp/car-with-sump') &&
-            !world.ledger.marks.includes('burned-camp/car-back-at-town') && !previous.parkedAtNest) {
+            !world.ledger.marks.includes('burned-camp/car-back-at-town') &&
+            world.ledger.history.some(row => row.type === 'mark' && row.key === 'burned-camp/car-with-sump' && row.night === night)) {
           // A same-day reload must not put the held car back in the player's hands.
           const distant = context.placeAt(['rats-nest', 'held-car'], record.cast);
           if (distant) {

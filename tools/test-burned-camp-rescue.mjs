@@ -308,6 +308,10 @@ test('a reload on breakout day keeps the car at the Nest until the next bank', (
   assert.equal(parked?.parkOnly, true);
   assert.deepEqual([parked.car.x, parked.car.z], [at(['rats-nest', 'held-car']).x, at(['rats-nest', 'held-car']).z]);
   assert(!step(midDay.open, hearth).requests.some(row => row.type === 'threadTaken'));
+  const olderSave = nextNight(escaped);
+  assert(!marks(olderSave).includes(id + '/car-back-at-town'));
+  assert(!step(begin(olderSave), hearth).requests.some(row => row.type === 'threadTaken'),
+    'a save banked before this card is never sent back to the pen');
   const banked = bankOpenHearth(dusk(escaped), escaped.ledger.night, {storyChoices: true});
   assert(marks(banked).includes(id + '/car-back-at-town'));
   assert(!step(begin(banked), hearth).requests.some(row => row.type === 'threadTaken'));
