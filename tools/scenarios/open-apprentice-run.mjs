@@ -36,6 +36,18 @@ const pageFunctions = {
     Object.assign(state.fighter, {x: point.x + 1, y: point.y, z: point.z, groundY: point.y, s, lateral});
     window.__qaApp.advance(.15);
   },
+  talkState: () => {
+    const state = window.__qaApp?.duel.state, trip = state?.arena?.worldJob;
+    const job = trip?.job;
+    return {status: state?.status, step: job?.steps[job.stepIndex], talk: job?.stepState.talk,
+      routines: trip?.open?.world.open.routines, routineState: trip?.open?.parts.routines,
+      talks: [...document.querySelectorAll('.story-talk')].map(box => ({
+        html: box.outerHTML, buttons: [...box.querySelectorAll('button')].map(button => ({
+          text: button.textContent, hidden: button.hidden, disabled: button.disabled,
+          visible: !!button.getClientRects().length, visibility: getComputedStyle(button).visibility,
+        })),
+      }))};
+  },
   line: (words, click = false) => {
     const button = document.querySelector('.story-talk:not([hidden]) .story-speech:not([hidden])');
     if (!button || !button.getClientRects().length || button.disabled ||
@@ -47,7 +59,11 @@ const pageFunctions = {
     const button = [...document.querySelectorAll('.story-talk:not([hidden]) .story-options button')]
       .find(row => row.textContent.includes(words) && row.getClientRects().length && !row.disabled);
     if (!button) return false;
-    if (click) button.click();
+    if (click) {
+      button.click();
+      // Apply the answer before the scenario moves away and closes this talk.
+      window.__qaApp.advance(.15);
+    }
     return true;
   },
   passengerReady: () => {
@@ -96,7 +112,13 @@ export const pageSource = (name, ...args) =>
   '(' + pageFunctions[name] + ')(' + args.map(arg => JSON.stringify(arg)).join(', ') + ')';
 
 export async function run(context) {
-  const wait = (name, ...args) => context.waitFor(pageSource(name, ...args), name + ' ' + args.join(' '), 90_000);
+  const wait = async (name, ...args) => {
+    try { return await context.waitFor(pageSource(name, ...args), name + ' ' + args.join(' '), 90_000); }
+    catch (error) {
+      error.message += '\nTalk state: ' + await evaluate('talkState').then(JSON.stringify, failure => failure.message);
+      throw error;
+    }
+  };
   const evaluate = (name, ...args) => context.evaluate(pageSource(name, ...args));
   const click = async (name, text) => {
     await wait(name, text);
