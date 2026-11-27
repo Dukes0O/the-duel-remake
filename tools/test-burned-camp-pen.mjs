@@ -95,7 +95,7 @@ const waitFor = (open, point, ready, view = {}) => {
   return open;
 };
 
-// 1. Driving in alone. Won: Sump's line, the Road Rats to Raiding, the mark, and on to the gate.
+// 1. Driving in alone. Won: Sump's line, the Road Rats to Raiding, the mark, and the escort home.
 {
   const world = toBeat(base, 'alone');
   let out = step(roam(world), at('road-top'), {onFoot: false});
@@ -109,7 +109,7 @@ const waitFor = (open, point, ready, view = {}) => {
   assert.equal(outcome(won), 'won');
   out = step(won.open, at('road-foot'), {onFoot: false});
   assert.match(said(out)[0], /^Sump: All right, all right, you can take them!/);
-  assert.equal(beat(out.open), 'gate');
+  assert.equal(beat(out.open), 'alone-home');
   assert.ok(marks(out.open).includes('burned-camp/took-them-alone'));
   assert.equal(feudOf(out.open.world, 'road-rats'), 'Raiding');
   assert.ok(won.events.some(event => event.type === 'threadMissionOutcome') && out.events.some(event => event.cue === 'open.pen.chain'));

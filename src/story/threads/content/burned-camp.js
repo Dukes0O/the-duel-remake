@@ -20,6 +20,11 @@
 // Until then every `ASH` row waits. During the act the fifth day is the only day left once the Ash Men are cast, so
 // what happens on it is written for that day (IN_ACT), and Old Smoke says how it went at the parley of the fifth night
 // (the `parley-` rows of `later`).
+import {
+  homeLines, homeQuestions, homeThoughts, homeChoices, partyMission, soloEscort, buyBackDrive, buyBackRansom,
+  gateRoadRats, campChoices, glassHaul, leftTrader,
+} from '../../scenes/burned-camp-home.js';
+
 const ID = 'burned-camp';
 const ASH = {cast: 'enemy', is: 'ash-men'};
 const RATS = {cast: 'enemy', is: 'road-rats'};
@@ -121,7 +126,7 @@ export default {
   title: 'Smoke over a friend',
   kind: 'trouble',
   reads: ['stage', 'found', 'word', 'feud', 'night', 'made', 'mark', 'stock', 'thread', 'draw', 'promise'],
-  writes: ['site', 'mark', 'feud', 'word', 'stock', 'find', 'rumour', 'promise', 'shareHearth', 'scrap', 'town'],
+  writes: ['site', 'mark', 'feud', 'word', 'stock', 'find', 'rumour', 'promise', 'shareHearth', 'scrap', 'town', 'favour', 'settle'],
 
   // The Road Rats' cast. A false trail is never laid by the Ash Men: they would not set a fire to put the blame on
   // anybody, so `blamed` is cast only when the enemy is the Road Rats. The Ash Men's enemy row is in `notes.ashMenTurn`.
@@ -305,7 +310,7 @@ export default {
             ],
             effects: [{type: 'feud', of: '@enemy', by: 1, when: {fact: 'feud', of: '@enemy', is: 'Watching'}},
               mark('took-them-alone', "You took {camp.name}'s people out of the Rats' Nest by yourself.")],
-            next: 'gate'},
+            next: 'alone-home'},
           lost: {cue: 'open.taken',
             lines: [
               say('sump', 'Well, look at this. You drove all the way out here by yourself to bring me a car. That\'s the nicest thing anybody has done for me all week.'),
@@ -316,12 +321,12 @@ export default {
         },
       },
       notes: {
-        // Won: the pen's gate is opened with the wrench and the growers walk out behind the water cart. The road home at
-        // a walking pace is Scene 6's, which OPEN-BURNED-RESCUE builds; until then the storyline goes on at the gate.
         // The road riders cannot yet hold four of the six back for twenty seconds, so all six set off together.
         sixAtOnce: true,
       },
     },
+
+    'alone-home': soloEscort,
 
     // Scene 4, the Road Rats. Going in by the drain, on foot. One guard walks a round with a lamp, and the round is a
     // routine like anybody's. The player keeps out of the lamp's light, holds the wrench on the pen's chain for eight
@@ -413,6 +418,7 @@ export default {
         say('marigold', "Off you go, then. Don't you look back at us like that. You came all this way, and that's more than anybody else has done."),
       ],
       ransom: {
+        roadRats: true,
         price: [{when: CAUGHT_RATS, scrap: 220, embers: 1}, {scrap: 150}],
         asked: [{roadWord: 3, embers: 2}, {roadWord: 1, embers: 1}],
       },
@@ -814,9 +820,12 @@ export default {
       },
     },
 
-    // Scene 5. Home, and the choice. The Ash Men's lines and helpers are here; the Road Rats' are still to be built.
+    // Scene 5. Home, and the choice.
     home: {
+      when: {reach: ['tin-town', 'hearth'], within: 5},
+      oneTalk: true,
       lines: [
+        ...homeLines,
         say('cinder', "There are nine people carrying coal for Old Smoke tonight, and they never did any of us any harm. I'm only saying it out loud so that somebody has said it.", {when: ASH}),
         say('auntie-solder', "We also have only a few embers left, and Old Smoke wants every one of them. I'm saying that out loud as well.", {when: ASH}),
         say('moss', "Bess could carry twelve people in the tank cradle, if they didn't mind the smell of gas. But those trucks are as heavy as she is. I'm not offering to go. I'm only telling you what Bess can do.", {when: ASH}),
@@ -824,6 +833,7 @@ export default {
           {when: ash({any: [has('broke-out'), has('creep-out')]})}),
       ],
       questions: [
+        ...homeQuestions,
         {id: 'who-moss', to: 'moss', words: 'Moss, would you bring Bess?', when: ASH,
           lines: [say('moss', "If you ask me to, I'll bring Bess. But if they throw ash in her holes, nobody fetches gas tomorrow, and you'll be the one who explains that to Auntie.")],
           shows: 'Carry all nine home at once. Bess is at risk'},
@@ -841,35 +851,38 @@ export default {
           shows: 'Nothing. The trader\'s truck in the gateway is the Road Rats\' turn only'},
       ],
       thoughts: [
+        ...homeThoughts,
         {thought: 'Every person I take to the Grey Camp is a person who won\'t be on our fence tonight.', when: ASH},
       ],
       choices: [
+        ...homeChoices,
         {id: 'raise-party', by: 'say', words: "We're going to get them out. Who is coming with me?",
           plain: 'The player picks up to three of those who said yes. Each one\'s favour or debt is spent, and the page says so',
           thought: "I'll owe every one of them something if this goes wrong.",
-          hidden: 'The rescue (Scene 6). The fence at home is thinner tonight', next: 'rescue'},
+          hidden: 'The rescue (Scene 6). The fence at home is thinner tonight', next: 'party'},
         {id: 'buy-back-embers', by: 'say', when: ASH, words: "We'll buy them back. Old Smoke wants fire, so we'll pay him in fire.",
           plain: 'Auntie Solder says the price she expects: three embers, one for every three growers',
           thought: "That's three nights of fire for nine people. I wonder what Old Smoke will think we'll pay next time.",
           hidden: 'Clinker\'s price goes up for Tin Town from now on',
           lines: [say('auntie-solder', "Old Smoke doesn't sell people for scrap. If we buy them back, it will be with fire, and I'd expect three embers at the least.")],
           next: 'bought'},
-        {id: 'cannot', by: 'say', words: "We can't do it. Not with the embers we have and the fence as it is.",
+        {id: 'cannot', by: 'say', when: ASH, words: "We can't do it. Not with the embers we have and the fence as it is.",
           plain: 'Nothing changes at Tin Town',
           thought: '{camp.leader} will go on telling them that somebody is coming, and I wonder how long she will keep saying it.',
           effects: [{type: 'word', person: CAMP_PEOPLE, by: -1, when: ASH},
             {...mark('left-at-grey-camp', 'You left the people of {camp.name} at the Grey Camp.'), when: ASH}],
           next: 'left'},
       ],
-      notes: {
-        builds: 'OPEN-BURNED-RESCUE builds the Road Rats\' Scene 5 on this beat.',
-        // Auntie Solder's first line and Rell's offer are as section 21 has them. Tally's row of section 21 (her truck in
-        // Sump's gateway) is the Road Rats' turn only; in the Ash Men's turn she says why not.
-        bothTurns: ['raise-party'],
-        // `cannot` is the Road Rats' choice with its words made general. It is one choice for both turns, and
-        // OPEN-BURNED-RESCUE adds the Road Rats' effects beside the Ash Men's, each under its `when`.
-      },
     },
+
+    party: {
+      when: {reach: ['tin-town', 'hearth'], within: 5},
+      choices: [{id: 'ride', by: 'say', words: "Let's ride.", next: 'rescue'},
+        {id: 'back', by: 'say', words: "Let's talk it over again.", next: 'home'}],
+    },
+
+    'buy-back-drive': buyBackDrive,
+    'buy-back-ransom': buyBackRansom,
 
     // Scene 5, the Ash Men. 2. Bought back, at first light.
     bought: {
@@ -892,52 +905,26 @@ export default {
     // Scene 6. The rescue. The same three jobs in both turns; what differs is the den, the light and who speaks.
     rescue: {
       when: {chose: 'raise-party'},
-      mission: {id: `${ID}/rescue`, kind: 'rescue', by: 'car', minutes: 6, outing: true, holds: ['checkpoints', 'signs'],
-        enemy: '@enemy', cars: 4,
-        // Draw the riders out by car; open the pen down the ash tip if it is known, or at the gate if not; carry the
-        // growers home. Nat, if he leads the party, takes them down the tip, and the pen is opened twenty seconds sooner.
-        rule: {chaseRiders: 4, ridersIfSeen: 6, gateGuards: 2, gateGuardsIfSeen: 4, natSoonerSeconds: 20},
-        lines: [
-          say('rell', "They're all out, every one of the nine. The old woman wanted to go back for her stove, and I told her no.", {radio: true, when: ASH}),
-          say('slack', "Down the tip and round the coal heap, the same as always. Nobody even looked at me.", {radio: true, as: 'Nat', when: ash(NAT_AT_TIN_TOWN)}),
-        ],
-        outcomes: {
-          'all-home': {
-            effects: [ashFeud(1), {type: 'word', person: CAMP_PEOPLE, set: 'Sworn'},
-              mark('rode-out', 'You rode out with friends and brought the people of {camp.name} home from the Grey Camp.')],
-            next: 'gate'},
-          'some-home': {
-            effects: [mark('some-home', 'Some of the people of {camp.name} came home from the Grey Camp, and the rest are still there.')],
-            next: 'gate'},
-          'none-home': {
-            lines: [say('rell', "I brought six people to the bottom of a heap of ash, and we waited there for a whistle that never came. I'm not angry with you. I'm just not going to do that again in a hurry.")],
-            effects: [mark('rescue-failed', 'The rescue at the Grey Camp failed, and nobody came home.')],
-            next: 'home'},
-        },
-      },
-      notes: {
-        // The whistle is Rell's (`night.whistle`), as in section 21. The tower's keeper calls the moment a truck turns
-        // for home. Bess holed: "if they throw ash in her holes". The rest of Scene 6 is as section 21.
-        outcomeCues: {'all-home': 'night.whistle'},
-        // The mission kind `rescue` is not built yet. OPEN-BURNED-RESCUE builds it, and the Road Rats' rule and outcomes
-        // beside the Ash Men's.
-        missionKindBy: 'OPEN-BURNED-RESCUE',
-      },
+      mission: partyMission,
     },
 
     // Scene 7. What becomes of the camp. The Ash Men took its fire, so in their turn going home needs one of Tin Town's
     // embers.
     gate: {
+      when: {reach: ['tin-town', 'gate'], within: 6},
+      oneTalk: true,
       lines: [
+        gateRoadRats,
         say('marigold', "We've nothing to go back to but a pump and the place where our stove stood. The grey men took our fire, and a camp without a fire isn't a camp. It's only a place where people used to be.", {when: ASH}),
       ],
       choices: [
+        ...campChoices,
         {id: 'stay-inside', by: 'say', words: "Stay here with us. There's room inside the fence.",
           plain: 'Nine more people at the hearth',
           hidden: 'As section 21: the hearth burns an extra ember every second night in an act with a clock, and a bean bed is dug by the south fence. The site stays burned',
           lines: [say('marigold', "Inside a fence? I haven't lived inside a fence since I was a girl. Finch, go and find out which side gets the morning sun.")],
           effects: [{type: 'shareHearth'}, mark('stayed-inside', 'The people of {camp.name} came to live inside the fence at Tin Town.')],
-          next: [{when: {chose: 'buy-back-embers'}, to: 'bought-back'}, {to: 'freed'}]},
+          next: [{when: {chose: 'buy-back'}, to: 'bought-back'}, {when: {chose: 'buy-back-embers'}, to: 'bought-back'}, {to: 'freed'}]},
         {id: 'relight', by: 'say', when: ASH, words: "Go home, and take one of our embers to light your fire again.",
           plain: 'One ember out of the store, in a pot',
           thought: "That's one night of fire gone out of our store. It's also one fire burning out there that Old Smoke doesn't own.",
@@ -945,7 +932,7 @@ export default {
           lines: [say('marigold', "You'd give us fire out of your own store? Then the first basket of every crop is yours, and I won't hear any argument about it.")],
           effects: [embers(-1), {type: 'site', id: '@camp', stage: 'rebuilt'}, {type: 'word', person: CAMP_PEOPLE, set: 'Sworn'},
             mark('relit', 'You gave {camp.name} an ember to light its fire again.')],
-          next: [{when: {chose: 'buy-back-embers'}, to: 'bought-back'}, {to: 'freed'}]},
+          next: [{when: {chose: 'buy-back'}, to: 'bought-back'}, {when: {chose: 'buy-back-embers'}, to: 'bought-back'}, {to: 'freed'}]},
         {id: 'seep-relight', by: 'say', when: ash({fact: 'made', id: 'somebody-elses-flag/hand-pump'}),
           words: "There's water at the Sweet Seep now. Take one of our embers and build there.",
           plain: 'The Sweet Seep is on the map. One ember out of the store',
@@ -953,14 +940,10 @@ export default {
           lines: [say('marigold', "Beans beside a well that never runs dry, and a fire that somebody gave us instead of taking it. I've dreamed of the first for thirty years, and I never once dreamed of the second.")],
           effects: [embers(-1), {type: 'word', person: CAMP_PEOPLE, set: 'Sworn'},
             mark('moved-to-seep', 'The people of {camp.name} built again at the Sweet Seep, with an ember from Tin Town.')],
-          next: [{when: {chose: 'buy-back-embers'}, to: 'bought-back'}, {to: 'freed'}]},
+          next: [{when: {chose: 'buy-back'}, to: 'bought-back'}, {when: {chose: 'buy-back-embers'}, to: 'bought-back'}, {to: 'freed'}]},
       ],
-      notes: {
-        // Staying is as section 21 has it, one choice for both turns. Rebuilding with the Road Rats is a load of
-        // windscreens (OPEN-BURNED-RESCUE); with the Ash Men the glass mostly stands, and what is missing is fire.
-        bothTurns: ['stay-inside'],
-      },
     },
+    'haul-glass': glassHaul,
   },
 
   ends: ['freed', 'bought-back', 'left', 'taken'],
@@ -971,11 +954,12 @@ export default {
   // turn asks who was cast or a promise falling due, its `when` asks the land's nearest fact and `notes.laterWhen` keeps
   // the storyline's own condition.
   later: [
+    leftTrader,
     // Tied back, the next time the Road Rats are met at a checkpoint (parts/checkpoints.js says it as the meeting begins).
     {id: 'rats-know-the-car', by: 'sumps-rider', when: has('ransomed'),
       lines: [say('sumps-rider', "We know that car, don't we? That's the one from Tin Town, where they pay up. Sump says the price will be higher next time, because you've shown him that you can find the scrap.")]},
     {id: 'burned-camp/remembered', by: 'dot', when: {fact: 'mark', id: 'burned-camp/never-went'},
-      lines: [{speaker: 'dot', words: 'There used to be a camp out past the Ridge that grew beans.'}]},
+      lines: [{speaker: 'dot', words: "There used to be a camp out past the Ridge that grew beans. I bought from them every spring. Nobody has seen them this year, and I can't think why not."}]},
     // Tied back, the next time Clinker names a price for anything.
     {id: 'clinker-paid-fire', by: 'clinker', when: {any: [has('ransomed-in-fire'), has('bought-back-in-fire')]},
       lines: [say('clinker', "Tin Town pays in fire. Everybody on the road knows it now, so I've put my prices up. It seemed only fair to the furnace.")]},

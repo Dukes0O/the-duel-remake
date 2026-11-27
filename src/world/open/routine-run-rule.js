@@ -3,6 +3,7 @@ import {night2Banked} from '../jobs/night-2.js';
 import {GAS_ROUTINE, ROUTINES, learnerOf} from './content/routines.js';
 import {isTrue} from './facts.js';
 import {routineDraw} from './routine-rule.js';
+import {damagedBessLoad} from './burned-rescue-rule.js';
 
 const GAS_PER_EMBER = 20;
 const empty = handRuns => ({handRuns, offered: false, offeredNight: null, refusedNight: null, learner: null,
@@ -102,7 +103,8 @@ export function arriveHandRun(world, {load, clean, passenger}, row = GAS_ROUTINE
   const night = world.ledger.night;
   if (!night2Banked(world.ledger) || record.deliveredNight === night ||
       !Number.isSafeInteger(load) || load < 0 || load > row.fullLoad) return {world};
-  const baked = kiln(world, load, 'routine/' + row.id + '/hand');
+  const gas = damagedBessLoad(world, load);
+  const baked = kiln(world, gas, 'routine/' + row.id + '/hand');
   let next = {...record, handRuns: record.handRuns + 1, handNight: night, deliveredNight: night};
   if (record.lessonPending && passenger && passenger === record.learner && learnerOf(row, passenger)) {
     const [low, high] = row.share;
@@ -115,7 +117,7 @@ export function arriveHandRun(world, {load, clean, passenger}, row = GAS_ROUTINE
     next = {...next, ...(better ? lesson : {}), lessonPending: false, startAfterLesson: false,
       running: record.startAfterLesson === true || record.share === null || record.running};
   }
-  return {world: keepRoutine(baked.world, next, row), embers: baked.embers};
+  return {world: keepRoutine(baked.world, next, row), embers: baked.embers, gas};
 }
 
 export function runBankedRoutines(world, {held = false} = {}) {
@@ -125,10 +127,11 @@ export function runBankedRoutines(world, {held = false} = {}) {
     const night = world.ledger.night;
     if (!record.running || record.trouble || record.share === null || record.handNight === night ||
         record.lastDelivery?.night === night) continue;
-    const gas = learnedLoad(record);
+    const gas = damagedBessLoad(world, learnedLoad(record));
     const baked = kiln(world, gas, 'routine/' + row.id + '/learner');
-    const lastDelivery = {night, gas, embers: baked.embers, byHand: record.lessonLoad,
-      handEmbers: Math.floor((world.ledger.stocks.gas + record.lessonLoad) / GAS_PER_EMBER)};
+    const byHand = damagedBessLoad(world, record.lessonLoad);
+    const lastDelivery = {night, gas, embers: baked.embers, byHand,
+      handEmbers: Math.floor((world.ledger.stocks.gas + byHand) / GAS_PER_EMBER)};
     world = keepRoutine(baked.world, {...record, lastDelivery, tally: {runs: record.tally.runs + 1,
       gas: record.tally.gas + gas, embers: record.tally.embers + baked.embers}}, row);
   }

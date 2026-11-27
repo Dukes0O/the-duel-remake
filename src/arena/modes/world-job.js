@@ -2196,8 +2196,9 @@ export function stepWorldJob(duel, dt) {
         worldJob.riderFight?.heldSec : 0,
       deferCheckpointRecovery, threadSearchCast: worldJob.threadSearchCast, missionLookoutPosts: threadMission?.state.route.posts,
       roadEncounter: worldJob.open.parts.checkpoints?.encounter,
+      finchRide: worldJob.open.parts.checkpoints?.finchRide,
       ...(threadMission?.mission.kind === 'squeeze' ? {missionWeapons: state.combat?.cooldowns} : {}),
-      ...(checkpointsEnabled && {threadMission}),
+      ...(checkpointsEnabled && {threadMission, threadConvoy: worldJob.threadConvoy}),
       openRoam, peopleGrid: openRoam ? worldJob.solidGrid : undefined,
       campSiteState: worldJob.open.parts.sites,
       serviceSheds: worldJob.serviceSheds,
@@ -2405,6 +2406,14 @@ export function stepWorldJob(duel, dt) {
           ...(request.armour !== undefined && {combatWrecking: false, armor: request.armour})});
       } else if (checkpointsEnabled && request.type === 'threadFootPosition' && state.onFoot && state.fighter) {
         putFighterOnGround(duel, state.fighter, request.place);
+      } else if (checkpointsEnabled && request.type === 'missionConvoy') {
+        worldJob.threadConvoy = request.place ? request : null;
+        if (!request.place || !request.truck) applyRequests(duel, worldJob, [{type: 'solids', id: request.id + '/convoy', solids: []}]);
+        else {
+          const {x, y, z, heading} = request.place;
+          applyRequests(duel, worldJob, [{type: 'solids', id: request.id + '/convoy',
+            solids: [{id: request.id + '/convoy', kind: 'wreck', shape: 'box', x, z, heading, base: y, halfX: 1.4, halfZ: 4, height: 3.4}]}]);
+        }
       } else if (checkpointsEnabled && request.type === 'missionLookouts') {
         const prefix = request.id + '/lookout/';
         worldJob.actors = worldJob.actors.filter(actor => !actor.id?.startsWith(prefix));

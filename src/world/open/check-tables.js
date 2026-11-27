@@ -149,7 +149,7 @@ export const THREAD_SHAPE = Object.freeze({
   beat: ['when', 'cue', 'cues', 'lines', 'thoughts', 'explore', 'mend', 'mends', 'questions', 'choices', 'mission', 'effects', 'next', 'notes',
     'takes', 'frees', 'leaves', 'ransom', 'oneTalk'],
   takes: ['foot', 'car'],
-  ransom: ['price', 'asked'],
+  ransom: ['price', 'asked', 'roadRats'],
   ransomPrice: ['when', 'scrap', 'embers'],
   ransomAsked: ['roadWord', 'embers'],
   line: ['speaker', 'words', 'when', 'radio', 'low', 'shouted', 'as', 'cue', 'moment', 'slot'],

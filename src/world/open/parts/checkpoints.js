@@ -10,6 +10,7 @@ import hauler from '../../../story/threads/content/stranded-hauler.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 
 // The `later` rows Sump's rider says at a checkpoint, each asking only facts of the land.
+const LEFT_TRADER = burnedCamp.later.find(row => row.id === 'trader-bolts');
 const RIDER_ROWS = [burnedCamp].flatMap(thread => (thread.later ?? []).filter(row => row.by === 'sumps-rider')
   .map(row => ({thread, row})));
 
@@ -52,6 +53,7 @@ export const checkpointsPart = {
     const point = view.carPosition;
     const inside = !view.onFoot && point ? OPEN_CHECKPOINTS.find(row => gap(row.position, point) <= row.radius) : null;
     const next = {...state, inside: inside?.id ?? null, interact: view.interact === true};
+    if (!view.road || next.finchRide !== view.road.id) next.finchRide = null;
     const held = isHeld(holds, 'checkpoints');
     const banked = hearthBanked(world, view.jobEvents);
     const current = {...context, view: {...view, player: view.player?.position ?? view.player,
@@ -67,11 +69,23 @@ export const checkpointsPart = {
       choices.push({id: 'checkpoint/bank/' + world.ledger.night, effects: [{type: 'rest', clear: true}]});
     const camps = () => friendlyCamps(world, view.checkpointSites);
     const encounter = state.encounter ?? view.road?.external;
-    if (encounter) {
+    if (encounter && !(encounter.external && view.threadMission?.id === encounter.id &&
+        view.threadMission.mission.kind === 'party-rescue')) {
       const out = stepEncounter(encounter, current, dt, held && !encounter.external);
       next.encounter = out.encounter;
       choices.push(...(out.choices ?? []));
       requests.push(...(out.requests ?? []));
+    }
+    if (!held && encounter?.group === 'road-rats' && view.road?.id === encounter.id &&
+        world.ledger.marks.includes('burned-camp/left-at-rats-nest') &&
+        !world.ledger.marks.includes('burned-camp/home/finch') &&
+        !world.ledger.marks.includes('burned-camp/drain-out') &&
+        !world.ledger.marks.includes('burned-camp/broke-out') &&
+        !world.ledger.marks.includes('burned-camp/saw-finch-at-checkpoint') &&
+        view.road.cars.some(car => !car.wrecked && gap(point, car) <= 45)) {
+      next.finchRide = encounter.id;
+      choices.push({id: 'burned-camp/saw-finch-at-checkpoint',
+        effects: [{type: 'mark', id: 'burned-camp/saw-finch-at-checkpoint'}]});
     }
     if (!held && !missionLoss && !taken && (state.recovery || view.combatWrecking && !view.deferCheckpointRecovery)) {
       if (!state.recovery) next.recoveries = recoveryNumber(world, state.recoveries);
@@ -100,6 +114,15 @@ export const checkpointsPart = {
       const {encounter, requests: start} = startEncounter(inside, number, draw, {...point, heading: view.checkpointHeading ?? point.heading});
       next.encounter = encounter;
       requests.push(...start);
+      if (draw.group === 'traders' && isTrue(LEFT_TRADER.when, world) &&
+          !world.ledger.marks.includes('burned-camp/later/trader-bolts')) {
+        const left = world.ledger.history.findLast(change => change.key === 'burned-camp/left-at-rats-nest');
+        if (left && world.ledger.night - left.night >= 2) {
+          requests.push({type: 'say', lineId: 'burned-camp/later/trader-bolts',
+            text: LEFT_TRADER.lines[0].as + ': ' + LEFT_TRADER.lines[0].words});
+          effects.push({type: 'mark', id: 'burned-camp/later/trader-bolts'});
+        }
+      }
       if (draw.group === 'road-rats' && radioMarked(world, RADIO_ID + '/took-the-set') &&
           !radioMarked(world, RADIO_ID + '/later/took-the-set')) {
         const row = voice.later.find(item => item.id === 'took-the-set').lines[0];

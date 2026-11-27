@@ -167,11 +167,14 @@ function applyEffect(ledger, e) {
     case 'tell': {
       // The writer supplies what someone actually said, and the line tying it
       // to the decision. No raw marks, effect names or choice IDs reach the page.
-      const source = integer(e.source, 0, ledger.history.length - 1);
+      const source = e.sourceMark === undefined ? integer(e.source, 0, ledger.history.length - 1) :
+        ledger.history.findLastIndex(change => change.type === 'mark' && change.key === id(e.sourceMark));
+      if (source < 0) return null;
       const cause = ledgerCause(ledger.history, source);
       if (ledger.history.some(change => change.type === 'tell' &&
         sameLedgerCause(recordedTellCause(ledger, change), cause))) return null;
-      return {key: cause.key, source, cause, text: sentence(e.text), because: sentence(e.because)};
+      return {key: cause.key, source, cause, text: sentence(e.text),
+        because: e.sourceMark !== undefined && e.because === undefined ? '' : sentence(e.because)};
     }
     case 'shareHearth': {
       if (ledger.extraHeatFrom !== null) return null;
