@@ -383,3 +383,22 @@ single ones; the exhaust stack and the rear draw pipe stand on a different side 
 is a little shorter in the cab than the side view). The side view controls length, height, wheels and the stack's and
 pipe's look, the front and rear views control width, and `tools/blender/big-bess-photo.py` builds the stack and pipe on
 their own and turns the overhead photo round in its own working copy.
+
+## The Iron Mule (WW-ART-MULE, 27 November 2026)
+
+`mule-cab-side.jpg`, `mule-cab-front.jpg`, `mule-cab-rear.jpg`, `mule-cab-top.jpg`, `mule-tank-side.jpg`,
+`mule-tank-end.jpg`, `mule-tank-top.jpg`, `mule-guard-side.jpg`, `mule-guard-end.jpg`, `mule-guard-top.jpg`,
+`mule-box-side.jpg`, `mule-box-end.jpg`, `mule-box-top.jpg`, `mule-bridge-side.jpg`, `mule-track-top.jpg`: OpenAI image
+generation through Codex, 26 November 2026, one dead-on view to a picture, each later view given the first picture of
+its object as a reference. Original objects with no source art, logos or lettering: an armoured steam engine, a bogie
+tank wagon with a chequer-plate walkway, an armoured guard wagon with a lookout, an old timber box wagon with a barred
+door, a 24 m lattice bridge span and 8 m of track, all in filthy company white with rust runs. They stand on a flat
+blue backdrop, because a pale backdrop eats white paint; `tools/blender/scablands-mule.py` takes everything that is not
+blue as the subject. The views disagree in places: the tank wagon's walkway is 0.8 m wide from above and 1.8 m from the
+end (the recipe makes it 1.2 m), its ladders stand in different places in each view, the engine's front view tapers
+towards the roof where its rear view does not (the rear view shapes the body), and the engine's overhead view is
+narrower than its end views (the end views control width).
+
+The comparison sheets under `docs/board/looks/ww-art-mule/` also show two real photographs from Wikimedia Commons, kept
+outside the repository: `File:Bartosz Glowacki Parowoz.jpg` (public domain) and `File:GATX Tank Car No. 40649.jpg` (CC0).
+No game file uses them.
