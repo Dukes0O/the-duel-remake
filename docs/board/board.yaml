@@ -1283,11 +1283,10 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "M"
-    status: "building"
+    status: "ready"
     needs: []
     locks: []
     flag: "story-choices"
-    claimed_by: "Claude Opus session (local), 27 November 2026"
     details: "docs/board/cards/OPEN-LOOK-DACE.md"
 
   - id: OPEN-SOUND
