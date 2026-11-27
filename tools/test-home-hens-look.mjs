@@ -105,9 +105,11 @@ async function sources(dir) {
   }
   return found;
 }
+// HOME-GROUND-2 places these parts on his ground: the ground's drawing is the one game file that imports them.
 for (const file of await sources(new URL('src/', root).pathname.replace(/^\/([A-Za-z]:)/, '$1'))) {
   if (file.endsWith('home-hens-look.js')) continue;
-  assert.ok(!(await readFile(file, 'utf8')).includes('home-hens-look'), `${file} uses the hens' look before step 2`);
+  const imports = /from\s+['"][^'"]*home-hens-look\.js['"]/.test(await readFile(file, 'utf8'));
+  assert.ok(!imports || /[\\/]looks[\\/]home-ground-look\.js$/.test(file), `${file} imports the hens' look; only the ground's drawing may`);
 }
 
 // ---- The scenario's pictures and what it sends to the page. -------------------------------------------------------------------
