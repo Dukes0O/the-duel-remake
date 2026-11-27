@@ -1832,3 +1832,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge HOME-GROUND-1 (Claude session): Home Ground step 1, the ground, tin fence, gate, lane, view from above and burst, behind home-ground
 - Janitor OPEN-PEN-DRAIN-BANK round 2: audit candidates advisory; pipe facts folded into ART_LINE; generated lane build recycled; no evidence remains.
 - Merge OPEN-PEN-DRAIN-BANK (Codex, laptop lane): a walkable floor inside the Rats' Nest drain
+- Merge SCENERY-FENCE-BOUNCE (Codex, laptop lane): a car shoved into a thin fence stays at its face

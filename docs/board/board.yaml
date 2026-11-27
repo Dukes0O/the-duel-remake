@@ -1228,18 +1228,6 @@ tasks:
     locks: []
     details: "docs/board/cards/HOME-GROUND.md"
 
-  - id: SCENERY-FENCE-BOUNCE
-    title: "A car shoved into a thin fence jumps 1 to 2 m back off it in one tick"
-    owner: "codex"
-    model: "astra"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Codex laptop lane, 27 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/SCENERY-FENCE-BOUNCE.md"
-
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"
     owner: "claude"
