@@ -839,7 +839,8 @@ tasks:
 
   - id: TOWN-VANE-JOBS
     title: "Act 3: A Bottle of Her Water, Sand from the Shore, Walk the Bounds"
-    owner: "claude"
+    owner: "codex"
+    model: "sol"
     lane: "SIM"
     size: "M"
     status: "ready"
