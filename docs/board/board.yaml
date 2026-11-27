@@ -1297,6 +1297,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "building"
+    waiting_on: "claude"
     claimed_by: "Codex (cloud), 26 November 2026"
     branch: "codex/open-burned-rescue"
     needs: []
