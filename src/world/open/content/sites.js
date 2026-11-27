@@ -27,6 +27,10 @@ export const LAND_SITES = Object.freeze(requireSound([
   TOLL_SITE,
   site(POCKET_ID, POCKET_POSITIONS, {foundWithin: 80, tell: 'lamp', tellWithin: 4000, storyChoices: true}),
   site('bell-buoy', BUOY_POSITIONS, {foundWithin: 24, tell: 'bell', tellWithin: 400, storyChoices: true}),
+  site('deep-sign', [['everburn', -190, -530]], {foundWithin: 80, tell: 'green-patch', tellWithin: 450, storyChoices: true}),
+  site('hangar', [['iron-line', 180, 650]], {foundWithin: 95, tell: 'mast', tellWithin: 650, storyChoices: true}),
+  site('crows-step', [['ridge', -1976, 2322]],
+    {foundWithin: 100, tell: 'mast', tellWithin: 600, storyChoices: true}),
 ], checkSite, 'Open Scablands sites'));
 
 export const CAMP_SITES = Object.freeze(LAND_SITES.filter(site => site.kind === 'camp'));
