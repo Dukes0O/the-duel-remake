@@ -11,9 +11,13 @@ Moss's wash shed, `job.open.parts.buildings.inside` is `null` where `'bess-shed'
 
 - It fails in the integration folder (`C:\Users\kyleb\.codex\worktrees\wasteland-integration\the-duel-remake`) and in
   Claude's worktree at `710be0c6f`, three times out of three.
-- A first-parent bisect on integration names `b0894b1e8` (the Show Night session's merge of its follow-ups) as the
-  first failing commit. Claude's runs in throwaway checkouts, which seemed to pass, are not to be trusted (the same
-  method gave a false pass for `test-feature-flags`). The Show Night session has been told; it may take this card.
+- It follows the folder, not a commit. At `c76d71bfd` and `847bb9f2e` (the checkout confirmed at that commit) it
+  passes in a fresh detached checkout outside the repository's folders (under Claude's scratchpad). Inside the
+  repository's folders (the integration folder, Claude's worktree, the Show Night session's worktree) it fails, also at
+  `d85d29a4c`, which adds only a card. The Show Night merge `b0894b1e8` is not the cause; it touches no shed code.
+- So something found by walking up from a folder inside the repository changes the result: a `node_modules` above it
+  (the live game folder's), an ignored generated file, or a config file. Compare what the test loads in both places
+  (log the resolved module paths) before changing any code.
 - It passed in Claude's worktree on 26 November after commit `7c176a26f` (the RPG held low in town).
 
 ## What to build
