@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-Claude's card for Codex (Astra), round 1. Dace Goes Looking (merged at `46ec73022`) draws its things with boxes in
+Claude's card, built by a local Claude Opus session, round 1 (graphics is Claude's line). Dace Goes Looking (merged at `46ec73022`) draws its things with boxes in
 `src/world/open/looks/dace-goes-looking-look.js`. Replace them with real-looking things, drawn in code first
 (`memory/code-drawn-art-first`), and with `tools/blender/photo_model.py` or `hull_model.py` only where code cannot carry
 the shape. Gritty and worn, never toy-like.

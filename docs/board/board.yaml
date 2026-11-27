@@ -1280,14 +1280,14 @@ tasks:
 
   - id: OPEN-LOOK-DACE
     title: "Open Scablands: Dace's pickup, the stones, the Deep Sign, the Hangar and the Crow's Step look real"
-    owner: "codex"
-    model: "astra"
+    owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "story-choices"
+    claimed_by: "Claude Opus session (local), 27 November 2026"
     details: "docs/board/cards/OPEN-LOOK-DACE.md"
 
   - id: OPEN-SOUND
