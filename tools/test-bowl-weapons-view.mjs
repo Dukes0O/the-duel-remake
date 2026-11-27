@@ -153,4 +153,24 @@ for (const kind of ['hammer', 'saw', 'launcher']) {
   view.dispose();
 }
 
+// QA-SUMMIT-WARMUP-EXCEPTION: a rig that leaves the scene (the truck left the fight) keeps its materials until the warmup is idle.
+{
+  const duel = fight('hammer'), s = duel.state, later = [], view = createBowlWeaponsView({retire: release => later.push(release)});
+  const meshes = [s, ...s.opponents].map(truckModel);
+  const draw = now => view.update(readOnly(s), meshes, now, true);
+  s.bowlNight.event.type = 'lastTruckRolling';
+  draw(16);
+  const rig = view.rigs.get(meshes[0]), disposed = new Set();
+  assert.ok(rig && rig.materialList.length > 3, 'the player truck carries a built rig');
+  for (const material of rig.materialList) material.addEventListener('dispose', () => disposed.add(material));
+  view.update(readOnly(s), meshes, 32, false);
+  assert.equal(view.rigs.size, 0, 'the rigs are dropped when the fight is left');
+  assert.equal(rig.root.parent, null, 'the rig leaves the scene at once');
+  assert.equal(disposed.size, 0, 'no material is disposed while a warmup poll may still hold it');
+  assert.ok(later.length >= 1);
+  later.splice(0).forEach(release => release());
+  assert.equal(disposed.size, rig.materialList.length, 'every rig material is disposed once the warmup is idle');
+  view.dispose();
+}
+
 console.log('Bowl weapons view: the hammer, saw and launcher, five rivals and the damage read the rules without writing them.');

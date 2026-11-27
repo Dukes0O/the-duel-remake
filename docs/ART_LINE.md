@@ -386,6 +386,31 @@ the game.
 - **A fire's smoke column between a viewpoint and what it looks at hides it.** `createSmokeColumn` is one upright sheet and it is wide a few metres up. Keep every fire a few metres off the line from each place to look from to its target, and keep `foot` under a metre.
 - **A wreck on its side, seen from its roof, is a box.** A shell built from stations along its length reads as a car from the side (arches, window openings, pillars). Stack wrecks upright where they face the viewer.
 - **The rear view is drawn into the game's own canvas,** so hiding the page's other elements leaves it in every picture. Give `.rear-view-frame` no size (`display:none`) and send a `resize`: the rear view is not drawn while its frame measures nothing.
+- **The nearest road may not see the site** (OPEN-LOOK-BUS-RING). The Ridge Road passes the Bus Ring 740 m off but 40 m up, behind the ridge's edge, and the first far picture was of a bank. Pick the far view by sight line (`sees` along each road, sampled every few metres), and face the gate and the tell towards that road.
+- **A light-card for a far tell needs a least size.** A welding flash sized for the yard was a second sun close up and nothing at 700 m. Give the card a least angle (its size grows with distance only beyond it), so that it is small near and a few pixels far.
+- **A point light beside thin tube makes it neon.** The arc's light a few centimetres from the buggy frame lit its tubes white. Stand the light off the work, a metre up and out towards the viewer, and keep it near the lamps' strength.
+- **Vertex rust in whole-number cells reads as planks.** Weathering picked per cell of `floor(z), floor(y)` came out as boards on a bus side; interpolate the noise smoothly, and keep `createScrapWear`'s `paint` near 0.45 on long metal sides.
+- **Judge a colour by the pixels, against the land's own rocks** (OPEN-LOOK-RADIO-HILL, 26 November 2026). The open land is lit hard and the tone mapping squeezes every sunlit face: halving a stone's colour moved it on the screen from 222 to 205. Sample the picture (the land's rocks read about 165, 140, 95 lit and 88, 71, 52 in shade on the hilltop north-west of Tin Town) and keep pale things few and broken up; a heap of identical pale slabs reads as cardboard whatever its colour.
+- **A far view stands on the road, not on the ground drawn under it.** The East Road crosses a wash on a truss bridge 1.35 to 1.47 km from Radio Hill: the first far picture was taken under the deck, the second inside the truss. Pick the point by the road's own height, level with the land either side, and test that it sees the tell (`roadView` in `tools/scenarios/look-radio-hill.mjs`). Nothing is drawn beyond `tellWithin`, so never pass it.
+- **Unlit things glow at night.** Lines, the smoke column and any shader without the scene's light keep their day colour when the land goes dark: wires showed white and the smoke a bright streak. Take them down by hand at night. A glow's level must be the same uniform object the update sets, or it never lights.
+- **Every wire ends at something.** A dipole drawn to a point in the air read as a broken line from the mast's foot. End each wire at an insulator, a rope and a stake.
+- **In software drawing the dusk blends one frame at a time,** so blend it with the camera on a near view and only then turn to the long one, or the wait runs out.
+
+### Bolt-ons and laid strips (COMBAT-ROOF-BOW-LOOK, 26 November 2026)
+
+- **A long straight piece set at its middle's height floats over rolling land and sinks into it.** Each town road was one flat
+  box: the road from the Dome's gate stood 1.9 m over the land, and from a truck's hood its unlit underside filled the top of
+  the view as a near-black slab. Lay a road or strip as a ribbon on the drawn ground (`createStripRoadsDraw` in
+  `src/world/scablands-draw.js`), and check the middles of its triangles against `nearGroundHeightAt`, not only its corners.
+- **Ribbons that meet end to end show a hard edge** where one's square end crosses the other. Run each ribbon on past its ends
+  and fade it there (a `color` of four numbers); whole at the meeting point, so a crossing is never bare.
+- **One bolt-on for every car is seated from the car's own skin,** not from its socket: the socket stands at the model's
+  bounding height, which on a car with a tall wing is 0.3 m over the roof. Read the roof from the model's triangles
+  (`roofSkin` in `src/combat-roof-bow.js`) and keep only faces that face up: a steep panel seen from above is a sliver whose
+  heights run its full height, and a one-sided lining turned down is not drawn from above. Both held a foot 0.26 m in the air.
+  Check each foot with a ray that ignores the bolt-on itself (`tools/test-vehicle-sockets.mjs`).
+- **The point of a roof weapon decides where it can stand.** A bolt reaching 0.36 m past the prod pushed the whole bow back off
+  a short roof onto the engine cover. Keep what sticks forward short, and let the butt overhang the back instead.
 
 ### Moments (a thing that happens, not a thing that stands)
 

@@ -1,15 +1,18 @@
 // OPEN-STATE: optional versioned story record. Work with profile values only;
 // App owns the switch, job outcome, player identity and storage write.
 import {registerStory, writeStory} from '../../story/story-save.js';
-import {savedLedger} from '../../story/ledger-save.js';
+import {bankOpenHearth, savedLedger} from '../../story/ledger-save.js';
 import {rememberWorldFound} from '../world-save.js';
-import {GROUND_COLUMNS, GROUND_ROWS, OPEN_RECORD_VERSION} from './open-record.js';
+import {GROUND_COLUMNS, GROUND_ROWS, OPEN_RECORD_VERSION, readableRoutine} from './open-record.js';
+import {ROUTINES} from './content/routines.js';
+import {DARK_START} from './day-rule.js';
 
 const MAX_SCRAP = 1_000_000_000; // normalizeWasteland's wallet ceiling
 export const OPEN_JOURNAL_LIMIT = 512; // saved rows; progress takes priority over this target
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const count = value => Number.isSafeInteger(value) && value >= 0;
 const same = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+const learners = new Map(ROUTINES.map(row => [row.id, [...row.learner.people, row.learner.otherwise].map(person => person.id)]));
 const unavailable = 'This open land cannot be read by this version of the game.';
 const failure = (profile, reason) => ({ok: false, changed: false, profile, reason});
 
@@ -20,7 +23,11 @@ function readable(entry) {
     object(entry.crossings) && Array.isArray(entry.resting) &&
     object(entry.car) && Number.isFinite(entry.car.dirt) && entry.car.dirt >= 0 && entry.car.dirt <= 1 &&
     (entry.car.armour == null || (Number.isFinite(entry.car.armour) && entry.car.armour >= 0)) &&
-    (!Object.hasOwn(entry, 'routines') || object(entry.routines)) &&
+    (!Object.hasOwn(entry, 'routines') || (object(entry.routines) &&
+      [...learners].every(([id, ids]) => !Object.hasOwn(entry.routines, id) || readableRoutine(entry.routines[id], ids)))) &&
+    (!Object.hasOwn(entry, 'day') || (count(entry.day?.night) && entry.day.night > 0 &&
+      Number.isFinite(entry.day.seconds) && entry.day.seconds >= 0 && entry.day.seconds <= DARK_START)) &&
+    (!Object.hasOwn(entry, 'outingNight') || (count(entry.outingNight) && entry.outingNight > 0)) &&
     Array.isArray(entry.driven) && entry.driven.every(square => count(square) && square < GROUND_COLUMNS * GROUND_ROWS) &&
     Array.isArray(entry.journal) && entry.journal.every(object);
 }
@@ -131,7 +138,7 @@ export function spendScrap(profile, amount, reason) {
   };
 }
 
-export function settleOpenWorld(profile, world, {atStart = null, savedAtStart = null} = {}) {
+export function settleOpenWorld(profile, world, {atStart = null, savedAtStart = null, atBank = false} = {}) {
   if (!object(profile) || !readable(world?.open) || !count(world.scrap)) return failure(profile, unavailable);
   const story = profile.story;
   const ledgerBefore = savedLedger(profile);
@@ -160,7 +167,7 @@ export function settleOpenWorld(profile, world, {atStart = null, savedAtStart = 
   const found = [...new Set([...(recordBefore?.found ?? []), ...world.open.found])];
   const bankedNight = ledger.history.reduce((last, row) => row.type === 'night' &&
     row.choiceId === 'bank/' + row.night && count(row.night) && row.night < ledger.night ? Math.max(last, row.night) : last, 0);
-  const compacted = compactOpenJournal({...recordBefore, ...world.open, found}, bankedNight);
+  const compacted = compactOpenJournal({...recordBefore, ...world.open, found}, bankedNight, {atBank});
   const record = compacted.record;
   if (compacted.overflow) console.warn('Open journal target exceeded; all progress is kept.',
     {entries: record.journal.length, target: OPEN_JOURNAL_LIMIT});
@@ -170,4 +177,13 @@ export function settleOpenWorld(profile, world, {atStart = null, savedAtStart = 
   if (!same(ledgerBefore, ledger)) next = {...next, story: {...next.story, ledger: structuredClone(ledger)}};
   for (const site of found) next = rememberWorldFound(next, site);
   return {ok: true, changed: next !== profile, profile: next, reason: ''};
+}
+
+
+export function settleOpenHearth(profile, world, {night, storyChoices, holds, view, ...settlement} = {}) {
+  const kept = savedLedger(profile);
+  if ((kept && kept.night !== night) || !readable(world?.open)) return failure(profile, 'That night cannot be banked.');
+  const banked = bankOpenHearth(world, night, {storyChoices, holds, view});
+  if (!banked) return failure(profile, 'That night cannot be banked.');
+  return settleOpenWorld(profile, banked, {...settlement, atBank: true});
 }

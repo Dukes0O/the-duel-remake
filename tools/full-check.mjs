@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { discoverSuites, localDependencies, readsPath, wideSuitesForChanges, SMOKE_SUITES, LANE_GUARDS } from './run-tests.mjs';
 import { nightIsFullTierPass } from './build-status.mjs';
 import { evidenceDate } from './evidence-date.mjs';
+import { FRAME_STAGE_SCENARIOS } from './run-browser-scenarios.mjs';
 
 
 const ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
@@ -48,6 +49,13 @@ const noteFile=file=>/^docs\//.test(file)||/\.md$/i.test(file);
 const FRAME_ENTRIES=Object.freeze([path('src','main.js'),path('tools','browser-harness.mjs'),
   ...under(path('tools','scenarios'),['frame-pacing.mjs','tremblant-snow.mjs','tremblant-views.mjs'])]);
 const FRAME_FILES=Object.freeze(['index.html',path('tools','vite-qa.config.js')]);
+// QA-NIGHT-TIMING-ALONE: the frame stage runs the three Tremblant/Harbour frame recipes and then the scenarios that
+// time frames and so need the laptop alone (the one list is FRAME_STAGE_SCENARIOS in run-browser-scenarios.mjs).
+const FRAME_STAGE_NAMES=Object.freeze(['frame-pacing','tremblant-snow','tremblant-views',...FRAME_STAGE_SCENARIOS]);
+// The browser stage never runs those scenarios, so its expected names leave them out.
+export const browserStageNames=names=>names.filter(name=>!FRAME_STAGE_SCENARIOS.includes(name));
+// A failed row with a plain error message was measured; a timeout, crash or refusal was not.
+const measuredScenarioFailure=item=>!item.passed&&typeof item.error==='string'&&item.error.trim()&&!/timed? ?out|timeout|crash|terminated|refused/i.test(item.error);
 const RUN_LOG=path('docs','board','run-log.md');
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 // The night's evidence folder takes its date from the shared clock (evidence-date.mjs): the laptop's local date.
@@ -79,7 +87,7 @@ export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evide
   const stages=[
     partial?{id:'full',tier:'wide',args:['tools/run-tests.mjs','--tier','wide','--since',previousSource,'--jobs','4','--keep-going','--json']}
       :{id:'full',tier:'full',args:['tools/run-tests.mjs','--tier','full','--jobs','4','--keep-going','--json']},
-    {id:'frames',args:['tools/run-browser-scenarios.mjs','--scenarios','frame-pacing,tremblant-snow,tremblant-views',
+    {id:'frames',args:['tools/run-browser-scenarios.mjs','--scenarios',FRAME_STAGE_NAMES.join(','),
       '--timing-only','--headed','--jobs','1','--output-dir',frameDir],
       env:{DUEL_NIGHT_FRAMES:'1',DUEL_NIGHT_IDLE_AWAKE:'1'},packet:path(frameDir,'frame-pacing','frame-pacing.json'),
       suitePacket:path(frameDir,'summary.json'),timingPackets:[
@@ -400,9 +408,13 @@ async function decideNight({options,source,history,previous,dependencies}) {
     size.suites={picked:picked.size,total:choice.total};
     const framesBase=history.map(framesPassCommit).find(Boolean)??null;
     const sceneChanges=framesBase?await dependencies.frameScope(await dependencies.changedFiles(framesBase,source)):[];
-    const framesRun=!framesBase||sceneChanges.length>0;
+    // The frame stage also holds deep-frames, convoy-frames and fire-view, which the browser stage no longer runs: a
+    // partial night runs it when one of them is picked by its own area or its own files (not merely for having no area).
+    const stageScenarios=framesBase?(await dependencies.scenarioSelection(dependencies.root,[...FRAME_STAGE_SCENARIOS],previous.source))
+      .filter(row=>FRAME_STAGE_SCENARIOS.includes(row.name)&&['area changed','scenario or helper changed'].includes(row.reason)):[];
+    const framesRun=!framesBase||sceneChanges.length>0||stageScenarios.length>0;
     size.frames={run:framesRun,reusedFrom:framesRun?null:framesBase,
-      note:framesRun?'run ('+(framesBase?'the timed scene or its code changed':'no earlier frame pass is on record')+')':'reused from '+shortCommit(framesBase)};
+      note:framesRun?'run ('+(framesBase?(sceneChanges.length?'the timed scene or its code changed':'the area of '+joinWords(stageScenarios.map(row=>row.name))+' changed'):'no earlier frame pass is on record')+')':'reused from '+shortCommit(framesBase)};
     const combatRun=changed.some(combatFile);
     size.combat={run:combatRun,note:combatRun?'run':'not needed'};
     const names=await dependencies.scenarioNames(dependencies.root);
@@ -432,11 +444,11 @@ export function classifyNight(failures, stages, standing, strict=false) {
   const fresh=[],known=[];
   if(!stages.length) failures=[...failures,{name:'night',error:'no stage ran'}];
   for(const failure of failures) {
-    const match=/^(full|browser): (.+)$/.exec(failure.name);
+    const match=/^(full|browser|frames): (.+)$/.exec(failure.name);
     const stageId=match?.[1]??failure.name, name=match?.[2]??failure.name;
     const listed=standing.find(item=>item.stage===stageId&&item.name===name);
     const stage=stages.find(item=>item.id===stageId);
-    const valid=stageId==='frames'?stage?.measuredFailure===true:
+    const valid=stageId==='frames'?(name==='frames'?stage?.measuredFailure===true:stage?.validatedFailures?.includes(name)===true):
       stageId==='browser'?stage?.validatedFailures?.includes(name)===true:false;
     if(listed&&valid&&normalize(failure.error)===normalize(listed.cause))known.push(failure);
     else {
@@ -548,7 +560,7 @@ export async function runNight(options,overrides={}) {
   if(options?.idleAwake!==true||options.noPush!==true)throw Error(usage);
   const dependencies={root,print:message=>console.log(message),now:()=>new Date(),git:(args,cwd=root)=>gitCommand(args,cwd),processes:inspectNightProcesses,
     createCopy:source=>createCheckCopy(root,source),removeCopy:removeCheckCopy,framePollMs:1000,
-    scenarioNames:async copyRoot=>(await import(pathToFileURL(path(copyRoot,'tools/run-browser-scenarios.mjs')).href)).namedScenarios(),
+    scenarioNames:async copyRoot=>browserStageNames(await (await import(pathToFileURL(path(copyRoot,'tools/run-browser-scenarios.mjs')).href)).namedScenarios()),
     scenarioSelection:async (copyRoot,names,commit)=>(await import(pathToFileURL(path(copyRoot,'tools/run-browser-scenarios.mjs')).href)).changedSelection(names,commit,{root:copyRoot}),readText:file=>readFile(file,'utf8'),writeText:writeFile,appendText:appendFile,
     mkdir:dir=>mkdir(dir,{recursive:true}),makeTemp:mkdtemp,
     refreshStatus:()=>refreshNightStatus(root),recycleText:file=>recycleNightDraft(file,root),
@@ -696,8 +708,8 @@ export async function runNight(options,overrides={}) {
                 try {
                   validateFramePacket(adjusted);
                   const suite=json(await dependencies.readText(stage.suitePacket));
-                  const names=['frame-pacing','tremblant-snow','tremblant-views'];
-                  if(suite?.schema===1&&suite.timingMode==='timing-only'&&suite.count===3&&suite.rows?.length===3&&
+                  const names=FRAME_STAGE_NAMES;
+                  if(suite?.schema===1&&suite.timingMode==='timing-only'&&suite.count===names.length&&suite.rows?.length===names.length&&
                     suite.rows.every((item,index)=>item.name===names[index]&&typeof item.passed==='boolean')&&
                     suite.passed===suite.rows.filter(item=>item.passed).length&&suite.failed===suite.rows.filter(item=>!item.passed).length&&
                     suite.rows[0].passed===false&&suite.rows[0].error===error.message&&suite.rows.slice(1).every(item=>item.passed)&&result.exitCode===1)
@@ -708,7 +720,21 @@ export async function runNight(options,overrides={}) {
             }
             const timing=json(await dependencies.readText(stage.suitePacket));
             if(timing.timingMode!=='timing-only')throw Error('Frame suite did not run timing-only mode.');
-            validateBrowser(timing,['frame-pacing','tremblant-snow','tremblant-views']);
+            // The three frame recipes must pass. A frame-stage scenario that failed with a measured message is
+            // classified like the frame-pacing result: its own entry, listed or news, and the stage fails.
+            const rows=timing.rows;
+            if(timing.schema!==1||timing.count!==FRAME_STAGE_NAMES.length||rows?.length!==timing.count||
+              rows.map(item=>item.name).join('|')!==FRAME_STAGE_NAMES.join('|')||rows.some(item=>typeof item.passed!=='boolean')||
+              timing.passed!==rows.filter(item=>item.passed).length||timing.failed!==rows.filter(item=>!item.passed).length||
+              rows.some(item=>!item.passed&&!FRAME_STAGE_SCENARIOS.includes(item.name)))
+              throw Error('Browser acceptance has failures or missing named scenarios.');
+            row.passedNames=rows.filter(item=>item.passed).map(item=>item.name);
+            const failedHere=rows.filter(item=>!item.passed);
+            if(failedHere.length) {
+              if(result.exitCode!==1)throw Error('Frame suite exit does not match its failed scenarios.');
+              row.stageFailures=failedHere.map(item=>({name:item.name,error:item.error}));
+              row.validatedFailures=failedHere.filter(measuredScenarioFailure).map(item=>item.name);
+            }
             row.tremblantReports=[];
             for(const recipe of stage.timingPackets) {
               const actual=validateTremblantFramePacket(json(await dependencies.readText(recipe.packet)),recipe.name);
@@ -732,7 +758,7 @@ export async function runNight(options,overrides={}) {
             continue;
           }
         }
-        if(result.exitCode!==0&&!(stage.id==='browser'&&browserResult.failed))throw Error(row.measuredFailure?frameError.message:result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
+        if(result.exitCode!==0&&!(stage.id==='browser'&&browserResult.failed)&&!(stage.id==='frames'&&row.stageFailures?.length&&!frameError))throw Error(row.measuredFailure?frameError.message:result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
         if(stage.id==='full')validateFull(fullPacket(result.stdout),stage.tier||'full');
         else if(stage.id==='frames') {if(frameError)throw frameError;}
         else if(stage.id==='browser') {
@@ -745,11 +771,15 @@ export async function runNight(options,overrides={}) {
         await assertCopy();
         if(browserResult) {
           row.passedNames=browserResult.rows.filter(item=>item.passed).map(item=>item.name);
-          row.validatedFailures=browserResult.rows.filter(item=>!item.passed&&typeof item.error==='string'&&item.error.trim()&&!/timed? ?out|timeout|crash|terminated|refused/i.test(item.error)).map(item=>item.name);
+          row.validatedFailures=browserResult.rows.filter(measuredScenarioFailure).map(item=>item.name);
           for(const item of browserResult.rows.filter(item=>!item.passed))failure('browser: '+item.name,item.error);
           if(browserResult.failed)row.error='Browser scenarios failed.';
         }
-        row.passed=!browserResult?.failed;
+        if(stage.id==='frames'&&row.stageFailures?.length) {
+          for(const item of row.stageFailures)failure('frames: '+item.name,item.error);
+          row.error='Frame scenarios failed.';
+        }
+        row.passed=!browserResult?.failed&&!row.stageFailures?.length;
       }catch(error){row.error=error.message;failure(stage.id,error.message);}
       row.finished=dependencies.now().toISOString();
     }

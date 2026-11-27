@@ -1,6 +1,8 @@
 import {checkSite, requireSound} from '../check-tables.js';
 import {siteRow} from '../register.js';
-import {DRY_PUMP_CAMP} from './dry-pump-places.js';
+import {POCKET_ID, POCKET_POSITIONS} from './radio-hill-voice-places.js';
+import {TOLL_SITE} from './mall-road-toll-places.js';
+import {BUS_RING} from './market-day-places.js';
 import {SITE_NEEDS} from './needs.js';
 
 const site = (id, positions, rules) => ({
@@ -19,9 +21,12 @@ export const LAND_SITES = Object.freeze(requireSound([
     {foundWithin: 120, tell: 'mast', tellWithin: 1400, radioWithin: 800, leader: 'hetty', meeting: 'door', warns: true}),
   // OPEN-BURNED-SCOUT owns discovery and the look of the den.
   site('rats-nest', [['boneyard', -150, -900]], {foundWithin: 120, tell: 'tyre-smoke'}),
+  site('grey-camp', [['boneyard', 185, -1520]], {foundWithin: 95, tell: 'tyre-smoke'}),
   site('sweet-seep', [['dead-mall', -1050, 300]], {foundWithin: 160, tell: 'green-patch', tellWithin: 700}),
-  site(DRY_PUMP_CAMP.id, [DRY_PUMP_CAMP.at], {foundWithin: 120, tell: 'lamp', tellWithin: 500,
-    leader: 'gasket', meeting: 'door', storyChoices: true}),
+  site('bus-ring', [['ridge', -665, -345]], {foundWithin: 135, tell: 'lamp', tellWithin: 850,
+    leader: 'gasket', meeting: BUS_RING.meeting, hostileTo: ['glasshouse'], storyOnly: true, storyChoices: true}),
+  TOLL_SITE,
+  site(POCKET_ID, POCKET_POSITIONS, {foundWithin: 80, tell: 'lamp', tellWithin: 4000, storyChoices: true}),
   site('bell-buoy', BUOY_POSITIONS, {foundWithin: 24, tell: 'bell', tellWithin: 400, storyChoices: true}),
 ], checkSite, 'Open Scablands sites'));
 

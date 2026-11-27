@@ -145,6 +145,67 @@ export function createRoadsDraw({net = ROAD_NET, river = RIVER_LAND, plainAt, ma
   };
 }
 
+// ---- The town's roads ---------------------------------------------------------------------------------------------------------------------
+// COMBAT-ROOF-BOW-LOOK: the saved town's roads (straight strips from `a` to `b` with a half width, src/town/town-world.js) laid on the
+// drawn ground as ribbons wearing the land roads' look. One flat box at each strip's middle height floated up to 1.9 m over the
+// land and sank up to 2.7 m into it, and from a truck's cab its unlit underside read as a near-black slab. Roads meet end to end,
+// so each ribbon runs on past both ends by part of its width and fades out there (the alpha of a `color` of four numbers, so
+// `material` draws vertex colours): where two overlap there is no hard edge, and where several meet each is whole at the meeting.
+const STRIP_STEP = 6, STRIP_RUN_ON = .75;
+export function createStripRoadsDraw({strips, plainAt, material, name = id => `Town road ${id}`}) {
+  const ground = createDrawnGround(plainAt), group = new THREE.Group();
+  group.name = 'Town roads';
+  const meshes = strips.map(strip => {
+    const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material);
+    mesh.name = name(strip.id); mesh.receiveShadow = true; mesh.renderOrder = 1; mesh.userData.strip = strip;
+    group.add(mesh);
+    return mesh;
+  });
+  function lay(mesh) {
+    const {a, b, halfWidth} = mesh.userData.strip, length = Math.hypot(b.x - a.x, b.z - a.z), runOn = halfWidth * STRIP_RUN_ON;
+    const sections = Math.max(1, Math.ceil(length / STRIP_STEP)), across = ROAD_ACROSS.length;
+    const dx = length ? (b.x - a.x) / length : 0, dz = length ? (b.z - a.z) / length : 1, nx = dz, nz = -dx;
+    const stations = [-runOn, -runOn / 2, ...Array.from({length: sections + 1}, (_, index) => length * index / sections),
+      length + runOn / 2, length + runOn];
+    const positions = [], roads = [], colours = [], indices = [];
+    stations.forEach((along, index) => {
+      const cx = a.x + dx * along, cz = a.z + dz * along;
+      const past = Math.max(-along, along - length, 0) / runOn, alpha = 1 - past * past * (3 - 2 * past);
+      for (let point = 0; point < across; point++) {
+        const u = ROAD_ACROSS[point], x = cx + nx * u * halfWidth, z = cz + nz * u * halfWidth;
+        positions.push(x, ground.at(x, z) + ROAD_LIFT, z);
+        roads.push(u, along);
+        colours.push(1, 1, 1, alpha);
+      }
+      if (index < stations.length - 1) {
+        const base = index * across;
+        for (let point = 0; point < across - 1; point++) {
+          const p = base + point, q = p + 1, r = p + across, t = r + 1;
+          indices.push(p, r, q, q, r, t);
+        }
+      }
+    });
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('aRoad', new THREE.Float32BufferAttribute(roads, 2));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 4));
+    geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.computeBoundingSphere();
+    // A strip laid the other way round faces down; turn its triangles so the road faces the sky.
+    if (geometry.attributes.normal.getY(0) < 0) {
+      for (let i = 0; i < indices.length; i += 3) [indices[i + 1], indices[i + 2]] = [indices[i + 2], indices[i + 1]];
+      geometry.setIndex(indices); geometry.computeVertexNormals();
+    }
+    mesh.geometry.dispose(); mesh.geometry = geometry;
+  }
+  meshes.forEach(lay);
+  return {
+    group, meshes,
+    // The ground under the roads has changed (a work order's edit): lay every strip again.
+    refresh() { ground.forget(); meshes.forEach(lay); },
+    dispose() { meshes.forEach(mesh => mesh.geometry.dispose()); },
+  };
+}
+
 // ---- The gorge ----------------------------------------------------------------------------------------------------------------------------
 const GORGE_STEP = 16, GORGE_SECTIONS = 64;
 // Two-metre cells on each bank preserve the Steps' ledges as well as the steep river face.

@@ -41,74 +41,88 @@ export const TRUNK_CLEAR = 6;
 export const CROWN_REACH = 3;          // a tree hides what stands this close to the line of sight
 export const NEAR_EDGE = 35;           // herds first try 15 to 35 m from the road edge
 const SIGHT_STEP = 3;
-const SIGHT_LENGTH = 40;               // only the last 40 m of the line to the road can hide an animal that matters
+const SIGHT_LENGTH = 40;
+// Roadside herds (switch `wildlife-hits`, WILDLIFE-HITS-2, Kyle 20 November 2026): one more herd halfway between
+// each two of the race's herds, standing 3 to 12 m from the road edge, on the verge or the run-off, where a car
+// that runs a little wide can reach it. Never on the road, an escape road, the pit lane or the paddock.
+export const ROADSIDE_EDGE = Object.freeze([3, 12]);
+const ROADSIDE_SLOT_SECONDS = MIN_GAP_SECONDS / 2;   // a roadside slot leaves this much of the half-way gap clear at each side               // only the last 40 m of the line to the road can hide an animal that matters
 
 // ---------------------------------------------------------------------------
 // Species. `kind` is ground, bird or decal. A bird is marked perching: the
 // drawing puts it on a tree, a post or a lamp post and lets it fly off.
 // `edge` narrows the 15 to 70 m band; `lake` stands at a lake shore only;
 // `shallows` is the chance of standing in the shallows when the course has a
-// lake; `cubs` is a chance of 1 to 2 young with a single adult.
+// lake; `cubs` is a chance of 1 to 2 young with a single adult. `size` is how
+// the animal falls when a car hits it (switch `wildlife-hits`, WILDLIFE-HITS-2):
+// a small one is flung and tumbles, a medium one is knocked onto its side, a
+// large one stops the car and slumps where it stood (src/wildlife-view.js).
 // ---------------------------------------------------------------------------
 export const SPECIES = Object.freeze({
   // North woods
-  'white-tailed-deer': { kind: 'ground' },
-  'moose': { kind: 'ground', shallows: .3 },
-  'black-bear': { kind: 'ground', cubs: { chance: .35, range: [1, 2] } },
-  'beaver': { kind: 'ground', lake: true },
-  'eastern-wolf': { kind: 'ground' },
+  'white-tailed-deer': { kind: 'ground', size: 'medium' },
+  'moose': { kind: 'ground', shallows: .3, size: 'large' },
+  'black-bear': { kind: 'ground', cubs: { chance: .35, range: [1, 2] }, size: 'large' },
+  'beaver': { kind: 'ground', lake: true, size: 'small' },
+  'eastern-wolf': { kind: 'ground', size: 'medium' },
   'wolf-tracks': { kind: 'decal' },
   // Australia
-  'eastern-grey-kangaroo': { kind: 'ground' },
-  'sulphur-crested-cockatoo': { kind: 'bird' },
-  'kookaburra': { kind: 'bird' },
-  'echidna': { kind: 'ground', edge: [15, 30] },
+  'eastern-grey-kangaroo': { kind: 'ground', size: 'medium' },
+  'sulphur-crested-cockatoo': { kind: 'bird', size: 'small' },
+  'kookaburra': { kind: 'bird', size: 'small' },
+  'echidna': { kind: 'ground', edge: [15, 30], size: 'small' },
   // Western mountains
-  'mule-deer': { kind: 'ground' },
-  'elk': { kind: 'ground' },
-  'coyote': { kind: 'ground' },
-  'cougar': { kind: 'ground' },
-  'yellow-bellied-marmot': { kind: 'ground' },
-  'bighorn-sheep': { kind: 'ground' },
-  'raven': { kind: 'bird' },
+  'mule-deer': { kind: 'ground', size: 'medium' },
+  'elk': { kind: 'ground', size: 'large' },
+  'coyote': { kind: 'ground', size: 'medium' },
+  'cougar': { kind: 'ground', size: 'medium' },
+  'yellow-bellied-marmot': { kind: 'ground', size: 'small' },
+  'bighorn-sheep': { kind: 'ground', size: 'medium' },
+  'raven': { kind: 'bird', size: 'small' },
   // Europe
-  'roe-deer': { kind: 'ground' },
-  'red-deer': { kind: 'ground' },
-  'wild-boar': { kind: 'ground' },
-  'red-fox': { kind: 'ground' },
-  'wildcat': { kind: 'ground' },
-  'black-stork': { kind: 'bird' },
-  'chamois': { kind: 'ground' },
-  'ibex': { kind: 'ground' },
-  'alpine-marmot': { kind: 'ground' },
-  'golden-eagle': { kind: 'bird' },
-  'gull': { kind: 'bird' },
+  'roe-deer': { kind: 'ground', size: 'medium' },
+  'red-deer': { kind: 'ground', size: 'large' },
+  'wild-boar': { kind: 'ground', size: 'medium' },
+  'red-fox': { kind: 'ground', size: 'small' },
+  'wildcat': { kind: 'ground', size: 'small' },
+  'black-stork': { kind: 'bird', size: 'small' },
+  'chamois': { kind: 'ground', size: 'medium' },
+  'ibex': { kind: 'ground', size: 'medium' },
+  'alpine-marmot': { kind: 'ground', size: 'small' },
+  'golden-eagle': { kind: 'bird', size: 'small' },
+  'gull': { kind: 'bird', size: 'small' },
   // Desert and coast. Their models have passed (WILD-ART-DESERT) but are held off the courses
   // by HELD_FROM_COURSES in src/wildlife-models.js until Red Mesa and Pacific Canyon have been looked at.
-  'roadrunner': { kind: 'ground' },
-  'jackrabbit': { kind: 'ground' },
-  'desert-bighorn': { kind: 'ground' },
-  'collared-lizard': { kind: 'ground' },
-  'pelican': { kind: 'bird' },
-  'condor': { kind: 'bird' },
+  'roadrunner': { kind: 'ground', size: 'small' },
+  'jackrabbit': { kind: 'ground', size: 'small' },
+  'desert-bighorn': { kind: 'ground', size: 'medium' },
+  'collared-lizard': { kind: 'ground', size: 'small' },
+  'pelican': { kind: 'bird', size: 'small' },
+  'condor': { kind: 'bird', size: 'small' },
   // Asia and cities. Their models have passed (WILD-ART-CITY) but are held off the courses
   // by HELD_FROM_COURSES in src/wildlife-models.js until each course's placement is looked at.
-  'black-kite': { kind: 'bird' },
-  'egret': { kind: 'bird' },                  // a little egret
-  'black-faced-spoonbill': { kind: 'bird' },
-  'pigeon': { kind: 'bird' },                 // a feral rock dove; the town uses it too
-  'raccoon': { kind: 'ground' },
-  'cat': { kind: 'ground' },                  // a thin street cat; the town uses it too
-  'owl': { kind: 'bird' },                    // a barn owl
+  'black-kite': { kind: 'bird', size: 'small' },
+  'egret': { kind: 'bird', size: 'small' },                  // a little egret
+  'black-faced-spoonbill': { kind: 'bird', size: 'small' },
+  'pigeon': { kind: 'bird', size: 'small' },                 // a feral rock dove; the town uses it too
+  'raccoon': { kind: 'ground', size: 'small' },
+  'cat': { kind: 'ground', size: 'small' },                  // a thin street cat; the town uses it too
+  'owl': { kind: 'bird', size: 'small' },                    // a barn owl
   // The Wasteland and the player's town (on no course yet)
-  'goat': { kind: 'ground' },
-  'chicken': { kind: 'ground' },
-  'camp-dog': { kind: 'ground' },
-  'turkey-vulture': { kind: 'bird' },
-  'desert-monitor': { kind: 'ground' },
-  'scorpion': { kind: 'ground' },
+  'goat': { kind: 'ground', size: 'medium' },
+  'chicken': { kind: 'ground', size: 'small' },
+  'camp-dog': { kind: 'ground', size: 'medium' },
+  'turkey-vulture': { kind: 'bird', size: 'small' },
+  'desert-monitor': { kind: 'ground', size: 'small' },
+  'scorpion': { kind: 'ground', size: 'small' },
 });
 export const SPECIES_IDS = Object.freeze(Object.keys(SPECIES));
+export const SIZES = Object.freeze(['small', 'medium', 'large']);
+// How an animal falls: its species' size, one size smaller for a cub.
+export function speciesSize(species, { cub = false } = {}) {
+  const size = SPECIES[species]?.size ?? 'medium';
+  return cub ? SIZES[Math.max(0, SIZES.indexOf(size) - 1)] : size;
+}
 
 // [species, weight, fewest, most]. `night: true` rows appear on night courses only.
 const row = (species, weight, fewest, most, extra = {}) => Object.freeze({ species, weight, herd: Object.freeze([fewest, most]), ...extra });
@@ -269,6 +283,23 @@ export function planWildlife({ courseId, playDay, raceNumber, lapSeconds, closed
     slots.push(Object.freeze({ index, from, to: from + width }));
   }
   return Object.freeze({ seed, count, rareIndex, slots: Object.freeze(slots), lapSeconds, closed });
+}
+
+// The roadside slots (switch `wildlife-hits`): one halfway between each two of the plan's slots (on a closed lap the
+// last one sits between the last spot and the first), narrower than an ordinary slot so it never meets one. An open
+// road has none beyond its last spot. Each has an index after the ordinary spots', so a herd's id stays its own.
+export function roadsidePlan(plan) {
+  const each = plan.closed ? plan.lapSeconds / plan.count : null;
+  const slots = [];
+  for (const slot of plan.slots) {
+    const next = plan.slots[slot.index + 1];
+    const centre = (slot.from + slot.to) / 2, after = next ? (next.from + next.to) / 2 : plan.closed ? centre + each : null;
+    if (after === null) continue;
+    const middle = (centre + after) / 2, room = (after - centre) / 2 - (slot.to - slot.from) / 2 - ROADSIDE_SLOT_SECONDS;
+    const width = Math.max(MIN_SLOT_SECONDS, Math.min(slot.to - slot.from, 2 * room));
+    slots.push(Object.freeze({ index: plan.count + slot.index, from: middle - width / 2, to: middle + width / 2, roadside: true }));
+  }
+  return Object.freeze(slots);
 }
 
 // ---------------------------------------------------------------------------
@@ -443,7 +474,8 @@ export function createPlacementChecker(course) {
     return true;
   }
 
-  function inspect(x, z, { minEdge = MIN_EDGE, maxEdge = MAX_EDGE, lake = 'avoid', open = false } = {}) {
+  // `verge`: a roadside herd may stand on the run-off beside a scripted road (never on the road itself).
+  function inspect(x, z, { minEdge = MIN_EDGE, maxEdge = MAX_EDGE, lake = 'avoid', open = false, verge = false } = {}) {
     if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
     const n = course.nearest(x, z);
     if (!Number.isFinite(n.s) || !Number.isFinite(n.lateral)) return null;
@@ -454,7 +486,7 @@ export function createPlacementChecker(course) {
     if (edge < minEdge || edge > maxEdge) return null;
     // Never on a road of any kind (the main road, a shortcut or branch, the pit lane).
     if (course.surfaceAt(phase, n.lateral).road) return null;
-    if (course.script && mainEdge < course.script.runoffAt(phase, side) + RUNOFF_MARGIN) return null;
+    if (course.script && !verge && mainEdge < course.script.runoffAt(phase, side) + RUNOFF_MARGIN) return null;
     if (course.tunnelAt(phase)) return null;
     for (const escape of course.escapeRoads ?? []) {
       const { u, v } = escapeFrame(escape, x, z);
@@ -497,7 +529,9 @@ function lakeRule(info, wantsShallows) {
   return info.shallows && wantsShallows ? 'shallows' : 'avoid';
 }
 
-export function placeWildlife({ courseId, playDay, raceNumber, course, referenceLap = null, approvedModels = null }) {
+// `roadside` (switch `wildlife-hits`): also one roadside herd between each two herds, within a car's reach of the road.
+// The ordinary herds are the same with it or without it.
+export function placeWildlife({ courseId, playDay, raceNumber, course, referenceLap = null, approvedModels = null, roadside = false }) {
   courseId ??= course.def.id;
   const clock = lapClock(referenceLap, course.length, course.closed);
   const plan = planWildlife({ courseId, playDay, raceNumber, lapSeconds: clock.lapSeconds, closed: course.closed });
@@ -518,6 +552,19 @@ export function placeWildlife({ courseId, playDay, raceNumber, course, reference
       if (spot) { spot.index = slot.index; result.spots.push(spot); break; }
     }
   }
+  if (!roadside) return result;
+  // A lake animal (the beaver) keeps to its lake, and the rare animal stays rare: neither stands by the road.
+  const verge = available.common.filter(item => !SPECIES[item.species].lake);
+  for (const slot of verge.length ? roadsidePlan(plan) : []) {
+    const rng = makeRng(hash32(`${plan.seed}|roadside|${slot.index}`));
+    const pool = [...verge], tries = [];
+    while (pool.length) { const picked = pickWeighted(rng, pool); tries.push(picked); pool.splice(pool.indexOf(picked), 1); }
+    for (const choice of tries) {
+      const spot = placeHerd({ course, checker, clock, slot, rng, choice, rare: false, roadside: true });
+      if (spot) { spot.index = slot.index; result.spots.push(spot); break; }
+    }
+  }
+  result.spots.sort((a, b) => a.timeS - b.timeS);
   return result;
 }
 
@@ -526,13 +573,13 @@ const inSlot = (time, slot, lapSeconds, closed) => {
   return offset >= 0 && offset <= slot.to - slot.from;
 };
 
-function placeHerd({ course, checker, clock, slot, rng, choice, rare }) {
+function placeHerd({ course, checker, clock, slot, rng, choice, rare, roadside = false }) {
   const info = SPECIES[choice.species];
-  const band = info.edge ?? [MIN_EDGE, MAX_EDGE];
+  const band = roadside ? ROADSIDE_EDGE : info.edge ?? [MIN_EDGE, MAX_EDGE];
   const adults = rng.int(choice.herd[0], choice.herd[1]);
   const cubs = info.cubs && adults === 1 && rng.chance(info.cubs.chance) ? rng.int(...info.cubs.range) : 0;
   const total = adults + cubs;
-  const shallows = checker.basins.length > 0 && rng.chance(info.shallows ?? 0);
+  const shallows = !roadside && checker.basins.length > 0 && rng.chance(info.shallows ?? 0);
   const rule = lakeRule(info, shallows);
   if (rule !== 'avoid' && !checker.basins.length) return null;
   // Where an anchor for the herd could be, as world x and z.
@@ -552,7 +599,9 @@ function placeHerd({ course, checker, clock, slot, rng, choice, rare }) {
   // open ground (no trunk within 6 m, no tree on the line to the road), then anywhere in the band in open
   // ground, then, so a thick forest still has animals, as before. A herd at a lake keeps its own rule.
   const near = Math.max(band[0] + 1, Math.min(band[1], NEAR_EDGE));
-  const tiers = rule === 'avoid'
+  const tiers = roadside
+    ? [{ minEdge: band[0], maxEdge: band[1], lake: rule, open: true, verge: true }, { minEdge: band[0], maxEdge: band[1], lake: rule, verge: true }]
+    : rule === 'avoid'
     ? [{ minEdge: band[0], maxEdge: near, lake: rule, open: true }, { minEdge: band[0], maxEdge: band[1], lake: rule, open: true }, { minEdge: band[0], maxEdge: band[1], lake: rule }]
     : [{ minEdge: band[0], maxEdge: band[1], lake: rule }];
   let anchor = null, options = null;
@@ -571,7 +620,7 @@ function placeHerd({ course, checker, clock, slot, rng, choice, rare }) {
     // A thorough sweep of the slot, in case the random draws all landed badly.
     for (let time = slot.from; rule === 'avoid' && !anchor && time <= slot.to; time += .5)
       for (const side of [1, -1]) for (const edge of [tier.minEdge + 2, (tier.minEdge + tier.maxEdge) / 2, tier.maxEdge - 3]) anchor ||= accept(roadCandidate(time, side, edge));
-    if (anchor) { options = { ...tier, maxEdge: Math.min(band[1], tier.maxEdge + 10) }; break; }
+    if (anchor) { options = { ...tier, maxEdge: roadside ? band[1] + 4 : Math.min(band[1], tier.maxEdge + 10) }; break; }
   }
   if (!anchor) return null;
 
@@ -585,13 +634,13 @@ function placeHerd({ course, checker, clock, slot, rng, choice, rare }) {
     }
     if (!found) continue;
     animals.push({
-      species: choice.species, kind: info.kind, perching: info.kind === 'bird', cub: member >= adults,
+      species: choice.species, kind: info.kind, perching: info.kind === 'bird', cub: member >= adults, roadside,
       x: found.x, y: found.y, z: found.z, s: found.s, lateral: found.lateral, edgeDistance: found.edge, lakeOut: found.lakeOut,
     });
   }
   if (!animals.length) return null;
   return {
-    s: anchor.s, timeS: clock.timeAt(anchor.s), species: choice.species, kind: info.kind, rare,
+    s: anchor.s, timeS: clock.timeAt(anchor.s), species: choice.species, kind: info.kind, rare, roadside,
     herdSize: animals.filter(animal => !animal.cub).length, cubs: animals.filter(animal => animal.cub).length,
     complete: animals.length === total, animals,
   };

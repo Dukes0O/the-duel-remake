@@ -103,7 +103,7 @@ back into the car.
 
 > *Eight scrap isn't much to pay today. I wonder what the price will be once everybody has got used to paying it.*
 >
-> *Sump has three buggies by the fire and one more up on the hill. I can only see one of me.*
+> *Sump has three buggies by the fire and one more up on the hill, and there's only one of me.*
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
@@ -174,7 +174,7 @@ to it gives one thought, with the cue `open.clue.found`.
 
 | | You do | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| a | Strip it with the wrench | Ten seconds with the wrench, and 14 scrap of parts | *Nobody would ever know who took them.* | Nothing more. Sump goes on wondering which hill it is on |
+| a | Strip it with the wrench | Ten seconds with the wrench, and 14 scrap of parts | *Nobody would ever know who took its parts.* | Nothing more. Sump goes on wondering which hill it is on |
 | b | Leave it, and tell Sump where it is | Nothing is taken | *He treats everything as a deal. Finding his buggy for him ought to be worth something.* | Sump owes the player one favour, which can be spent at the gate for seven nights of free crossings |
 | c | Leave it and say nothing | Nothing | None | Nothing. It is still there on any later crossing |
 
@@ -272,19 +272,19 @@ At the hearth, at dusk, on any day after the gate was seen. This is the fourth w
 > off anyone who turns up alone, though, and he will.
 >
 > **Auntie Solder:** Tin Town will stand in that road, and you can tell people so. You'll need two more besides us
-> before it's worth trying. Go and ask them to their faces. Nobody comes out for a message.
+> before it's worth trying. Go and ask them to their faces, because nobody ever comes out just for a message.
 
 Each people who use the road is now a marker on the map, wherever their own day has put them. The player drives to
 each and asks. Nothing counts down. What each one says depends on that people's word for the player.
 
-> *If I ask somebody and they say no, they'll still know what we're planning to do.*
+> *If I ask people and they say no, they'll still know what we're planning to do.*
 
 **Dot,** at the diner. The player asks: "Will you stand with us at the gate, Dot?"
 
 | Dot's word | What she says | What it means |
 | --- | --- | --- |
 | Friendly or Sworn | **Dot:** I'll bring the van, and I'll bring a tray of pies as well, because people stand a great deal longer with something hot in their hands. Tell me the morning and I'll be there. | Dot stands |
-| Strangers | **Dot:** I'd like to, and I'm frightened to. That van is my whole living, and it has four wheels he could take. I'll come if you promise me your car stays beside my van from start to finish. | Dot stands if the player says "You have my word. My car stays beside your van." The promise goes on the page: "You promised Dot that your car would stay beside her van at Sump's Gate." If the player says "I can't promise that, Dot." she does not stand |
+| Strangers | **Dot:** I'd like to, and I'm frightened to. That van is my whole living, and it has four wheels he could take. I'll come if you promise me your car stays beside my van from start to finish. | Dot stands if the player says "You have my word that my car will stay beside your van." The promise goes on the page: "You promised Dot that your car would stay beside her van at Sump's Gate." If the player says "I can't promise that, Dot." she does not stand |
 | Wary or Cold | **Dot:** No. I don't park my van in front of the Road Rats for people I can't rely on. I'd sooner pay Sump his eight scrap, because at least I know what I'm getting for it. | Dot does not stand |
 
 **Marigold,** at the Glasshouse. The camp is whichever camp was cast. The player asks: "Will your people stand with
@@ -293,7 +293,7 @@ us at the gate?"
 | The camp's word | What is said | What it means |
 | --- | --- | --- |
 | Sworn | **Marigold:** We'll come, and we'll bring both carts. You don't need to promise us anything. You've kept every promise you ever made here, and that's why we're coming. | The camp stands, with two carts |
-| Friendly | **Marigold:** We've only the one cart, and it's the water cart. If he takes its wheels, everybody at home goes thirsty. I'll bring it if you give me your word that your car stays right beside it. | The camp stands if the player says "You have my word. My car stays beside your cart." The promise goes on the page: "You promised the Glasshouse that your car would stay beside its cart at Sump's Gate." If the player says "I can't promise that." the camp does not stand |
+| Friendly | **Marigold:** We've only the one cart, and it's the water cart. If he takes its wheels, everybody at home goes thirsty. I'll bring it if you give me your word that your car stays right beside it. | The camp stands if the player says "You have my word that my car will stay beside your cart." The promise goes on the page: "You promised the Glasshouse that your car would stay beside its cart at Sump's Gate." If the player says "I can't promise that." the camp does not stand |
 | Strangers | **Marigold:** We don't know you well enough for that. You're asking us to put our cart in front of the Road Rats on your say alone. Come back when we know you better. | The camp does not stand |
 | Wary or Cold | **Marigold:** No. I'd also think hard about who else you ask, because not everybody on this road wishes Tin Town well. | The camp does not stand. One time in two, drawn from the seed, somebody from the camp sells the plan to Sump for a free crossing |
 
@@ -311,8 +311,8 @@ once anybody besides Tin Town has said yes.
 
 If nobody besides Tin Town has said yes, she will not be the first.
 
-> **Nan Tallow:** Ask me again when you have somebody else. One van and one car aren't a refusal. They're two people
-> about to lose their wheels.
+> **Nan Tallow:** Ask me again when you have somebody else. One van and one car don't make a refusal. They're only two
+> people who are about to lose their wheels.
 
 **Calling the morning.** When Tin Town and two others have agreed, Auntie Solder asks at the hearth.
 
@@ -321,7 +321,7 @@ If nobody besides Tin Town has said yes, she will not be the first.
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "Send it. We'll stand at first light." | The names of those who agreed are on the page | *Every one of them is only coming because I asked them to.* | The stand is tomorrow's mission (Scene 7). In an act with a clock it is the day's outing |
+| 1 | "Send it, and we'll stand at first light." | The names of those who agreed are on the page | *Every one of them is only coming because I asked them to.* | The stand is tomorrow's mission (Scene 7). In an act with a clock it is the day's outing |
 | 2 | "Not yet. I want to ask somebody else first." | Nothing changes | None | Each one more who stands shortens the morning. Each one asked who says no knows the plan |
 
 **The ledger.** A mark for each who agreed: "Tin Town will stand at Sump's Gate.", "Dot will stand at Sump's Gate.",
@@ -340,7 +340,7 @@ Walkers with their carts and Nan Tallow's van, each if they agreed. Their horns 
 
 The player answers. It is the only thing to say.
 
-> **You:** Nobody in this line is paying you today, Sump. Nobody is paying you tomorrow either.
+> **You:** Nobody in this line is paying you today, Sump, and nobody is paying you tomorrow either.
 >
 > **Sump:** I can count every scrap that I'm not being paid this morning. I can also count the wheels in this line,
 > and I have lads here who'd enjoy taking every one of them.
@@ -378,7 +378,7 @@ player's window. He speaks low, so that the line cannot hear.
 
 If the player stays:
 
-> **You:** They came because I asked them, Sump. I'm staying where I am.
+> **You:** They came because I asked them to, Sump, so I'm staying where I am.
 >
 > **Sump:** That's a pity. I do hate it when somebody turns down a bargain.
 
@@ -406,8 +406,8 @@ Those who stood each say one thing, and they do not agree.
 
 | | You say | Plain to see | Your thought, if any | Kept out of sight |
 | --- | --- | --- | --- | --- |
-| 1 | "No toll and no wage. The road was free before you came." | The pole comes down and the Rats leave the pass | *He'll go somewhere, and he won't be in a good mood when he gets there.* | The road is free. The Road Rats go up one step. Nobody keeps the pass |
-| 2 | "One scrap a cart, and you keep the pass. That's a fair wage." | The pole stays up, and a Rat chalks a tally of carts | *I wonder what Sump does with a road once he has one.* | The road is taxed lightly. The Road Rats' feud does not rise. Dot is cross. It is the first step toward a peace with Sump |
+| 1 | "There'll be no toll and no wage, because the road was free before you came." | The pole comes down and the Rats leave the pass | *He'll go somewhere, and he won't be in a good mood when he gets there.* | The road is free. The Road Rats go up one step. Nobody keeps the pass |
+| 2 | "You can have one scrap a cart to keep the pass, and that's a fair wage." | The pole stays up, and a Rat chalks a tally of carts | *I wonder what Sump does with a road once he has one.* | The road is taxed lightly. The Road Rats' feud does not rise. Dot is cross. It is the first step toward a peace with Sump |
 
 > **Sump:** *(1)* Then you can have your free road, and all the holes in it. Don't come looking for me the day
 > somebody worse than me finds this pass empty.
@@ -415,8 +415,8 @@ Those who stood each say one thing, and they do not agree.
 > **Sump:** *(2)* Now that is a deal! I told the lads that Tin Town could be reasoned with. You won't see a wreck on
 > this road that we didn't put there ourselves.
 >
-> **Dot:** *(2)* So we stood in the cold for an hour to pay him less. I'll pay it, because I said I'd stand with you.
-> I shan't pretend that I like it.
+> **Dot:** *(2)* So we stood in the cold for an hour to pay him less. I'll pay it, because I said I'd stand with you,
+> but I shan't pretend that I like it.
 
 **If the line breaks.** A cart is pushed out for six seconds, a buggy on each side walks it to the bucket, and its
 driver pays.

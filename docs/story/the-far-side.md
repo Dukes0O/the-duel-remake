@@ -234,7 +234,7 @@ Rules: `docs/story/the-long-dry.md` section 9. Ids go in `src/story/far-lines.js
 | `far.10.why` | Brian | Straight after | Ten metres of height is one bar. I believe Odessa told you that years ago. That pond is a hundred and twenty metres above you. So, you tell me. A house tap wants about three. |
 | `far.10.fix` | Odessa | Straight after | Reducing valves. High pressure in, low pressure out. There's three to fit, in three streets, and you're the one who opened it. Hold F. You'll get wet. I want you to get wet. |
 | `far.10.one` | Odessa | First valve | That's one street. They've stopped screaming, and they've started washing. |
-| `far.10.two` | Odessa | Second valve | Second street. Somebody's got their dog in it. Somebody's got their whole family. |
+| `far.10.two` | Odessa | Second valve | Second street. Somebody's washing a dog in it. There's a whole family in it. |
 | `far.10.wet` | Hollis | In the spray | I've kept a dry gate for most of my life. Now look at me. Don't look at me. |
 | `far.10.won` | Odessa | Third valve | Three bar, all over town. It runs by itself, down the hill, and it costs nothing. All these years of pumps. Go and turn on a tap. I'll wait. |
 | `far.10.people` | Hollis | Next visit | They're all out in the street with their buckets, and they don't need to be. They're just filling them to watch. |

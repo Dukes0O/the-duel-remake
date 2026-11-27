@@ -12,8 +12,10 @@ import math
 import os
 import sys
 import time
-from datetime import date
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from evidence_date import evidence_date  # the one evidence day, shared with tools/evidence-date.mjs
 
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
@@ -138,7 +140,7 @@ def tool_texture(name, label):
 def hands_texture(name, label):
     return blend_dir / 'hands' / f'{name}-{label}.png'
 shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
-    (candidate_dir / 'evidence' if proof_mode else root / '.evidence' / date.today().isoformat() / 'first-person' / f'round-{args.round}'))
+    (candidate_dir / 'evidence' if proof_mode else root / '.evidence' / evidence_date() / 'first-person' / f'round-{args.round}'))
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:

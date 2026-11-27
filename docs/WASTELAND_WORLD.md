@@ -255,7 +255,7 @@ cars build the score. The crowd cheers and raises the value of every new stunt.
 Rolling** gives the driver three opponents. The hammer checks for a hit when it
 lands, with aim assist on Easy and Medium. Hold F to cut with the saw. The trucks
 slow during the cut, and you can still steer. The launcher throws a truck within
-40 degrees of its nose, up to 4 m away on Easy and Medium or 3 m on Hard.
+40 degrees of its nose, up to 6 m away for the player on Easy and Medium (a rival's reaches 4 m) or 3 m on Hard.
 After a hit, the truck turns over a quarter-second while steering stays active.
 A truck that clears the Spine can land and drive on. If it lands on the Spine,
 it slides off.

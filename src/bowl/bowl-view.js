@@ -92,8 +92,9 @@ function authoredParts(scene, prefixes, feature, name) {
 // BOWL-LOOK-FIX: High Jump's bar is a gas pipe with real flames (src/bowl/bowl-fx.js), not a bar of bunting.
 const jumpBar = createFlameBar;
 
+// `retire(release)` runs a disposal when the renderer's shader warmup is idle (render3d passes it); by default at once.
 export function createBowlView({loadModel = url => loader.loadAsync(url),
-  loadFireTexture = () => new THREE.TextureLoader().loadAsync(FIRE)} = {}) {
+  loadFireTexture = () => new THREE.TextureLoader().loadAsync(FIRE), retire = release => release()} = {}) {
   const group = new THREE.Group();
   group.name = 'Bowl show night';
   group.visible = false;
@@ -107,20 +108,24 @@ export function createBowlView({loadModel = url => loader.loadAsync(url),
   const rexView = createRexView({loadModel});
   group.add(rexView.group);
   // BOWL-WEAPONS-LOOK: the weapons, the rivals' bolt-ons and the damage ride on the drawn trucks.
-  const weaponsView = createBowlWeaponsView();
+  const weaponsView = createBowlWeaponsView({retire});
   group.add(weaponsView.group);
 
   // `keepStadium` keeps the drawn stadium (about a quarter of a second to build) when
   // only the crush props and fires are rebuilt for the same course.
   function clear(keepStadium = false) {
     token++;
+    // Three's compileAsync polls every material it collected, and a disposed one has no program: leave the scene now,
+    // release the materials once any warmup poll has settled.
+    const retired = [];
     for (const child of [...group.children]) {
       if (child === rexView.group || child === weaponsView.group) continue;
       if (keepStadium && child === stadium) continue;
       child.removeFromParent();
-      disposeTree(child);
+      retired.push(child);
     }
-    disposeTree(crushSource);
+    retired.push(crushSource);
+    retire(() => { for (const root of retired) disposeTree(root); });
     crushSource = null;
     fires.length = 0;
     authored.clear();

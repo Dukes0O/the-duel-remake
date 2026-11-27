@@ -63,6 +63,35 @@ function disposeTree(root) {
   });
 }
 
+// BOWL-REX-3, item 4: a bomb's two rings are barely there. A ring is not a colour of its own but a darkening of
+// whatever floor is under it: the blend keeps 94 % of the floor and takes a little more away per channel, which
+// keeps it about 3 steps of 255 darker on red, green and blue (never more than 4) from half the floor's light to
+// twice it, so the flame jets' light does not make it plainer. It gives off no light and has no outline or rim,
+// and its tone never changes. The floor tones are the Bowl's dirt (world.js, 0x8f6c4e) times the gravel photo
+// (public/assets/textures/rally-gravel.png): its mean, and its darkest and lightest 39-pixel patches.
+export const BOWL_FLOOR_TONES = Object.freeze({dirt: [79, 54, 34], darkest: [69, 48, 30], lightest: [90, 61, 38]});
+const toLinear = v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; };
+const toScreen = v => 255 * (v <= .0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - .055);
+const RING_KEEP = .94, RING_STEPS = 3;
+export const BOMB_RING_TONE = Object.freeze({keep: RING_KEEP,
+  take: Object.freeze(BOWL_FLOOR_TONES.dirt.map(v => toLinear(v) * RING_KEEP - toLinear(v - RING_STEPS)))});
+// The ring's colour on screen over a floor of this colour, with the floor's light scaled by `light`.
+export function bombRingOver(floor, light = 1) {
+  const lit = floor.map(v => toLinear(v) * light);
+  return {floor: lit.map(v => Math.round(toScreen(v))),
+    ring: lit.map((v, k) => Math.round(toScreen(Math.max(0, v * BOMB_RING_TONE.keep - BOMB_RING_TONE.take[k]))))};
+}
+function bombRingMaterial() {
+  // Reverse subtract: drawn = floor x keep - take. Nothing is added, so it can only darken.
+  const material = new THREE.MeshBasicMaterial({transparent: true, opacity: BOMB_RING_TONE.keep, depthWrite: false,
+    side: THREE.DoubleSide, toneMapped: false, fog: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+    blending: THREE.CustomBlending, blendEquation: THREE.ReverseSubtractEquation,
+    blendSrc: THREE.OneFactor, blendDst: THREE.SrcAlphaFactor});
+  material.color.setRGB(...BOMB_RING_TONE.take, THREE.LinearSRGBColorSpace);
+  material.name = 'Scrapasaurus bomb ring darkening';
+  return material;
+}
+
 // The throw ring is visible even where a ramp rises through it.
 const glowMaterial = (color, depthTest = false) => new THREE.MeshBasicMaterial({color, transparent: true, opacity: .5,
   depthWrite: false, depthTest, side: THREE.DoubleSide, toneMapped: false, blending: THREE.AdditiveBlending});
@@ -124,6 +153,36 @@ export function createRexView({loadModel}) {
   const rust = new THREE.MeshStandardMaterial({color: 0x6b4a33, roughness: .9, metalness: .2});
   const thrown = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.2, 4.2), rust);
   thrown.name = 'Scrapasaurus thrown junk car'; thrown.visible = false;
+  // BOWL-REX-3, plain shapes (BOWL-REX-3-LOOK draws them properly): two red eyes, the thin red line that follows
+  // the truck, the orange strip once it stops, the beam as a bright bar, the bomb as a ball with a lamp, its
+  // shadow growing as it falls, and its two faint rings.
+  const flatStrip = () => new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).translate(0, 0, .5);
+  const redLine = new THREE.Mesh(flatStrip(), glowMaterial(0xff2a1a));
+  redLine.name = 'Scrapasaurus eye beam line'; redLine.material.opacity = .85; redLine.renderOrder = 4;
+  const beamStrip = new THREE.Mesh(flatStrip(), glowMaterial(ORANGE));
+  beamStrip.name = 'Scrapasaurus eye beam strip'; beamStrip.renderOrder = 4;
+  const beamBar = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1).translate(0, 0, .5), glowMaterial(0xfff0e0, true));
+  beamBar.name = 'Scrapasaurus eye beam'; beamBar.material.opacity = .95; beamBar.renderOrder = 6;
+  const eyeMaterial = new THREE.MeshBasicMaterial({color: 0xff2414, toneMapped: false});
+  const eyes = [-1, 1].map(side => {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.28, 12, 8), eyeMaterial);
+    eye.name = 'Scrapasaurus red eye'; eye.userData.side = side; eye.visible = false; pose.add(eye); return eye;
+  });
+  const bombBall = new THREE.Mesh(new THREE.SphereGeometry(.55, 16, 10), new THREE.MeshStandardMaterial({color: 0x2a2724, roughness: .6, metalness: .6}));
+  bombBall.name = 'Scrapasaurus bomb';
+  const bombLamp = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 6), new THREE.MeshBasicMaterial({color: 0xff3020, toneMapped: false}));
+  bombLamp.name = 'Scrapasaurus bomb lamp'; bombLamp.position.y = .58; bombBall.add(bombLamp);
+  const bombShadow = new THREE.Mesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, depthWrite: false, opacity: 0}));
+  bombShadow.name = 'Scrapasaurus bomb shadow';
+  const ringTone = bombRingMaterial();
+  const landRing = new THREE.Mesh(new THREE.RingGeometry(REX_RULES.thrown.hitRadius - .35, REX_RULES.bomb.landRadius, 40).rotateX(-Math.PI / 2), ringTone);
+  landRing.name = 'Scrapasaurus bomb landing ring';
+  const lieRing = new THREE.Mesh(new THREE.RingGeometry(REX_RULES.bomb.burstRadius - .35, REX_RULES.bomb.burstRadius, 64).rotateX(-Math.PI / 2), ringTone);
+  lieRing.name = 'Scrapasaurus bomb ring';
+  const bombParts = [redLine, beamStrip, beamBar, bombBall, bombShadow, landRing, lieRing];
+  for (const part of bombParts) part.visible = false;
+  const beamFrom = new THREE.Vector3(), beamTo = new THREE.Vector3();
   // The cable: a bright steel rope that hangs to the floor while it is slack and pulls straight when it is tight,
   // thick enough to follow from across the arena.
   // BOWL-LOOK-FIX: lit steel wire rope with its strands' twist, not a flat pale ribbon.
@@ -165,7 +224,9 @@ export function createRexView({loadModel}) {
     pointer.quaternion.copy(camera.quaternion);pointer.rotateZ(Math.atan2(y,x*(camera.aspect||1)));
     pointer.material.opacity=1;pointer.updateMatrixWorld(true);
   };
-  for(const circle of [mark,progress])circle.onBeforeRender=(_renderer,_scene,camera)=>{
+  const bombMarker=new THREE.Mesh(mark.geometry,glowMaterial(0x99ff77));
+  bombMarker.name='Bomb hook marker';bombMarker.renderOrder=9;bombMarker.visible=false;bombParts.push(bombMarker);
+  for(const circle of [mark,progress,bombMarker])circle.onBeforeRender=(_renderer,_scene,camera)=>{
     circle.quaternion.copy(camera.quaternion);circle.updateMatrixWorld(true);
   };
   const pen = new THREE.Group(); pen.name = 'Scrapasaurus pen of junk cars';
@@ -184,7 +245,7 @@ export function createRexView({loadModel}) {
   const STEAM_VENTS = [[-1.4, 5.2, -1.6], [1.4, 5.2, -1.6], [-1.2, 5.5, 1.2], [1.2, 5.5, 1.2], [0, 5.0, -4.2], [0, 5.3, 3.4]];
   // Dust thrown up along its length where it lands, in the rails' metres (not rolled with the body).
   const dust = puffs('Scrapasaurus fall dust', 18, 0x8a7458); holder.add(dust);
-  group.add(holder, fire, ring, thrown, pen, cable, tip, mark, beam, boxLight, progress, pointer);
+  group.add(holder, fire, ring, thrown, pen, cable, tip, mark, beam, boxLight, progress, pointer, ...bombParts);
   const moments = {tornAt: [null, null, null], tiredAt: null, fight: null};
   let clockNow = 0;
   const sinceTearOf = index => moments.tornAt[index] == null ? Infinity : clockNow - moments.tornAt[index];
@@ -261,6 +322,8 @@ export function createRexView({loadModel}) {
     const truckMph = state?.speedMph || 0;
     pen.visible = !!fight;
     fire.visible = ring.visible = thrown.visible = chest.visible = false;
+    for (const part of bombParts) part.visible = false;
+    for (const eye of eyes) eye.visible = false;
     chestLight.intensity = 0;
     cable.visible=tip.visible=mark.visible=beam.visible=progress.visible=pointer.visible=false;
     boxLight.intensity=0;fireLight.intensity=0;
@@ -410,6 +473,8 @@ export function createRexView({loadModel}) {
       steelCable.lay(ropePoints,hook.tight ? .085 : .095,!!hook.tight);
       cable.visible=tip.visible=true;tip.position.copy(hook.tip);
     }
+    // A bomb in reach of the hook wears the box's own marker, in its biting colour, without the box's tall beam.
+    if(fight.bomb?.canBite){bombMarker.visible=true;bombMarker.position.set(fight.bomb.x,fight.bomb.y+1.6,fight.bomb.z);}
     if(fight.marker){
       mark.visible=true;mark.position.copy(fight.marker);
       beam.visible=pointer.visible=true;
@@ -465,6 +530,46 @@ export function createRexView({loadModel}) {
         });
         fireLight.position.set(0, 3, reach * .45 * grown);
         fireLight.intensity = (300 + 90 * Math.sin(seconds * 19)) * fireNear;
+      }
+    }
+    const line = fight.beam;
+    if (line) {
+      for (const eye of eyes) {
+        eye.visible = true;
+        eye.position.set(eye.userData.side * .55, places.headTop - (fight.headDown ? 1.6 : 1.4), places.headAhead + 1.3);
+      }
+      const floorY = line.y + .08;
+      // The thin red line follows the truck; once it stops it turns orange and widens to the beam's 3 m.
+      const strip = line.phase === 'aim' ? redLine : beamStrip;
+      strip.visible = true;
+      strip.position.set(line.x, floorY, line.z); strip.rotation.y = line.heading;
+      strip.scale.set(line.phase === 'aim' ? .3 : REX_RULES.beam.width, 1, line.length);
+      if (line.phase === 'burn') {
+        beamFrom.set(line.x, line.y + places.headTop - 1.4, line.z);
+        beamTo.set(line.x + Math.sin(line.heading) * line.length, line.y + .4, line.z + Math.cos(line.heading) * line.length);
+        beamBar.visible = true; beamBar.position.copy(beamFrom); beamBar.lookAt(beamTo);
+        beamBar.scale.set(.45, .45, beamFrom.distanceTo(beamTo));
+      }
+    }
+    const bomb = fight.bomb;
+    if (bomb) {
+      if (bomb.phase === 'tell' || bomb.phase === 'air') {
+        landRing.visible = true; landRing.position.set(bomb.x, bomb.y + .06, bomb.z);
+        const u = bomb.phase === 'air' ? Math.min(1, bomb.t / REX_RULES.bomb.flightSec) : 0;
+        bombBall.visible = true;
+        bombBall.position.set(bomb.from.x + (bomb.x - bomb.from.x) * u, bomb.from.y + (bomb.y + .55 - bomb.from.y) * u + 8 * u * (1 - u),
+          bomb.from.z + (bomb.z - bomb.from.z) * u);
+        // The ordinary shadow of a thing in the air: it grows and darkens as the bomb comes down.
+        bombShadow.visible = bomb.phase === 'air';
+        bombShadow.position.set(bomb.x, bomb.y + .05, bomb.z);
+        bombShadow.scale.setScalar(.25 + .5 * u); bombShadow.material.opacity = .15 + .4 * u;
+        bombLamp.visible = true;
+      } else {
+        lieRing.visible = true; lieRing.position.set(bomb.x, bomb.y + .06, bomb.z);
+        bombBall.visible = true; bombBall.position.set(bomb.x, bomb.y + .55, bomb.z);
+        // Its lamp blinks with its tick, faster as the time runs out.
+        const period = .14 + .86 * bomb.share;
+        bombLamp.visible = (seconds / period) % 1 < .5;
       }
     }
     if (fight.throwAt && (fight.phase === 'lift' || fight.phase === 'throw')) {

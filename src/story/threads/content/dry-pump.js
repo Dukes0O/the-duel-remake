@@ -37,10 +37,10 @@ const PENNY_PROMISE = {type: 'promise', id: `${ID}/penny-valve`, person: 'mr-pen
 
 // Said by the Ash Men when the lamps find the player, in the hall or outside the shoe shop.
 const SEEN_SHOUT = ashMan("There's somebody in the hall! Turn the lamps on the shops!", {shouted: true});
-const BOLTED_DOOR = penny("This door is for staff only! I have told them, and told them. Go down the corridor and out by the tunnel, and don't stop to thank me.");
+const BOLTED_DOOR = penny("This door is for staff only, and I have told them so again and again! Go down the corridor and out by the tunnel, and don't stop to thank me.");
 const CAUGHT = [
   ashMan("Put that down. It's Old Smoke's, and so is everything else under this roof."),
-  ashMan("Old Smoke doesn't keep thieves, because thieves have to be fed. Walk out by the front doors, and tell Tin Town who owns the Mall."),
+  ashMan("Old Smoke doesn't keep thieves prisoner, because thieves have to be fed. Walk out by the front doors, and tell Tin Town who owns the Mall."),
 ];
 
 // Where the camp's fitting leads: the thread's end, by how the valve was got.
@@ -100,7 +100,7 @@ export default {
         ],
       },
       lines: [
-        leader("You've come on a bad day, and you may be the one good thing in it. Our pump has stopped bringing up water. It turns as well as it ever did, and nothing comes up with it."),
+        leader("You've come on a bad day, and you may be the one good thing in it. Our pump has stopped bringing up water. It turns as well as it ever did, but nothing comes up with it."),
         say('marigold', "The pump you mended is turning beautifully. It just isn't bringing anything up with it, and beans can't drink the sound of a pump.",
           {when: {all: [AT_THE_GLASSHOUSE, PUMP_WAS_MENDED]}}),
         leader('We pulled the pipe up out of the ground this morning. The valve at the bottom of it has cracked right across, and here it is.'),
@@ -110,20 +110,20 @@ export default {
       questions: [
         {id: 'what-valve', words: 'What does the valve do?',
           shows: 'What is being fetched, and why nothing else will do',
-          lines: [leader("It sits at the bottom of the pipe, under the water. It lets water come up and won't let it fall back down. With a crack in it, the pump lifts the same cupful all day and never gets it to the top.")]},
+          lines: [leader("It sits at the bottom of the pipe, under the water, and it lets the water come up but won't let it fall back down. With a crack in it, the pump lifts the same cupful all day and never gets it to the top.")]},
         {id: 'how-long', words: 'How long will your water last?',
           shows: 'How long a promise can wait',
           lines: [
             leader("We have two barrels and what's in the trough. That's four days of drinking, if nobody washes and nothing gets watered."),
-            say('marigold', "The beans won't last four days. They'll last two. People can go thirsty and complain about it, and beans just die.",
+            say('marigold', "The beans won't last four days, though. They'll last two at most, because people can go thirsty and complain about it, but beans just die.",
               {when: AT_THE_GLASSHOUSE}),
           ]},
         {id: 'why-not-you', words: "Why can't you go yourselves?",
           shows: 'Somebody keeps a watch in the Mall',
-          lines: [leader("We've a handcart and no car, and it's two days there and back on foot. People say that lamps move about inside that place at night. None of us knows how to creep past a lamp.")]},
+          lines: [leader("We've a handcart and no car, and it's two days there and back on foot. People say that lamps move about inside that place at night, and none of us knows how to creep past a lamp without being seen.")]},
         {id: 'if-nobody', words: 'What will you do if nobody goes?',
           shows: 'What is lost if the player says no',
-          lines: [leader("Then we load the cart and walk to wherever there's water, and this place goes back to the sand. We've done that before. I'd hoped we had finished doing it.")]},
+          lines: [leader("Then we load the cart and walk to wherever there's water, and this place goes back to the sand. We've done that before, and I'd hoped we had finished doing it.")]},
       ],
       thoughts: [
         'They have four days of water, and nobody else out here even knows that their pump is dry.',
@@ -131,17 +131,17 @@ export default {
       choices: [
         {id: 'go-today', words: "I'll go to the Mall for it today.",
           plain: "In an act with a clock, it is the day's outing: Bess does not go for gas",
-          thought: "I'd better come back with it, after spending a whole day of fire on it.",
+          thought: "This costs me a whole day that I'd have spent on embers, so I'd better come back with it.",
           hidden: 'The trip',
           effects: [mark('asked')],
-          lines: [leader("Then take the cracked one with you, so that you can match the size. Hold it up against whatever you find. A valve that's a finger too wide is as much use as no valve.")],
+          lines: [leader("Then take the cracked one with you, so that you can hold it up against whatever you find and match the size. A valve that's a finger too wide is no more use than no valve at all.")],
           next: 'mall-outside'},
         {id: 'promise', words: "I'll fetch it, but I can't go today. You'll have it within three nights.",
           plain: 'A promise goes on the page with its night. Their water lasts four days',
-          thought: 'A promise is easy to make this morning. I wonder what the third night will look like.',
+          thought: 'A promise is easy to make this morning, but I wonder how it will look on the third night.',
           hidden: "Breaking it costs a word, said to the player's face. At the Glasshouse the beans die on the second day",
           effects: [mark('asked'), PROMISE],
-          lines: [leader("I'll hold you to three nights. I'll tell the others, and I'll tell them it was a promise, so that they stop looking at the cart. Take the cracked one with you, for the size.")],
+          lines: [leader("I'll hold you to three nights. I'll tell the others that it's a promise, so that they stop looking at the cart. Take the cracked one with you, so that you can match the size.")],
           next: 'promised'},
         {id: 'send-friends', words: "I know some people who owe me. I'll ask them to go.",
           when: {cast: 'friend'},
@@ -151,20 +151,20 @@ export default {
           effects: [mark('asked'), mark('sent-friends', 'You sent friends to the Dead Mall in your place.'),
             {type: 'favour', person: '@friend', by: -1}],
           lines: [
-            leader("I don't mind whose hands it comes in. I'll mind very much if it doesn't come."),
+            leader("I don't mind whose hands it comes in, but I'll mind very much if it doesn't come at all."),
             friend("We owe you, and this is a fair way to pay it. We'll walk to the Mall for your friends and be back at the second dawn. After that, you and I are square.", onRadio),
             say('rell', "You told us once that the Dead Mall still had a roof, and we slept under it for two nights. There's an old man there who keeps a door the grey men have never found. He'll open it to us.",
               {...onRadio, when: {all: [{cast: 'friend', is: 'walkers'}, WALKERS_KNOW_THE_MALL]}}),
           ],
           next: 'friends-away'},
-        {id: 'refuse', words: "I'm sorry. I can't spare a day for it.",
+        {id: 'refuse', words: "I'm sorry, but I can't spare a day for it.",
           plain: 'Nothing changes at Tin Town',
           thought: "I wonder where they'll walk to, when the barrels are empty.",
           hidden: 'Their word falls by one. They leave on the fifth day, and somebody speaks of it later',
           effects: [mark('asked'),
             mark('refused', '{camp.name} asked you to fetch a valve for their dry pump, and you said no.'),
             campWord({by: -1})],
-          lines: [leader('I thought you might say that, and I asked anyway. You have a town to keep. Go on home, and mind the road.')],
+          lines: [leader('I thought you might say that, and I asked anyway. You have a town of your own to keep, so go on home and mind the road.')],
           next: 'left-dry'},
       ],
     },
@@ -181,13 +181,13 @@ export default {
 
     'promise-broken': {
       when: {reach: '@camp'},
-      lines: [leader("You said three nights, and I told the others that it was a promise. I shan't tell them that again about anybody.")],
+      lines: [leader("You said three nights, and I told the others that it was a promise. I shan't ever tell them that about anybody again.")],
       effects: [mark('promise-broken', 'You promised {camp.name} a valve, and did not bring it in time.'),
         campWord({by: -1}), {type: 'settle', id: `${ID}/valve`}],
       // They have one day of water left, and the cart is half loaded. The valve can still be fetched today.
       choices: [
         {id: 'go-late', by: 'do', words: 'Drive to the Dead Mall', plain: 'The cart is half loaded',
-          thought: "It's late, and I said it wouldn't be. It isn't too late yet.",
+          thought: "It's later than I said it would be, but it isn't too late yet.",
           hidden: 'The trip, a day late', next: 'mall-outside'},
         {id: 'leave-it', by: 'do', words: 'Drive home', plain: 'Nothing',
           hidden: 'The camp leaves on the fifth day', next: 'left-dry'},
@@ -201,7 +201,7 @@ export default {
       lines: [
         friend("Here's your valve. An old man under that place made every one of us sign a book before he'd part with it. We're square now, and I'd like it said that we were quick.",
           {when: FRIENDS_FETCHED}),
-        friend("We got as far as the lamps and no further. I'm sorry. We've paid what we owed you in walking, and your friends still have no valve.",
+        friend("We got as far as the lamps and no further, and I'm sorry. We've paid what we owed you in walking, but your friends still have no valve.",
           {when: {not: FRIENDS_FETCHED}}),
       ],
       effects: [
@@ -225,7 +225,7 @@ export default {
       thoughts: [
         "The letters over the doors say SEAVIEW. There hasn't been a sea to view from here for thirty years.",
         'I have to go in on foot, and whatever I bring out is going to be heavy.',
-        "The front doors are the short way to the middle of the building. They're also where the lamps are.",
+        "The front doors are the short way to the middle of the building, but they're also where the lamps are.",
       ],
       explore: [
         {id: 'east-front', cue: 'open.scout.seen',
@@ -234,7 +234,7 @@ export default {
           tells: 'Who keeps the watch, and that the front is watched'},
         {id: 'north-side', cue: 'open.scout.seen',
           what: 'The sand has drifted to the top of the wall, and part of the roof has fallen in.',
-          thought: "The sand goes right up to the roof on this side, and there's a hole where the roof fell in. I could slide down inside. I couldn't climb back up that slope carrying anything heavy.",
+          thought: "The sand goes right up to the roof on this side, and there's a hole where the roof fell in. I could slide down inside, but I couldn't climb back up that slope carrying anything heavy.",
           tells: 'A way in that is not a way out'},
         {id: 'south-side', cue: 'open.scout.seen',
           what: 'Four lorries are nose-down in the sand in a row, pointing at the wall.',
@@ -248,7 +248,7 @@ export default {
         {id: 'ask-rell', to: 'rell', words: 'Rell, did your people ever reach the Dead Mall?',
           when: WALKERS_KNOW_THE_MALL,
           shows: 'The whole way to the door, from somebody who has walked it',
-          lines: [say('rell', 'We slept in it for two nights, after you told us it had a roof. An old man under the fountain keeps a door that the grey men have never found. Go in by the roof, come down the dead stairs and knock on the door marked STAFF ONLY.', onRadio)]},
+          lines: [say('rell', "We slept in it for two nights, after you told us it had a roof. An old man under the fountain keeps a door that the grey men have never found. Go in by the roof, come down the stairs that don't move any more, and knock on the door marked STAFF ONLY.", onRadio)]},
       ],
       choices: [
         {id: 'front-doors', by: 'do', words: 'Walk in by the front doors',
@@ -257,7 +257,7 @@ export default {
           hidden: 'The whole width of the hall, in the lamps\' light. Being seen brings the alarm', next: 'hall'},
         {id: 'roof', by: 'do', words: 'Climb the sand and go in by the roof',
           plain: 'A slope of sand going down into the dark',
-          thought: "Nobody watches a roof. I'll have to find another way out, though.",
+          thought: "Nobody watches a roof, but I'll have to find another way out.",
           hidden: 'The gallery, above the lamps. There is no way back up', next: 'gallery'},
         {id: 'tunnel', by: 'do', words: 'Go in by the delivery tunnel and knock twice',
           when: did('mall-way-in'),
@@ -318,11 +318,11 @@ export default {
       },
       lines: [
         penny("Come in quickly, please, and mind the step. I'm afraid the Seaview Centre is closed. We close at nine, and it has been after nine for thirty years.", low),
-        penny("My name is Mr Penny, and I'm the night watchman. You'll be a contractor, because customers never use this door. Contractors sign the book."),
+        penny("My name is Mr Penny, and I'm the night watchman. You'll be a contractor, because customers never use this door, and contractors sign the book."),
         penny("That's a number four foot valve, and it's cracked across the seat. You've come to the right building. I have a pump room, and I know every valve in it by its number."),
         penny("There were two number fours in this building. One of them is at the bottom of my own pipe, in the tank under the fountain, and it's how I make my tea."),
         penny("The other was on that shelf until last winter. The grey gentlemen carried it upstairs, along with a great many other things that weren't theirs. It's in the old shoe shop now, where they keep their store."),
-        penny("You may have mine. A camp full of people needs it more than one old man needs tea. I can let a bucket down into the tank on a rope. It's thirty-one steps down and thirty-one up, and I've counted them before."),
+        penny("You may have mine. A camp full of people needs it more than one old man needs tea. I can let a bucket down into the tank on a rope instead. It's thirty-one steps down and thirty-one up, and I've counted them before."),
       ],
       questions: [
         {id: 'why-here', words: 'Why are you still here?',
@@ -336,7 +336,7 @@ export default {
           lines: [penny("They've never found this door. In all my years of customers, hardly anybody has looked up, and nobody at all has looked behind a sign that says STAFF ONLY.")]},
         {id: 'the-lamps', words: 'How do they move their lamps?',
           shows: 'The gap: a count of twenty',
-          lines: [penny("They turn their lamps the way a tired man stirs soup, slowly and always the same way round. Between one lamp leaving the shoe shop and the other arriving, I can count to twenty. I've never needed more than fifteen.")]},
+          lines: [penny("They turn their lamps the way a tired man stirs soup, slowly and always the same way round. Between one lamp leaving the shoe shop and the other arriving, I can count to twenty, and I've never needed more than fifteen to get across.")]},
         {id: 'way-out', words: 'Is there another way out?',
           shows: 'The way out, and the way in for next time',
           lines: [penny("Staff and contractors use the delivery tunnel. It runs from the end of this corridor to the lorry ramp on the south side. The ramp door is barred on the inside, which is why nobody has ever found it from the outside.")]},
@@ -348,7 +348,7 @@ export default {
       choices: [
         {id: 'take-his', words: "Thank you. I'll take the one from your pipe.",
           plain: 'His tap stops. He said how he will manage',
-          thought: 'Thirty-one steps down and thirty-one up, with a full bucket, at his age.',
+          thought: "He'd be climbing thirty-one steps down and thirty-one up with a full bucket, at his age.",
           hidden: 'He hauls his water by hand from now on, and it shows when he is next met',
           lines: [penny('Then bring your wrench. I did that collar up myself thirty years ago, and I did it up properly, so it will take both of us.')],
           next: 'his-pipe'},
@@ -357,13 +357,13 @@ export default {
           plain: 'Two lamps, and a count of twenty',
           thought: "It was his before it was theirs. I'd only be taking it back.",
           hidden: 'The shoe shop',
-          lines: [penny("I hoped you'd say that, and I'd never have asked it of you. The shoe shop is the third door on the left from the top of my stairs. The valve is on the counter, beside the till. Count to twenty, and be back behind this door by fifteen.")],
+          lines: [penny("I hoped you'd say that, and I'd never have asked it of you. The shoe shop is the third door on the left from the top of my stairs, and the valve is on the counter beside the till. You'll have a count of twenty between the lamps, so try to be back behind this door by fifteen.")],
           next: 'shoe-shop'},
-        {id: 'take-neither', words: "I can't take your water, and I can't get past those lamps. I'm sorry.",
+        {id: 'take-neither', words: "I'm sorry, but I can't take your water, and I can't get past those lamps.",
           plain: 'Nothing is taken',
           thought: "I'll have to tell them at the camp that there was a valve, and that I left it there.",
           hidden: 'The day is spent, and the camp is still dry',
-          lines: [penny("There's no shame in that. I've been not getting past those lamps myself since last winter. Come back if you change your mind. I'm here every night, and every day as well.")],
+          lines: [penny("There's no shame in that. I've been not getting past those lamps myself since last winter. Come back if you change your mind, because I'm here every night, and every day as well.")],
           next: 'tunnel'},
       ],
     },
@@ -404,7 +404,7 @@ export default {
       mission: {id: `${ID}/mall/shoe-shop`, partOf: `${ID}/mall`,
         outcomes: {
           'not-seen': {
-            lines: [penny("That was fourteen. I counted. You'd have made a very good night watchman, and I don't say that to contractors.")],
+            lines: [penny("You were back by fourteen, and I counted every one. You'd have made a very good night watchman, and I don't say that to contractors.")],
             effects: [mark('took-the-spare', "You took a brass valve back from the Ash Men's store in the Dead Mall.")],
             next: 'tunnel'},
           seen: {
@@ -426,7 +426,7 @@ export default {
       when: {reach: ['dead-mall', 'tunnel-door']},
       cue: 'open.mall.bar',
       lines: [
-        penny("This is the contractors' way. Remember where it comes out. Next time, knock twice on this door, so that I know it isn't a customer."),
+        penny("This is the contractors' way, so remember where it comes out. Next time, knock twice on this door, so that I know it isn't a customer."),
         penny('If that camp of yours has any tea, you might mention that the Seaview Centre has run rather short.'),
       ],
       thoughts: ["So that's the way in. It's a door behind four dead lorries, and nobody has looked at it for thirty years."],
@@ -469,7 +469,7 @@ export default {
           leader("Listen to that. That's the sound of nobody having to pack the cart."),
           say('marigold', "Finch, stop grinning at the trough and go and water the beans. They've listened to that pump for two days, and they deserve some of what it brings up.",
             {when: AT_THE_GLASSHOUSE}),
-          leader("You spent a whole day on water that you'll never drink. People here will be telling that to their children. The first cup is yours."),
+          leader("You spent a whole day on water that you'll never drink. People here will be telling that to their children, and the first cup is yours."),
           leader("Where did you find it? We'd heard that the grey men had cleared that place out."),
         ],
         effects: [mark('water-back', 'You fetched a valve from the Dead Mall, and {camp.name} has water again.'),
@@ -485,7 +485,7 @@ export default {
           plain: 'The truth, and all of it',
           hidden: 'The camp takes on part of what the valve cost',
           effects: [mark('penny-has-friends', '{camp.name} carries water to Mr Penny, because you told them whose valve it was.')],
-          lines: [leader("Then somebody we've never met is hauling a bucket tonight so that we don't have to. We can't have that. Our cart will stop at his door with a barrel, every time it goes out.")]},
+          lines: [leader("Then somebody we've never met is hauling a bucket tonight so that we don't have to, and we can't have that. Our cart will stop at his door with a barrel, every time it goes out.")]},
         {id: 'tell-half', words: 'I found it in the pump room.',
           when: did('took-penny-valve'),
           plain: 'Nothing',
@@ -494,7 +494,7 @@ export default {
         {id: 'tell-of-the-store', words: "I took it back from the Ash Men's store.",
           when: did('took-the-spare'),
           plain: 'The truth',
-          lines: [leader("You took it from under Old Smoke's lamps, for us? Sit down. You're not driving anywhere until you've had something to eat.")]},
+          lines: [leader("You took it from under Old Smoke's lamps, for us? Sit down, because you're not driving anywhere until you've had something to eat.")]},
       ],
       // The thread's end is named here.
       next: FITTING_END,
@@ -523,7 +523,7 @@ export default {
             effects: [mark('seen-in-the-mall'), mark('caught-in-the-mall'), {type: 'feud', of: 'ash-men', by: 1}],
             next: KEEP_FITTING_END},
           broken: {
-            when: {due: `${ID}/penny-valve`}, lines: [penny("I've left it in the book as work outstanding. Most things in the book are. Please don't look so troubled. I'm very used to waiting.")],
+            when: {due: `${ID}/penny-valve`}, lines: [penny("I've left it in the book as work outstanding, like most things in the book. Please don't look so troubled, because I'm very used to waiting.")],
             effects: [mark('penny-promise-broken', 'You promised Mr Penny a valve, and did not bring it.'),
               {type: 'word', person: 'mr-penny', by: -1}, {type: 'settle', id: `${ID}/penny-valve`}],
             next: KEEP_FITTING_END},
@@ -552,19 +552,19 @@ export default {
   later: [
     {id: 'the-hearth-that-night', by: 'auntie-solder',
       when: did('water-back'),
-      lines: [say('auntie-solder', "So Bess sat in the yard all day, and tonight's ember burns with nothing baked to replace it. I'm told there's a whole camp drinking tonight that wasn't going to be. I've decided not to be cross until tomorrow.")]},
+      lines: [say('auntie-solder', "So Bess sat in the yard all day, and tonight's ember burns with nothing baked to replace it. I'm told there's a whole camp with water to drink tonight that wouldn't have had any. I've decided not to be cross until tomorrow.")]},
     {id: 'penny-and-the-bucket', by: 'mr-penny', at: ['dead-mall', 'tunnel-door'],
       when: {all: [did('took-penny-valve'), {not: did('penny-has-friends')}, {not: did('penny-valve-returned')}]},
       lines: [penny('I manage very well, thank you. The bucket and I have come to an understanding. It does the first twenty steps, and I do the rest rather slowly.')]},
     {id: 'penny-and-the-cart', by: 'mr-penny', at: ['dead-mall', 'tunnel-door'],
       when: did('penny-has-friends'),
-      lines: [penny("A cart came to the tunnel door with a barrel of water and a twist of tea. I've entered it in the book under deliveries. It's the first delivery in thirty years.")]},
+      lines: [penny("A cart came to the tunnel door with a barrel of water and a twist of tea. I've entered it in the book under deliveries, and it's the first delivery in thirty years.")]},
     {id: 'the-ash-store', by: 'cinder',
       when: did('saw-the-ash-store'),
       lines: [say('cinder', "So that's where they keep it all. If that store ever got wet, the Ash Men would have nothing to throw for a week. I'm not suggesting anything. I'm only thinking out loud.")]},
     {id: 'they-walked-south', by: 'trader',
       when: did('left-dry'),
-      lines: [say('trader', "I met a line of people on the road with a handcart, heading south for the pans. They said their pump had failed. They said somebody with a car had been to see them, too, and I didn't like to ask who.")]},
+      lines: [say('trader', "I met a line of people on the road with a handcart, heading south for the pans. They told me their pump had failed, and that somebody with a car had been to see them, too. I didn't like to ask who.")]},
     // What happens when the sign is never followed: the camp says so on the next visit.
     {id: 'the-camp-went-themselves', by: '{camp.leader}', at: '@camp', when: did('fetched-it-themselves'),
       lines: [leader("The pump failed a while back. Three of us walked to the Dead Mall for a valve in the end, and it cost us nine days and most of our feet. You weren't to know. I only wish that you had.")]},

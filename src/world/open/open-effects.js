@@ -29,14 +29,15 @@
 // could not be paid in full carries `owed`. An effect that changed nothing is left out.
 import {applyChoice} from '../../story/ledger.js';
 import {FEUD_WORDS, FRIEND_WORDS, OLD_FEUD_GROUP, SITE_STAGES, STOCKS, isPeople, isSite, keepsFeud, nameRow} from './register.js';
-import {GROUND_COLUMNS, GROUND_ROWS, MOST_FAVOURS, favoursOf, feudOf, stageOf} from './open-record.js';
+import {GROUND_COLUMNS, GROUND_ROWS, MOST_FAVOURS, favoursOf, feudOf, stageOf, readableRoutine} from './open-record.js';
 import {checkRole, isRole} from './roles.js';
+import {ROUTINES} from './content/routines.js';
 
 export const LEDGER_EFFECTS = Object.freeze(['stock', 'word', 'feud', 'roadWord', 'mark', 'made', 'debt', 'promise',
   'settle', 'met', 'tell', 'read', 'shareHearth', 'rumour']);
 export const OPEN_EFFECTS = Object.freeze(['find', 'site', 'favour', 'scrap', 'thread', 'town', 'ground', 'crossing',
-  'rest', 'dirt']);
-const COUNTING = Object.freeze(['ground', 'crossing', 'rest', 'dirt']);
+  'rest', 'dirt', 'routine', 'outing']);
+const COUNTING = Object.freeze(['ground', 'crossing', 'rest', 'dirt', 'routine', 'outing']);
 const SQUARES = GROUND_COLUMNS * GROUND_ROWS;
 const LONGEST_SENTENCE = 259;
 const clip = (n, low, high) => Math.max(low, Math.min(high, n));
@@ -49,6 +50,19 @@ function applyOpen(world, effect) {
   const {open} = world;
   const whole = value => { if (!Number.isSafeInteger(value)) throw new TypeError('The effect "' + effect.type + '" changes by a whole number.'); };
   switch (effect.type) {
+    case 'routine': {
+      const before = open.routines?.[effect.id] ?? null;
+      const after = structuredClone(effect.record);
+      open.routines = {...open.routines, [effect.id]: after};
+      return {key: effect.id, before, after};
+    }
+    case 'outing': {
+      const after = world.ledger.night;
+      const before = open.outingNight ?? null;
+      if (before === after) return null;
+      open.outingNight = after;
+      return {key: 'outing', before, after};
+    }
     case 'find': {
       if (!isSite(effect.site)) throw new TypeError('Unknown site: ' + effect.site);
       if (open.found.includes(effect.site)) return null;
@@ -192,6 +206,13 @@ export function checkEffect(effect, {roles = null} = {}) {
     else if (effect.text.length > LONGEST_SENTENCE) say('The sentence of the effect "' + effect.type + '" is longer than ' + LONGEST_SENTENCE + ' letters.');
   };
   switch (effect.type) {
+    case 'routine': {
+      const row = ROUTINES.find(row => row.id === effect.id);
+      const ids = row && [...row.learner.people, row.learner.otherwise].map(person => person.id);
+      if (!ids || !readableRoutine(effect.record, ids)) say('A routine needs its known id and a readable record.');
+      break;
+    }
+    case 'outing': break;
     case 'find': case 'rumour': named('site', isSite, 'a site in the register', 'site'); break;
     case 'site':
       named('id', isSite, 'a site in the register', 'site');

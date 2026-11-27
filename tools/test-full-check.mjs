@@ -8,7 +8,9 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseNightArguments, classifyNight, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy, chooseNightSize, nightSizeLine, NIGHT_FULL_FILES, saveFile, realFrameScope } from './full-check.mjs';
+import { parseNightArguments, classifyNight, nightPlan, validateFramePacket, validateTremblantFramePacket, runChild, runNight, heavyProcesses, createCheckCopy, removeCheckCopy, chooseNightSize, nightSizeLine, NIGHT_FULL_FILES, saveFile, realFrameScope, browserStageNames } from './full-check.mjs';
+import { FRAME_STAGE_SCENARIOS } from './run-browser-scenarios.mjs';
+const FRAME_NAMES=['frame-pacing','tremblant-snow','tremblant-views',...FRAME_STAGE_SCENARIOS];
 import { nightIsFullTierPass, latestNight } from './build-status.mjs';
 import { fileURLToPath } from 'node:url';
 
@@ -20,7 +22,7 @@ const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),re
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true,exitCode:0},{label:'b',passed:true,exitCode:0}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,frameSuiteFail=false,timingPatch={},timingMissing=false,browserPatch={},changed=['src/game.js'],planOptions={}}={}) {
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,frameSuiteFail=false,stageScenarioFail=null,timingPatch={},timingMissing=false,browserPatch={},changed=['src/game.js'],planOptions={}}={}) {
   const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [], messages = [];
   const copyRoot=root+'-copy/source',reportName='docs/board/checks/full-tier.json';
   const sourceReport='original copied report\n';
@@ -98,8 +100,9 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
           const packet=frames();Object.assign(packet.reports[0],framePatch);
           files.set(stage.packet,frameText??JSON.stringify(packet));
           const measuredFailure=frameSuiteFail;
-          files.set(stage.suitePacket,JSON.stringify({schema:1,count:3,passed:measuredFailure?2:3,failed:measuredFailure?1:0,timingMode:'timing-only',
-            rows:['frame-pacing','tremblant-snow','tremblant-views'].map((name,index)=>({name,passed:!measuredFailure||index!==0,...(measuredFailure&&index===0?{error:'High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.'}:{})}))}));
+          const failedName=measuredFailure?FRAME_NAMES[0]:stageScenarioFail?.name;
+          files.set(stage.suitePacket,JSON.stringify({schema:1,count:FRAME_NAMES.length,passed:FRAME_NAMES.length-(failedName?1:0),failed:failedName?1:0,timingMode:'timing-only',
+            rows:FRAME_NAMES.map(name=>({name,passed:name!==failedName,...(name===failedName?{error:measuredFailure?'High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.':stageScenarioFail.error}:{})}))}));
           if(!timingMissing)for(const recipe of stage.timingPackets) {
             const labels=recipe.name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
             const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:recipe.name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,
@@ -538,8 +541,8 @@ test('foreign heavy work appearing only during frames discards the actual timing
       const leaf=[...f.files.keys()].find(name=>name.endsWith('/full.log')).split('/').at(-2);
       const stage=nightPlan({root:root+'-copy/source',date,evidence:root+'-copy/source/.evidence/'+date+'/FAC-03/'+leaf})[1];
       f.files.set(stage.packet,JSON.stringify(frames()));
-      f.files.set(stage.suitePacket,JSON.stringify({schema:1,count:3,passed:3,failed:0,timingMode:'timing-only',
-        rows:['frame-pacing','tremblant-snow','tremblant-views'].map(name=>({name,passed:true}))}));
+      f.files.set(stage.suitePacket,JSON.stringify({schema:1,count:FRAME_NAMES.length,passed:FRAME_NAMES.length,failed:0,timingMode:'timing-only',
+        rows:FRAME_NAMES.map(name=>({name,passed:true}))}));
       for(const recipe of stage.timingPackets) {
         const labels=recipe.name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
         const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:recipe.name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,
@@ -639,10 +642,46 @@ test('consecutive frame qualities buy courses for distinct memory-only native pl
 test('existing frame step owns all three timing recipes in one headed serial suite', () => {
   const plan = nightPlan({root,date}), stage = plan[1];
   assert.equal(plan.length,4,'no extra full-check stage');
-  assert.deepEqual(stage.args.slice(0,4),['tools/run-browser-scenarios.mjs','--scenarios','frame-pacing,tremblant-snow,tremblant-views','--timing-only']);
+  assert.deepEqual(stage.args.slice(0,4),['tools/run-browser-scenarios.mjs','--scenarios','frame-pacing,tremblant-snow,tremblant-views,deep-frames,convoy-frames,fire-view','--timing-only']);
+  assert.deepEqual([...FRAME_STAGE_SCENARIOS].sort(),['convoy-frames','deep-frames','fire-view'],'one list of the three');
   assert.ok(stage.args.includes('--headed'));
   assert.equal(stage.args[stage.args.indexOf('--jobs')+1],'1');
   assert.equal(plan[3].env.DUEL_NIGHT_FRAME_PACKET,stage.packet,'ordinary frame reuse still reads the actual Harbour packet');
+});
+
+test('QA-NIGHT-TIMING-ALONE: the browser stage leaves the three frame-stage scenarios out and the frame stage names them', async () => {
+  const left=browserStageNames(['deep-frames','convoy-frames','fire-view','frame-pacing','smoke-extra','other']);
+  assert.deepEqual(left,['frame-pacing','smoke-extra','other'],'only the three leave the browser stage');
+  const plan=nightPlan({root,date}), frameNames=plan.find(row=>row.id==='frames').args[2].split(',');
+  for(const name of FRAME_STAGE_SCENARIOS) {
+    assert.ok(frameNames.includes(name),name+' runs in the frame stage');
+    assert.ok(!plan.find(row=>row.id==='browser').args.includes(name),name+' is not named in the browser stage');
+  }
+  const partial=nightPlan({root,date,size:'partial',frames:true,combat:false,scenarios:['smoke-extra'],previousSource:'a'.repeat(40)});
+  assert.deepEqual(partial.map(row=>row.id),['full','frames','browser']);
+  assert.equal(partial[1].args[2],frameNames.join(','));
+});
+
+test('a failing deep-frames result in the frame stage is classified like the frame-pacing result', async () => {
+  const error='Deep frames require headed mode';
+  const f=fixture({fail:'frames',stageScenarioFail:{name:'deep-frames',error}}), packet=await runNight(opts(),f.deps);
+  const stage=packet.stages.find(row=>row.id==='frames');
+  assert.equal(stage.passed,false);
+  assert.deepEqual(stage.validatedFailures,['deep-frames']);
+  assert.equal(packet.status,'failed','not listed, so it is news');
+  assert.deepEqual(packet.failures.map(row=>row.name),['frames: deep-frames']);
+  assert.equal(packet.stages.find(row=>row.id==='browser').passed,true,'the browser stage no longer sees it');
+  const list=[{stage:'frames',name:'deep-frames',cause:error}];
+  assert.equal(classifyNight([{name:'frames: deep-frames',error}],[{id:'frames',validatedFailures:['deep-frames']}],list).status,'standing');
+  for(const stage of [undefined,{id:'frames'},{id:'frames',measuredFailure:true},{id:'frames',validatedFailures:[]}])
+    assert.equal(classifyNight([{name:'frames: deep-frames',error}],stage?[stage]:[],list).status,'failed','an unmeasured failure is news');
+  const changed=classifyNight([{name:'frames: deep-frames',error:'Frame check over 18.5 ms'}],[{id:'frames',validatedFailures:['deep-frames']}],list);
+  assert.equal(changed.fresh[0].news,'a listed item failed in a new way');
+  assert.deepEqual(classifyNight([],[{id:'frames',passed:false,passedNames:['frame-pacing','deep-frames']}],list).nowPassing,list);
+  // A timeout is not a measurement, so it is never taken as a listed failure.
+  const timeout=fixture({fail:'frames',stageScenarioFail:{name:'fire-view',error:'timed out after 600 s'}}), result=await runNight(opts(),timeout.deps);
+  assert.deepEqual(result.stages.find(row=>row.id==='frames').validatedFailures,[]);
+  assert.equal(result.status,'failed');
 });
 
 test('Tremblant timing acceptance rejects missing qualities, unrun timing and every original boundary failure', () => {
@@ -876,6 +915,21 @@ test('night report: a partial night runs frames when the timed scene changed and
   const first=fixture({changed:['src/arsenal/crossbow.js'],planOptions:{size:'partial',frames:true,combat:true,scenarios:['smoke-extra']}});
   first.deps.reach=reachStub;first.deps.frameScope=()=>[];
   assert.match((await runNight(opts(),first.deps)).sizeLine,/frames run \(no earlier frame pass is on record\)/);
+});
+test('night report: a partial night runs frames when the area of a frame-stage scenario changed, and not for a scenario with no area',async()=>{
+  const row={schema:1,status:'passed',source:previous,date:'2026-10-11',size:'full',stages:[{id:'frames',passed:true}]};
+  const night=async(picked,planOptions)=>{
+    const f=fixture({changed:['src/lab/lab-tune.js'],planOptions});
+    f.files.set(`${root}/docs/board/checks/night-2026-10-11.json`,JSON.stringify(row));
+    f.deps.reach=reachStub;f.deps.frameScope=()=>[];f.deps.scenarioSelection=async(_root,names)=>names.includes('deep-frames')?picked:[{name:'smoke-extra'}];
+    return {packet:await runNight(opts(),f.deps),f};
+  };
+  const area=await night([{name:'deep-frames',reason:'area changed'}],{size:'partial',frames:true,combat:false,scenarios:['smoke-extra']});
+  assert.deepEqual(area.f.calls,['full','frames','browser']);
+  assert.match(area.packet.sizeLine,/frames run \(the area of deep-frames changed\)/);
+  const noArea=await night([{name:'convoy-frames',reason:'no area'},{name:'fire-view',reason:'guards saved progress or pay'}],{size:'partial',frames:false,combat:false,scenarios:['smoke-extra']});
+  assert.deepEqual(noArea.f.calls,['full','browser'],'a scenario with no area does not force the frame stage every night');
+  assert.match(noArea.packet.sizeLine,/frames reused from/);
 });
 test('night report: a full night begins with its reason, and --full runs everything even when only notes changed',async()=>{
   const f=fixture(),packet=await runNight(opts(),f.deps);

@@ -4,12 +4,14 @@
 // walk up to that person starts. Checked as it is loaded.
 import {checkTalkRow} from '../check-tables.js';
 import {nameRow} from '../register.js';
-import {THREADS_TALK} from './talk-threads.js';
+import {MARKET_TALK} from '../market-day-rule.js';
+import {RUNAWAY_TALK, THREADS_TALK} from './talk-threads.js';
 import {SITES_TALK} from './talk-sites.js';
 import {FORGE_TALK} from './talk-forge.js';
 import {TOWN_TALK} from './talk-town.js';
 import {HAULER_TALK} from './talk-hauler.js';
 import {LIGHTS_TALK} from './talk-lights.js';
+import {PARROT_TALK, POCKET_ID} from './radio-hill-voice-places.js';
 
 export function joinTalkTables(tables) {
   const joined = {}, wrong = [];
@@ -23,4 +25,6 @@ export function joinTalkTables(tables) {
   return Object.freeze(Object.fromEntries(Object.entries(joined).map(([person, rows]) => [person, Object.freeze(rows)])));
 }
 
-export const TALK_TABLES = joinTalkTables([THREADS_TALK, SITES_TALK, FORGE_TALK, TOWN_TALK, HAULER_TALK, LIGHTS_TALK]);
+export const TALK_TABLES = joinTalkTables([THREADS_TALK, SITES_TALK, FORGE_TALK, TOWN_TALK, MARKET_TALK, RUNAWAY_TALK, HAULER_TALK, LIGHTS_TALK,
+  {parrot: [{needs: {fact: 'found', site: POCKET_ID}, scene: PARROT_TALK}]},
+]);

@@ -66,6 +66,7 @@ assert.equal(witnessLights(sign, {player: road, missionHeightAt: (x, z) =>
   z < road.z - 200 && z > road.z - 260 ? 1000 : 0}, 2.9, .1).witnessed, false);
 assert.equal(witnessLights({...sign, sign: {...sign.sign, seenWithin: 30}}, {player: road}, 3, .1).witnessed, false);
 
+// Give the hearth director only this storyline, independent of other loaded storylines.
 const eligible = Array.from({length: 100}, (_, seed) => newWorld({seed, night: 3, embers: 2})).find(initial =>
   threadsAtBankedHearth({world: initial, view: {...view, player: road}}, [lightsStory]).open.threads[id]);
 assert.ok(eligible);
