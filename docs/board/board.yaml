@@ -1184,18 +1184,6 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
-  - id: WASTE-TRUCKS-FIT
-    title: "The Workshop's big trucks: the Longhaul goes through a wall, and the trucks cannot follow the instructor's line"
-    owner: "claude"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude Opus session (local), 27 November 2026"
-    needs: []
-    locks: []
-    flag: "wasteland-cars"
-    details: "docs/board/cards/WASTE-TRUCKS-FIT.md"
-
   - id: QA-AUDIO-UNDER-LOAD
     title: "p4-audio and skyline-audio fail inside the night's four-job browser stage and pass alone"
     owner: "claude"
@@ -1226,6 +1214,16 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/HOME-GROUND.md"
+
+  - id: SCENERY-FENCE-BOUNCE
+    title: "A car shoved into a thin fence jumps 1 to 2 m back off it in one tick"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/SCENERY-FENCE-BOUNCE.md"
 
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"
