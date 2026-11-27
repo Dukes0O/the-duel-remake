@@ -1737,7 +1737,10 @@ function finishWorldJob(duel, worldJob) {
 // OPEN-ROAM: keep the cast array stable while figures move. The renderer
 // uses its identity to decide when a different group needs to be loaded.
 function syncOpenPeople(worldJob) {
-  const cast = worldJob.open.parts.people?.cast ?? [], fixed = worldJob.fixedOpenPeople ?? [];
+  const cast = worldJob.open.parts.people?.cast ?? [];
+  // A storyline may take someone from a fixed post for a scene (Dace's morning takes Moss from his shed): while the moving
+  // cast holds that person, the post stands empty, so nobody is placed twice (OPEN-DACE-MOSS-TWICE).
+  const fixed = (worldJob.fixedOpenPeople ?? []).filter(post => !cast.some(person => person.id === post.id));
   let people = worldJob.storyPeople;
   // OPEN-DOORS: people at fixed posts (the shed staff) stand after the routine cast and are not moved here.
   const changed = !people || cast.length + fixed.length !== people.length || cast.some((person, i) => person.id !== people[i].id);

@@ -18,6 +18,7 @@ import {stepMover} from '../src/world/scablands-movers.js';
 import {sampleLine} from '../src/world/scablands-ways.js';
 import {walkThread} from './thread-crossings.mjs';
 import {run, scenarioWorld} from './scenarios/open-dace-goes-looking.mjs';
+import {App} from '../src/app.js';
 
 const mark = (id, scoped = true) => ({type: 'mark', id: scoped ? daceMark(id) : id});
 const changed = (world, id, effects) => applyEffects(world, {id: 'qa/' + id, effects}).world;
@@ -256,4 +257,30 @@ const browserSite = sitePosition(record({world: browserWorld}).cast.site, browse
 const browserRoad = sampleLine([p.start, p['first-fork'], browserSite, p['gate-at-dusk']], 2);
 assert.ok(browserRoad.slice(1).every((point, i) => !stepMover(browserRoad[i], point, {radius: 1.2}).blocked),
   'the scenario follows a solid-free route on the real ground');
+// OPEN-DACE-MOSS-TWICE (Claude's drive, 27 November 2026): an outing at Dace's morning sign keeps running. Dace's scene
+// takes Moss from his shed post, and the post stands empty while he is in the scene, so nobody is placed twice.
+{
+  const memory = new Map();
+  globalThis.localStorage = {getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, String(v)), removeItem: k => memory.delete(k)};
+  globalThis.cancelAnimationFrame = () => {};
+  const app = new App();
+  app.audio.unlock = () => {};
+  app.duel.featureFlags = {enabled: id => ['hidden-road', 'story-choices', 'crew-gear', 'warlord-cards'].includes(id)};
+  app.profile = {...app.profile, wasteland: {...app.profile.wasteland, discoveredGate: true}};
+  assert.ok(app._saveProfile());
+  assert.ok(app.visitWasteland());
+  app.advance(8);
+  assert.ok(app.startOpenRoam(), 'the outing starts');
+  app.advance(5);
+  assert.equal(app.duel.state.status, 'racing', 'the countdown is over');
+  const job = app.duel.state.arena.worldJob;
+  job.open.world = fixture('sign');
+  job.open.daySeconds = 2 * 60;
+  const before = app.duel.state.stageTimeSec;
+  assert.doesNotThrow(() => app.advance(1), 'a second of the morning sign runs');
+  assert.ok(app.duel.state.stageTimeSec > before + .5, 'the clock of the outing runs at the morning sign');
+  const ids = job.storyPeople.map(person => person.id);
+  assert.ok(ids.includes('moss') && ids.includes('dace'), 'Moss and Dace stand at the pickup');
+  assert.equal(new Set(ids).size, ids.length, 'nobody is placed twice');
+}
 console.log('test-open-dace-goes-looking: sign, three decisions, paid repairs, radio, drive and rescue outcomes, ledger, and browser source passed');
