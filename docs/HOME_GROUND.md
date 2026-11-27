@@ -1,8 +1,8 @@
 # Home Ground
 
-Claude, 27 November 2026, third draft. The redesign of the town that Kyle asked for on 20 November 2026. It replaces
+Claude, 27 November 2026, fourth draft. The redesign of the town that Kyle asked for on 20 November 2026. It replaces
 the way `docs/WASTELAND_TOWN.md` plays, and where the two differ this page wins. Kyle read it on 27 November, added his
-own ideas and settled its five questions (section 16; his words are in `docs/board/decisions.md`). The page with
+own ideas and settled its five questions (section 17; his words are in `docs/board/decisions.md`). The page with
 pictures that Kyle and Gratian read is the artifact "Home Ground"; this page is the record builders read. Kyle and
 Gratian can overrule anything.
 
@@ -17,7 +17,7 @@ his own hands, standing in the same land he drives through, not on a separate ma
 finish while the laptop is shut. On some evenings the Road Rats come for his scrap; he climbs his own watchtower with
 the rocket launcher, or eats a fire pepper and runs them down on foot.
 
-It plays on its own, with no storyline, and it is also the ground on which Act 3 is told (section 13).
+It plays on its own, with no storyline, and it is also the ground on which Act 3 is told (section 14).
 
 ## 2. Why this is not the old town screen
 
@@ -85,11 +85,12 @@ builders can raise the next while he is away: do it, teach it, hand it over.
 
 - Helping always makes it faster. Nothing is hurried with scrap.
 - The ground starts 40 m square and grows a strip at a time as he clears the land beside it. It has no largest size.
-- Five materials: scrap (also the coin), timber, tin, brick, parts, each from a place the land already has.
+- Five materials: scrap (also the coin), tin, brick, parts and timber. The first four come from the land he already
+  drives. Timber is the scarce one, because nothing grows in the Scablands (section 11, the Timber Road).
 - The Workshop's machines work here and do not race the courses: the Longhaul carries the big loads, the flatbed
   collects, the Bully's plough clears ground, the Scarab reaches rough places, the Rattler runs errands.
 
-## 6. Torn down by machine, picked up with one press, levelled up later
+## 6. Machines in the town: the digger, the drill rig, the view from above, one press, levels
 
 Kyle's rulings of 27 November.
 
@@ -101,13 +102,20 @@ Kyle's rulings of 27 November.
   main lanes are 8 m wide, for a digger about 3 m wide. An outline that would shut the machines out turns red and says
   why.
 - **The digger does more than wreck:** the ditch outside the fence, a cellar under the store that raiders cannot
-  reach, a pond.
+  reach, and a pond, which the well then fills.
+- **The well is drilled by hand** (Kyle). He drives the drill rig in along the lanes, sets it over the spot, lowers
+  the auger, feeds it down and listens for the change when it reaches water (`docs/MACHINES.md`: lower, feed, listen).
+  Mr Penny fits the pump afterwards. A lane wide enough for the digger is wide enough for the rig.
+- **Seen from above** (Kyle). One key lifts the camera to look straight down on the whole ground, and the same key
+  brings it back. From above he sees his layout as a plan, marks where the next things will go, and watches where the
+  Rats are coming from. The hammering is still done on the ground.
 - **One press picks it up.** Nothing small needs a crane. He drives the flatbed close to a pile, a wreck or a crate, a
   prompt says what it is, and one press of a key or the joystick button puts it on the bed. Cranes and winches are
   kept for the big lifts.
-- **Levels.** Every building has three: timber, then plated with scrap, then steel or brick. A higher level is
-  sturdier (a level 1 fence falls to one buggy, a level 3 fence takes six). He raises a level by delivering the plates
-  and giving the builders a night. Levels need new drawings, so the town goes to Gratian with level 1 only; the fence
+- **Levels** (Kyle). Every building has three. Level 1 is tin, because tin is everywhere. Level 2 is the same building
+  braced with timber, which is stronger and far scarcer and comes down the Timber Road. Level 3, later still, is steel
+  or brick. A higher level is sturdier (a tin fence falls to one buggy, a timbered fence takes three). He raises a
+  level by delivering the timber and giving the builders a night. Levels need new drawings, so the town goes to Gratian with level 1 only; the fence
   and the tower get their second level first.
 
 ## 7. Hens
@@ -181,7 +189,7 @@ empties in three seconds. A fire pepper makes the third speed last a minute and 
 
 | Piece | What it does |
 | --- | --- |
-| Wooden fence | Slows riders on bikes; a buggy flattens it |
+| Tin fence | Slows riders on bikes; a buggy flattens it, until it is braced with timber |
 | Scrap wall | Stops a buggy; bikes go round |
 | Gate | His to open and shut; shut, it holds like the wall beside it |
 | Watchtower | A friend with a crossbow covers 25 m, or he takes the post himself |
@@ -210,7 +218,30 @@ the lunch tin and rides out (the open land's rescue party is the pattern).
   he spares may become neighbours (peace with Sump).
 - Loot has to fit on the truck, one press each, and the road home is still dangerous.
 
-## 11. A town with a life of its own
+## 11. The Timber Road
+
+Kyle's idea of 27 November. Nothing grows in the Scablands, so timber is fetched from a forest a long way off. The
+forest is a place he visits and cannot yet live in. It is drawn with the trees, grass and wet stone of the Far Side art
+kit (`public/assets/models/wasteland/far-side/far-side.glb`) and has people of its own, the woodcutters of the Sawpit,
+who want food far more than scrap. The Far Side itself (`docs/story/the-far-side.md`: Highwater, the tunnel, the rain)
+stays a separate story for later.
+
+- **The first run is his.** He drives the truck, loaded with eggs, vegetables and pies, and his crew ride escort.
+  Far enough down the road the screen fades out and fades in on the forest, as the helicopter skips its long flights.
+- **Food buys timber, and power food buys more:** a crate of super spinach is worth twice a crate of eggs.
+- **After that, an apprentice can go.** The trip takes two real days and costs more food for the same timber. Going
+  himself is always the better bargain.
+- **No two runs are the same:** a clear road, an ambush, a washed-out bridge, a stranded trader who pays for a tow, a
+  toll. The danger is on the Scablands stretch, going out and coming home.
+- **Nobody asks him to choose.** His crew says what it sees. Many raiders: "That's too many for us. We could turn
+  round while we still have the load." Few: "We've come this far. Let's clear them out and keep going." He answers by
+  what he does with the truck.
+- **He can always fight,** even against too many, and he may win. If he loses, the raiders take part of the load and
+  he limps home. If he turns back, he keeps everything and tries another day.
+- **After a fight he has won,** the crew says: timber first, then see what room is left on the truck for their scrap
+  on the way home.
+
+## 12. A town with a life of its own
 
 What makes it worth a visit on a day with no story and no raid.
 
@@ -224,7 +255,7 @@ What makes it worth a visit on a day with no story and no raid.
 - **A dust storm, now and then,** in play only: hens in, shutters closed, then the lanes dug out with the machines.
 - **A tunnel, one day,** with the boring machine: from his cellar to Tin Town, or out past his own ditch.
 
-## 12. People move in
+## 13. People move in
 
 Each needs a hut and brings a skill.
 
@@ -237,7 +268,7 @@ Each needs a hut and brings a skill.
 | Hetty | Radio Hill | A radio mast: raids called earlier, news from traders |
 | Mr Penny | The Dry Pump | The pump and pipes for his well |
 
-## 13. With the story, and without it
+## 14. With the story, and without it
 
 Everything above plays with no storyline. Act 3 (`docs/story/the-polite-letter.md`) is laid over it and is rewritten
 onto this ground as choices with consequences, in the open land's form.
@@ -254,38 +285,40 @@ onto this ground as choices with consequences, in the open land's form.
 6. **Free Water Day.** A tanker beside her kiosk at Dot's Diner, and water handed out free. After it, a raid on her
    depot is his to choose.
 
-## 14. The first hour
+## 15. The first hour
 
 1. Auntie Solder walks him to the bare patch. He brings the fence panels in on the flatbed, sets them up and hangs the
    gate.
-2. Moss brings two brown hens in a crate. He builds a nest box from four planks, and the first egg is laid before he
+2. Moss brings two brown hens in a crate. He builds a nest box from an old crate, and the first egg is laid before he
    leaves.
 3. At dusk a single Rat on a bike tests the fence. He sprints after the bike and chases it off. This raid cannot be
    lost.
 4. He banks the hearth. The gate board says what will be ready when he is back.
 
-## 15. What exists, and the order of building
+## 16. What exists, and the order of building
 
 Exists: the old town's 53 drawn buildings (both fences, both walls, the watchtower, the chicken run, the goat pen, the
 greenhouse, the well, the water tower, the fairground wheel); the chicken, goat and camp dog models; the excavator, the
-flatbed and the boring machine of `docs/MACHINES.md`; the open land's people with routines, buildings to enter, the
+drill rig, the flatbed and the boring machine of `docs/MACHINES.md`; the Far Side kit's trees, grass and stone; the open land's people with routines, buildings to enter, the
 shoulder rocket launcher, the day that ends at the hearth, the `defend` missions, the rescue party and the Rats.
 
 Each step is playable alone. Claude drives each by hand, Kyle and Gratian try it, and only then the next starts. It can
 go into the real game after step 4.
 
-1. The ground, the fence, the gate and the lanes, with sprinting and the third speed on foot (card HOME-GROUND-1).
+1. The ground, the tin fence, the gate and the lanes, with the view from above, and sprinting and the third speed on
+   foot (card HOME-GROUND-1).
 2. Hens, nest boxes and the real clock, with the board at the gate.
 3. Builders, the first coop and shed, and one-press loading on the flatbed.
 4. The first raids, a tower he can fight from, and the loot left behind.
-5. The garden, the greenhouse and the power foods.
+5. The well he drills, the garden, the greenhouse and the power foods.
 6. The digger: tearing down, the ditch and the cellar.
 7. People moving in, and the order board.
 8. Going raiding.
-9. Levels, a building at a time as each is drawn.
-10. Act 3 on top.
+9. The Timber Road, by hand and then by apprentice.
+10. Levels, a building at a time as each is drawn, now that there is timber.
+11. Act 3 on top.
 
-## 16. Settled with Kyle, 27 November 2026
+## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.
 2. The Rats do not come while the game is off.

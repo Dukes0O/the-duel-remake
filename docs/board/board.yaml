@@ -1205,7 +1205,7 @@ tasks:
     details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
 
   - id: HOME-GROUND-1
-    title: "Home Ground, step 1: the ground, the fence, the gate and the lanes, with sprinting and the third speed on foot"
+    title: "Home Ground, step 1: the ground, the tin fence, the gate and the lanes, the view from above, sprinting and the third speed on foot"
     owner: "claude"
     lane: "SIM"
     size: "M"

@@ -2,10 +2,11 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-Claude's card. Step 1 of `docs/HOME_GROUND.md` (read sections 1, 5, 6 and 14 first): **the ground, the fence, the gate
-and the lanes, with sprinting and the third speed on foot.** Behind a new switch `home-ground` (dev), inside the open
+Claude's card. Step 1 of `docs/HOME_GROUND.md` (read sections 1, 5, 6 and 15 first): **the ground, the tin fence, the
+gate and the lanes, with the view from above, and sprinting and the third speed on foot.** Behind a new switch `home-ground` (dev), inside the open
 Scablands outing (`src/world/open/`), as a new part with its content as data. Nothing of the old town screen is used
-but its drawn fence and gate (`public/assets/models/wasteland/town/safety.glb`).
+but its drawn fence and gate (`public/assets/models/wasteland/town/safety.glb`). Level 1 is tin (Kyle, 27 November):
+use the tin or chain fence, and keep the wooden one for the timbered level of a later step.
 
 What a player can do when this is done:
 
@@ -21,14 +22,17 @@ What a player can do when this is done:
   is read or drawn.
 - On foot: sprint while the key is held, and a third speed that is far too fast and empties in three seconds, then
   refills. Show it as a small bar that is only on screen while it is in use.
+- One key lifts the camera to look straight down on the whole ground, and the same key brings it back. From above he
+  can mark where a piece will go (the outline stays on the ground until he builds or clears it); building is still
+  done on the ground.
 - He names the ground; the name is on a board at its gate.
 
 Not in this card: hens, the real clock, builders, raids, the digger, levels.
 
 **Sound cues:** `home.fence.hammer`, `home.fence.up`, `home.piece.lift`, `home.gate.hang`, `home.place.refused`,
-`foot.sprint`, `foot.burst`, `foot.burst.spent`.
+`foot.sprint`, `foot.burst`, `foot.burst.spent`, `home.view.up`, `home.view.down`.
 
-**Checks:** a suite without graphics (placing, refusing, lifting, the lane rule, solids, save and reload, the older
+**Checks:** a suite without graphics (placing, refusing, lifting, the lane rule, marks made from above, solids, save and reload, the older
 save, the switch off); the rule 23 set; `npm run build`; one browser scenario that fences the ground and hangs the
 gate by real key presses; Claude's drive by hand with pictures; then Kyle's and Gratian's try before step 2 is cut.
 
