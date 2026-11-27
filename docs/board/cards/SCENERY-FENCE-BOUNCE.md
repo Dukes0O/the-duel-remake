@@ -11,3 +11,13 @@ the gate fence with several cars at 20 and 40 mph and measures the step back in 
 `test-arena-shove`; `npm run build`. Home Ground's fences will lean on this rule, so it matters before raids arrive.
 
 ## Claude answers
+
+## Implementation decision (27 November 2026)
+
+The measured extra push is the next tick's overlap after the CPU scenery response clamps its heading to the road.
+Keep the incoming world heading for contact with Scablands sheet walls (up to 24 cm thick, including gate leaves).
+Keep the swept entry face and its existing 4 cm clearance; leave thicker solids, buildings and arena walls unchanged.
+Owned hook: `src/sim-contacts.js::_staticContacts`; regression: `tools/test-scenery-fence-bounce.mjs`.
+Checks: native 20/40 mph rams at both gate-fence faces and both Home Ground panel axes, player and CPU;
+`test-arena-shove`, `test-wasteland-truck-wall`, `test-home-ground`, `test-open-doors`, the four guards, lane tier and build.
+No new event or sound cue. Claude runs browser checks and provides the independent code review.
