@@ -1256,18 +1256,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-T-RADIO
-    title: "Open Scablands: The Voice on Radio Hill comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-RADIO.md"
-
   - id: OPEN-APPRENTICE-RUN-3
     title: "Open Scablands: a gas run keeps its earnings when storage cannot be read (from the review)"
     owner: "codex"

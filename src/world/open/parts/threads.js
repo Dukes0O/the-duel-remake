@@ -25,6 +25,12 @@ import {HAULER_ID, haulerPlaces, haulerStop, haulerMission, haulerReading, haule
 import {haulerTalkScene, haulerGateNews} from '../content/talk-hauler.js';
 import {haulerVisitor} from '../content/stranded-hauler-places.js';
 import {flagStory, FLAG_ID, FLAG_SCENES, FLAG_LATER_PLACES, FLAG_TALK_ROWS, stagedFlag, flagSolids} from '../content/somebody-elses-flag-places.js';
+import radioHillVoice from '../../../story/threads/content/radio-hill-voice.js';
+import {NIGHT_2_SITES} from '../../jobs/night-2-sites.js';
+import {ROAD_REQUEST} from '../encounter-rule.js';
+import {RADIO_ID, POCKET_ID, RADIO_MARK, radioMarked, radioPlace, radioBeat,
+  radioMission, radioDestination, pocketWrecks, radioFuel} from '../content/radio-hill-voice-places.js';
+
 import {MALL_ROAD_TALK} from '../content/talk-threads.js';
 import {campPeople} from '../content/people-sites.js';
 import mallRoadToll from '../../../story/threads/content/mall-road-toll.js';
@@ -32,25 +38,33 @@ import {TOLL_GATE, TOLL_ID, TOLL_SITE, stagedToll, tollPlace, tollTalk, tollOffe
   tollGateStanding, tollGateSolids, tollIgnored, tollPoleUp, atTollPerson,
   tollAfterEnd, tollParkedCars, unusedTollPass, pastTollPole} from '../content/mall-road-toll-places.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway, mallRoadToll], checkThread, 'Open Scablands storylines');
+export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway, mallRoadToll, radioHillVoice], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
 
 function withPlaces(context) {
   const {world, view = {}} = context;
-  return {...context, placeAt: (place, cast) => {
+  const position = id => view.sitePositions?.[id]?.position ?? view.sitePositions?.[id] ?? sitePosition(id, world.open.landSeed);
+  return {...context, contextCall: thread => thread.id === RADIO_ID ? {
+    range: thread.notes.sign.onRoadWithin,
+    anywhere: world.open.found.includes('radio-hill') && ['Friendly', 'Sworn'].includes(world.ledger.words['radio-hill']),
+  } : undefined, placeAt: (place, cast) => {
       const hauler = haulerPlaces(world);
       if (place?.checkpoint?.who === 'traders') return hauler.sign ?? null;
       if (typeof place === 'string' && Object.hasOwn(hauler, place)) return hauler[place];
       const toll = tollPlace(place);
       if (toll) return toll;
-      const point = runawayPlace(place, cast) ?? mallPlace(place) ?? placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
+      const radio = view.checkpointsEnabled && Array.isArray(place) && ['radio-hill', POCKET_ID].includes(place[0])
+        && radioPlace(place, position('radio-hill'), position(POCKET_ID));
+      const point = radio || runawayPlace(place, cast) || mallPlace(place) || placeForThread(place, cast, {...view, landSeed: world.open.landSeed});
       if (!point || !Array.isArray(place)) return point;
       const spot = view.sitePositions?.[place[0]]?.spots?.[place[1]];
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
+    allowsStart: thread => thread.id !== RADIO_ID || view.checkpointsEnabled && view.openRoam && view.partOfDay === 'dark' &&
+      !view.onFoot && view.onRoad && witnessSign({sign: thread.sign, at: position('radio-hill'), call: {range: thread.notes.sign.onRoadWithin}}, view, 0, 0).witnessed,
     signFor: thread => thread === runaway ? RUNAWAY_SIGN : thread.sign,
     allowsCast: (thread, role, id, cast) => thread === marketDay ? allowsMarketCast(role, id, cast, world) :
       role === 'camp' && thread === dryPump ?
@@ -72,6 +86,7 @@ export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
 
 export function openThreadSigns(context) {
   const threads = OPEN_THREADS.filter(thread => (thread !== runaway || context.view?.runawayVisible) &&
+    (thread.id !== RADIO_ID || context.view?.checkpointsEnabled === true) &&
     (thread.id !== HAULER_ID || context.view?.checkpointsEnabled !== false) &&
     (thread.id !== TOLL_ID || context.view?.checkpointsEnabled === true) &&
     (thread !== marketDay ||
@@ -84,10 +99,31 @@ function localCampVisit({world, view, placeAt}) {
     !world.ledger.marks.includes(visitId(id, world.ledger.night)) && distanceBetween(playerPoint(view), placeAt(id, {})) <= 40);
 }
 
+
+function radioTalkLine(row) {
+  return {...row, speaker: ['hetty', 'bern', 'parrot', 'you', 'moss', 'cinder', 'rell', 'auntie-solder'].includes(row.speaker)
+    ? row.speaker : row.as ?? row.speaker};
+}
+
+function radioTalkPoint(beat, {view, placeAt}, {cast}) {
+  if (beat === 'second-voice' || beat === 'ramp' || beat === 'trap') return {speaker: 'hetty'};
+  if (beat === 'pocket')
+    return distanceBetween(playerPoint(view), placeAt([POCKET_ID, 'mouth'], cast)) <= 42 ? {speaker: 'parrot'} : null;
+  if (!['other-voice', 'set-asked', 'on-the-air'].includes(beat) || !view.onFoot) return null;
+  const position = placeAt(['radio-hill', 'hut'], cast);
+  if (distanceBetween(playerPoint(view), position) > 2.5) return null;
+  const speaker = beat === 'set-asked' ? 'bern' : 'hetty';
+  // Use the hut door as the talk anchor even while the sisters follow their routines.
+  return {speaker, position: {...position, y: scablandsSurfaceHeightAt(position.x, position.z)}};
+}
+
+const voiceAtWar = radioHillVoice.beats['pocket-fight'].mission.rule.atWar;
+
 function outputFor(thread, context, record, state, observed, decision, dt) {
   const isRunaway = thread === runaway;
   const {world, view, seconds, previousEvents} = context;
-  const beat = isRunaway ? runawayBeat(record, context) : thread.beats[record.beat];
+  const hill = thread.id === RADIO_ID;
+  const beat = isRunaway ? runawayBeat(record, context) : hill ? radioBeat(record.beat, world) : thread.beats[record.beat];
   const beatId = beat?.id ?? record.beat;
   const hauling = thread.id === HAULER_ID;
   const visit = hauling && haulerMarked(world, 'second-truck') ? '/again' : '';
@@ -104,7 +140,10 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const text = (id, words) => out.requests.push({type: 'say', lineId: `open/${thread.id}/${id}`, text: rule.line(words)});
   const speaker = row => row.as ?? (isRunaway && row.speaker === 'slack' && rule.ask({asked: 'his-name'}) ? 'Nat' :
     nameOf(row.speaker) ?? rule.line(row.speaker));
-  const line = (id, row) => text(id, `${speaker(row)}: ${row.words}`);
+  const line = (id, row) => {
+    text(id, `${speaker(row)}: ${row.words}`);
+    if (hill) cue(id, row.cue);
+  };
   const cue = (id, sound) => { if (sound) out.events.push({type: 'threadCue', id, cue: sound}); };
   const move = (id, row, effects = [], authoredEffects = row.effects) => {
     const cast = row.cast ? {...record.cast, ...row.cast} : undefined;
@@ -124,6 +163,9 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     return out;
   }
   const mission = beat.mission;
+  if (hill && beatId === 'take-set' && previousEvents.some(event => event.type === 'threadMissionAlert' && event.id === mission.id)) {
+    mission.outcomes.seen.lines.forEach((row, index) => line('seen/' + index, row));
+  }
   if (mission && decision.activeMission === mission.id) {
     if (toll && previousEvents.some(event => event.type === 'threadMissionOffer' && event.id === mission.id))
       out.requests.push(tollOffer(mission, beat, rule));
@@ -140,9 +182,10 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     if (finished) {
       out.mission = null;
       out.release = holder;
+      const outcomes = hill ? radioMission(mission, context, record).outcomes : mission.outcomes;
       const sold = toll && finished.outcome === 'sold';
       const outcome = sold ? beat.choices.find(row => row.id === 'drive-through') :
-        Object.hasOwn(mission.outcomes ?? {}, finished.outcome) && mission.outcomes[finished.outcome];
+        Object.hasOwn(outcomes ?? {}, finished.outcome) && outcomes[finished.outcome];
       if (outcome && rule.ask(outcome.when)) {
         (outcome.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`${beatId}/outcome/${index}`, row));
         if (!(toll && beatId === 'break')) cue(beatId, outcome.cue);
@@ -153,7 +196,12 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
               effect.person === (id === 'camp' ? '@camp.people' : id)));
           move(`mission/${beatId}/${finished.outcome}`, outcome, sold ? [remember('chose', 'drive-through')] : [],
             [...written, ...extra]);
-        } else move(`mission/${beatId}/${finished.outcome}`, outcome);
+        } else {
+          const effects = hill && finished.outcome === 'caught' ? [mark(RADIO_MARK.watched),
+            radioHillVoice.beats['wheels-off'].effects.find(row => row.type === 'mark')] : [];
+          const num = hill ? '/' + (state.missionCount ?? 1) : '';
+          move(`mission/${beatId}/${finished.outcome}${num}`, outcome, effects);
+        }
       }
       return out;
     }
@@ -167,7 +215,8 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     }
   }
 
-  const followed = isRunaway ? rule.ask({fact: 'mark', id: 'runaway/found-him'}) :
+  const followed = hill ? ['ramp', 'pocket'].some(id => rule.has('entered', id)) :
+    isRunaway ? rule.ask({fact: 'mark', id: 'runaway/found-him'}) :
     Object.keys(thread.beats).some(id => id !== firstBeat(thread) && rule.has('entered', id));
   const unhelped = hauling && !haulerMarked(world, 'helped') && beatId !== 'between';
   const ignored = toll ? (tollIgnored(world, record) ? thread.ignored : null) :
@@ -183,11 +232,27 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     return out;
   }
 
+  if (hill && (!mission || decision.activeMission !== mission.id)) {
+    const hillFound = world.open.found.includes('radio-hill');
+    const homeFirst = (beatId === 'by-day' || beatId === 'other-voice') && !rule.has('entered', beatId) && !rule.ask({nights: 1});
+    const destination = homeFirst ? ['tin-town', 'hearth'] : ({
+      ramp: ['radio-hill', hillFound ? 'hut' : 'ramp-foot'], 'by-day': 'radio-hill',
+      'other-voice': ['radio-hill', 'hut'], 'take-set': [POCKET_ID, 'park'],
+    })[beatId];
+    const markerKey = [].concat(destination ?? []).join('/');
+    if (state.markerKey !== markerKey && (destination || state.markerKey)) {
+      const at = destination && context.placeAt(destination, record.cast);
+      if (!mission || at) out.requests.push({type: 'marker',
+        place: at ? {...at, y: scablandsSurfaceHeightAt(at.x, at.z), radius: 5} : null});
+      state.markerKey = markerKey;
+    }
+  }
   const ownedHold = context.holds.some(hold => hold.holder === holder);
   if (isRunaway && !view.checkpointsEnabled) return out;
   const entered = rule.has('entered', beatId);
   const staging = thread.id === FLAG_ID && FLAG_SCENES[beatId];
-  const atTalk = !staging || view.onFoot === staging.foot && rule.ask({reach: staging.at, within: staging.within});
+  const atTalk = hill ? radioTalkPoint(beatId, context, record) :
+    !staging || view.onFoot === staging.foot && rule.ask({reach: staging.at, within: staging.within});
   if (thread.id === FLAG_ID && entered && beat.choices?.some(row => row.by === 'go') && !view.onFoot &&
       !rule.ask({reach: thread.sign.at, within: 60})) {
     const option = beat.choices.find(row => row.by === 'go');
@@ -198,19 +263,25 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const exploring = entered && view.onFoot && beat.explore?.length && rule.ask({reach: thread.sign.at, within: 45});
   if (staging && !atTalk && !exploring) return out;
   if (opening && isHeld(context.holds, 'signs') && !ownedHold) return out;
-  const approachedCold = !isRunaway && opening && beat.when === 'sign-seen' && !isFresh(thread, signRecord(thread, record, world), world.ledger.night) &&
+  const approachedCold = !hill && !isRunaway && opening && beat.when === 'sign-seen' && !isFresh(thread, signRecord(thread, record, world), world.ledger.night) &&
     rule.ask({reach: thread.sign.at});
   if (hauling && beatId === 'gate' && !entered &&
       (!haulerAtGate(world) || distanceBetween(playerPoint(view), haulerGate) > 40)) return out;
-  const startingMission = mission && !decision.journey && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
+  const carParked = !hill || beatId !== 'take-set' ||
+    distanceBetween(view.carPosition, context.placeAt([POCKET_ID, 'park'], record.cast)) <= 16;
+  const startingMission = mission && carParked && !decision.journey && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
     (mission.by !== 'car' || !view.onFoot) && (!isRunaway || mission.by !== 'foot' || view.onFoot) &&
     (!view.combatWrecking || (isRunaway && beatId === 'breakout')) && !view.missionLeaving &&
     !(mission.outing && view.outingAvailable === false);
+  const returning = hill && state.returning && ['after-pocket', 'wheels-off', 'talking-over'].includes(beatId);
+  const returningToRadio = hill && beatId === 'second-voice' && !state.beatSeconds['first-call'] && rule.has('entered', 'first-call');
   const tollPayment = toll && beatId === 'paying';
-  if ((!entered || startingMission || tollPayment) && (approachedCold || rule.ask(beat.when))) {
+  const ready = approachedCold || returningToRadio || rule.ask(beat.when);
+  if ((!entered || startingMission || returning || tollPayment) && ready) {
     if (mission) {
       if (!startingMission) return out;
-      const authored = hauling ? haulerMission(mission, world) : {...mission, enemy: resolveRoles(mission.enemy, record.cast)};
+      const authored = hill ? radioMission(mission, context, record) : hauling ? haulerMission(mission, world) :
+        {...mission, enemy: resolveRoles(mission.enemy, record.cast)};
       const route = prepareThreadMission(authored, place => context.placeAt(place, record.cast));
       if (!route) return out;
       decision.activeMission = mission.id;
@@ -219,6 +290,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       if (systems.length) out.hold = {holder, systems};
       out.events.push({type: 'threadMission', id: mission.id, thread: thread.id, beat: beatId, holder, mission: authored, route});
       if (hauling) out.requests.push({type: 'missionLookouts', id: HAULER_ID + '/sign', group: 'road-rats', posts: []});
+      if (hill) state.missionCount = (state.missionCount ?? 0) + 1;
       if (entered) return out;
     }
     state.beatSeconds[beatId] = seconds;
@@ -227,14 +299,20 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       out.requests.push({type: 'missionLookouts', id: HAULER_ID + '/sign', group: 'road-rats',
         posts: (beatId === 'ridge' || haulerIsTrap(world)) ? stop.starts : []});
     }
+    state.returning = false;
     const entry = [remember('entered', beatId), ...rule.effects(beat.effects)];
+    if (hill && mission) (mission.lines ?? []).filter(row => !row.moment && rule.ask(row.when))
+      .forEach((row, i) => line(beatId + '/mission/' + i, row));
+    if (hill && beatId === 'wheels-off' && !view.combatWrecking)
+      out.requests.push({type: ROAD_REQUEST, action: 'mission-loss', id: RADIO_ID});
     (beat.lines ?? []).filter(row => (!isRunaway || !(beat.walked || beat.choices?.some(choice => choice.by !== 'go'))) && rule.ask(row.when) && !(opening && thread.sign.kind === 'smoke' && row.radio)).forEach((row, index) => line(`${beatId}/${index}`, row));
-    if (!approachedCold) cue(beatId, beat.cue ?? (opening ? thread.sign.cue : undefined));
+    if (!approachedCold) cue(beatId, beat.cue ?? (opening && !(hill && !beat.choices?.length) ? thread.sign.cue : undefined));
     if (toll) (beat.cues ?? []).forEach((sound, index) => cue(beatId + '/' + index, sound));
     if (!beat.walked && beat.next && !beat.choices?.length && !beat.mission && !beat.explore?.length && !beat.questions?.length && !beat.mend && !beat.mends?.length)
       entry.push(...rule.move(beat.next));
     const paidCount = tollPayment ? world.ledger.marks.filter(id => id.startsWith(TOLL_ID + '/paid-')).length : 0;
-    choose(`entered/${beatId}${tollPayment ? '/' + paidCount : ''}`, entry);
+    const enteredId = hill ? beatId + '/' + world.open.journal.filter(row => row.type === 'thread' && row.key === RADIO_ID).length : beatId + (tollPayment ? '/' + paidCount : '');
+    choose(`entered/${enteredId}`, entry);
     if (opening && !approachedCold) (beat.thoughts ?? []).forEach((row, index) => {
       const thought = typeof row === 'string' ? {thought: row} : row;
       if (rule.ask(thought.when)) text(`${beatId}/thought/${index}`, thought.thought);
@@ -340,7 +418,8 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     text(`${beatId}/thought/${index}`, thought.thought);
   });
   for (const item of beat.explore ?? []) {
-    if (hauling ? !haulerReading(beat, item, context, state, dt) : !view.onFoot) continue;
+    if (hill ? !view.onFoot || !rule.ask({reach: [POCKET_ID, item.id], within: 4}) :
+      hauling ? !haulerReading(beat, item, context, state, dt) : !view.onFoot) continue;
     if (rule.has('found', item.id) || !rule.ask(item.when) ||
         toll && distanceBetween(playerPoint(view), tollPlace([TOLL_GATE, 'buggy'])) > 3) continue;
     once('found', item.id, rule.effects(item.effects));
@@ -402,6 +481,90 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   }
 
   const completed = (view.jobEvents ?? []).filter(event => event.type === 'talkChoice');
+  if (hill) {
+    if (mission) return out;
+    const moveRadio = option => {
+      if (option.id !== 'read-the-news' || !rule.ask(voiceAtWar)) cue(option.id, option.cue);
+      if (option.thought) text('choice/' + option.id, option.thought);
+      (option.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line('choice/' + option.id + '/' + index, row));
+      const effects = [remember('chose', option.id)];
+      if (option.id === 'threaten') effects.push(mark(RADIO_MARK.watched));
+      const next = {'by-day': 'by-day', 'talk-over-her': 'talking-over'}[option.id];
+      const attempt = world.open.journal.filter(row => row.type === 'thread' && row.key === thread.id).length;
+      move('choice/' + option.id + '/' + attempt, next ? {...option, next} : option, effects);
+    };
+    if (opening) {
+      if (!beat.choices?.length) return out;
+      if (view.onFoot) return out;
+      const elapsed = seconds - state.beatSeconds[beatId];
+      state.stopped = Math.abs(view.carSpeedMph ?? 0) < .5 ? (state.stopped ?? 0) + dt : 0;
+      if (state.stopped + 1e-9 >= beat.notes.choices.stop.stoppedSeconds) moveRadio(beat.choices[0]);
+      else if (elapsed >= 12) moveRadio(beat.choices[1]);
+      return out;
+    }
+    if (beatId === 'take-set') return out;
+    if (beatId === 'second-voice' && !followed && state.callNight !== world.ledger.night && view.partOfDay === 'dark' &&
+        witnessSign({sign: thread.sign, at: context.placeAt(thread.sign.at, record.cast),
+          call: context.contextCall(thread)}, view, 0, dt).witnessed) {
+      state.callNight = world.ledger.night;
+      const began = world.open.journal.findLast(row => row.key === RADIO_ID && row.after?.beat === beatId)?.night;
+      if (world.ledger.night > began) {
+        const first = radioBeat('first-call', world);
+        first.lines.filter(row => rule.ask(row.when)).forEach((row, index) => line('repeat/' + world.ledger.night + '/' + index, row));
+        cue(beatId, first.cue ?? thread.sign.cue);
+      }
+    }
+    const options = (beat.choices ?? []).filter(row => rule.ask(row.when));
+    const chooseByDriving = options.find(row => {
+      const at = radioDestination(beatId, row.id);
+      return at && !view.onFoot && rule.ask({reach: at, within: beatId === 'second-voice' ? 34 : 15}) &&
+        !(row.id === 'to-the-red-lamp' && view.partOfDay !== 'dark' && !world.open.found.includes('radio-hill'));
+    });
+    if (chooseByDriving) { moveRadio(chooseByDriving); return out; }
+    if (beatId === 'pocket') {
+      const waiting = state.waiting;
+      if (waiting !== undefined) {
+        if (!rule.ask({reach: [POCKET_ID, 'mouth'], within: 42}) || Math.abs(view.carSpeedMph ?? 0) >= .5) delete state.waiting;
+        else if (seconds - waiting >= 20) {
+          delete state.waiting;
+          moveRadio(options.find(row => row.id === 'wait-dark'));
+          const sawParrot = beat.thoughts.find(row => row.slot === 'after' && row.when?.chose === 'wait-dark');
+          if (sawParrot) text('pocket/saw-parrot', sawParrot.thought);
+          return out;
+        }
+      }
+    }
+    const spoken = options.filter(row => row.by !== 'go');
+    const id = RADIO_ID + '/' + beatId + '/decision';
+    for (const question of beat.questions ?? []) if (!rule.has('asked', question.id) &&
+      (view.jobEvents ?? []).some(event => event.type === 'openTalkQuestion' && event.scene === id && event.id === question.id)) {
+      const tested = radioHillVoice.beats['second-voice'].questions[0].effects[0];
+      const effects = rule.effects(question.effects).map(effect => effect.id === tested.id ? tested : effect);
+      once('asked', question.id, effects);
+      cue(question.id, question.cue);
+    }
+    const picked = completed.find(event => event.scene === id);
+    const selected = spoken.find(row => picked?.id === row.id);
+    if (selected && atTalk) {
+      if (selected.id === 'wait-dark') state.waiting = seconds;
+      else moveRadio(selected);
+      return out;
+    }
+    if (atTalk && view.openRoam && decision.interact) {
+      const questions = (beat.questions ?? []).filter(row => !rule.has('asked', row.id) && rule.ask(row.when)).map(row => ({
+        id: row.id, words: row.words, lines: row.lines.filter(line => rule.ask(line.when)).map(radioTalkLine),
+      }));
+      const choices = spoken.map(row => ({id: row.id, words: row.words, detail: row.plain, thought: row.thought}));
+      if (questions.length) choices.push({id: 'leave', words: 'End the conversation.'});
+      if (choices.length) {
+        decision.interact = false;
+        out.requests.push({type: 'talk', threadPriority: true, id, speaker: atTalk.speaker, position: atTalk.position,
+          anchorPosition: !!atTalk.position,
+          radio: !atTalk.position, scene: {id, questions, choices}});
+      }
+    }
+    return out;
+  }
   const radio = isRunaway ? null : radioScene(thread, beat, rule);
   const asked = new Set([
     ...(completed.find(event => event.id === `${thread.id}/radio-done`)?.asked ?? []),
@@ -507,7 +670,7 @@ export function createThreadsPart(threads) {
           sitePositions: view.sitePositions, checkpointsEnabled: view.checkpointsEnabled === true}};
       const enabled = view.checkpointsEnabled === true;
       const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID &&
-        thread.id !== HAULER_ID && thread.id !== TOLL_ID && thread !== marketDay && thread !== runaway);
+        thread.id !== HAULER_ID && thread.id !== RADIO_ID && thread.id !== TOLL_ID && thread !== marketDay && thread !== runaway);
       if (enabled) state.places.dryPumpEnabled = true;
       const canStartRunaway = runawayCanStart(context);
       const region = canStartRunaway ? 'runaway-tin-town' : regionId(view);
@@ -517,7 +680,20 @@ export function createThreadsPart(threads) {
         choices.push(...directThreads(availableThreads.filter(thread => thread !== runaway || canStartRunaway), context, `region-${region}`));
         state.regions.push(region);
       }
+      // The radio has its own opportunity when dusk gives way to darkness, even in
+      // a region already visited by day. Recheck on a road until the nightly draw runs.
+      const radioReady = availableThreads.includes(radioHillVoice) && context.allowsStart(radioHillVoice) &&
+        !world.open.threads[RADIO_ID] && !isHeld(holds, 'signs') && previous.radioNight !== night;
+      if (radioReady && !choices.some(choice => choice.effects.some(effect => effect.type === 'thread')))
+        choices.push(...directThreads(availableThreads, context, 'radio-dark'));
+      if (enabled) state.radioNight = radioReady ? night : previous.radioNight;
+      const pocket = enabled && availableThreads.includes(radioHillVoice) &&
+        (world.open.threads[RADIO_ID] || world.open.found.includes(POCKET_ID))
+        ? sitePosition(POCKET_ID, world.open.landSeed) : null;
       const events = [], requests = [];
+      if (pocket) state.pocketSeed = world.open.landSeed;
+      if (state.pocketSeed !== previous.pocketSeed)
+        requests.push({type: 'solids', id: POCKET_ID, solids: pocket ? pocketWrecks(pocket) : []});
       if (view.checkpointsEnabled && view.onFoot && world.ledger.marks.includes('rumour/grey-camp') &&
           !isFound(world, 'grey-camp') && distance(playerPoint(view), sitePosition('grey-camp', world.open.landSeed)) <= 30) {
         choices.push({id: 'runaway/discovered-grey-camp', effects: [{type: 'find', site: 'grey-camp'}]});
@@ -608,6 +784,20 @@ export function createThreadsPart(threads) {
         // A choice on the first tick of the new morning must already see the new price.
         const threadContext = waterStruck ? {...context, world: {...world, ledger: {...world.ledger,
           marks: [...world.ledger.marks, ...struck.effects.filter(row => row.type === 'mark').map(row => row.id)]}}} : context;
+        if (thread.id === RADIO_ID) {
+          const fuel = radioFuel(world, view, at => context.placeAt(at, record.cast));
+          if (fuel?.choice) choices.push(fuel.choice);
+          if (fuel?.id) {
+            const used = view.jobEvents?.some(event => event.type === 'talkChoice' && event.scene === fuel.id && event.id === fuel.id);
+            if (used) choices.push({id: fuel.id, effects: fuel.effects});
+            else if (view.openRoam && decision.interact) {
+              decision.interact = false;
+              requests.push({type: 'talk', threadPriority: true, id: fuel.id, speaker: fuel.speaker, anchorPosition: true,
+                position: {...fuel.point, y: fuel.point.y ?? scablandsSurfaceHeightAt(fuel.point.x, fuel.point.z)},
+                scene: {id: fuel.id, choices: [{id: fuel.id, words: fuel.words}]}});
+            }
+          }
+        }
         const laterRule = threadRule(thread, threadContext, record);
         const laterRows = thread === runaway ? [] : thread.id === FLAG_ID ? FLAG_TALK_ROWS : thread.id === TOLL_ID ? MALL_ROAD_TALK : thread.later ?? [];
         const later = laterRows.find(row => {
@@ -615,9 +805,16 @@ export function createThreadsPart(threads) {
           if (!view.onFoot || !laterRule.ask(row.when) || laterRule.has('later', row.id)) return false;
           if (thread.id === FLAG_ID && (!record.end || night - (world.open.journal.findLast(change =>
             change.type === 'thread' && change.key === thread.id && change.after.end)?.night ?? night) < row.afterNights)) return false;
+          if (thread.id === RADIO_ID && row.by === 'road-rats') return false;
+          if (thread.id === RADIO_ID && row.by === 'dot') {
+            const aged = world.open.journal.findLast(change => change.type === 'thread' && change.key === RADIO_ID && change.after.end);
+            if (!aged || night - aged.night < 2) return false;
+            const dot = view.people?.find(person => person.id === 'dot')?.position;
+            return distanceBetween(playerPoint(view), dot) <= 2.5 || distanceBetween(playerPoint(view), NIGHT_2_SITES.gate) <= 3;
+          }
           if (thread.id === TOLL_ID) return atTollPerson(threadContext, record, row.by, 2.5);
           const at = row.at ?? (thread.id === FLAG_ID && FLAG_LATER_PLACES[row.by]);
-          if (at) return laterRule.ask({reach: at, within: 3});
+          if (at) return laterRule.ask({reach: thread.id === RADIO_ID ? ['radio-hill', 'hut'] : at, within: 3});
           const speaker = laterRule.line(row.by);
           const person = view.people?.find(person => person.id === row.by || nameOf(person.id) === speaker);
           const resident = record.cast.camp && campPeople(record.cast.camp).find(person => person.id === row.by || nameOf(person.id) === speaker);
@@ -628,7 +825,9 @@ export function createThreadsPart(threads) {
         if (later && decision.interact) {
           decision.interact = false;
           const id = `${thread.id}/later/${later.id}`;
-          requests.push({type: 'talk', id, speaker: later.by, threadPriority: thread.id === TOLL_ID, scene: {id,
+          requests.push({type: 'talk', id, speaker: later.by, threadPriority: thread.id === RADIO_ID || thread.id === TOLL_ID,
+            ...(thread.id === RADIO_ID ? {position: playerPoint(view), anchorPosition: true} : {}),
+            scene: {id,
             lines: later.lines.filter(row => laterRule.ask(row.when)).map(row => ({...row, speaker: laterRule.line(row.speaker), words: laterRule.line(row.words)})),
             choices: [{id, words: later.words ?? 'I hear you.'}]}});
         }
@@ -658,10 +857,21 @@ export function createThreadsPart(threads) {
         const details = {...previous.progress?.[thread.id], beatSeconds: {...state.beatSeconds[thread.id]},
           reading: {...previous.progress?.[thread.id]?.reading},
           ...(thread === runaway ? {mendingSince: previous.mendingSince} : {})};
+        if (thread.id === RADIO_ID && details.lastBeat !== record.beat) {
+          details.lastBeat = record.beat;
+          details.returning = true;
+          details.stopped = 0;
+          details.beatSeconds[record.beat] = context.seconds;
+        }
         details.beatSeconds[record.beat] ??= context.seconds;
         const out = outputFor(thread, threadContext, record, details, sight?.witnessed ?? false, decision, dt);
         if (details.mendingSince !== undefined) state.mendingSince = details.mendingSince;
         (state.progress ??= {})[thread.id] = details;
+        if (thread.id === RADIO_ID) {
+          state.radioDark = view.partOfDay === 'dark' || view.partOfDay === 'dusk';
+          if (events.some(event => event.cue === 'open.lamp.blink') || out.events.some(event => event.cue === 'open.lamp.blink'))
+            details.blinkedAt = context.seconds;
+        }
         if (Object.keys(details.beatSeconds).length) state.beatSeconds[thread.id] = details.beatSeconds;
         choices.push(...out.choices);
         events.push(...out.events);

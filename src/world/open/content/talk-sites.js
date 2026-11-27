@@ -1,3 +1,4 @@
+import voice from '../../../story/threads/content/radio-hill-voice.js';
 import {validateTalkScene} from '../../../story/talk.js';
 import {checkSentence, checkTalkRow, requireSound} from '../check-tables.js';
 import {isTrue} from '../facts.js';
@@ -78,6 +79,7 @@ const scenes = requireSound([
     speech(need.id + '/done', need.thanksBy ?? need.by, need.done),
     ...(need.kind === 'supply' ? [speech(need.id + '/broken', need.by, need.broken)] : []),
   ]),
+  scene('radio-hill-voice/fuel-news', voice.beats['talking-over'].lines),
 ], row => {
   validateTalkScene(row);
   return [
