@@ -1242,12 +1242,10 @@ tasks:
   # Claude's drive of the merged batch, 27 November 2026 (docs/board/looks/drive-2026-11-27.md).
   - id: OPEN-PEN-DRAIN-BANK
     title: "Rats' Nest: a 9 m bank of earth fills the drain, so the way in on foot cannot be walked"
-    owner: "codex"
-    model: "sol"
+    owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "building"
-    claimed_by: "Codex laptop lane, 27 November 2026"
+    status: "ready"
     needs: []
     locks: []
     flag: "story-choices"
