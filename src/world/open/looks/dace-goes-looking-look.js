@@ -1,78 +1,51 @@
+// Dace Goes Looking, as it is drawn in the open land (OPEN-LOOK-DACE, round 1). The rules say where each thing stands and when
+// it shows; this file only draws. Moss's pickup and its key are in dace-pickup-look.js; the Walker stones, the tracks, the Deep
+// Sign, the Hangar and the Crow's Step are in dace-sites-look.js; the kit they share is dace-look-kit.js.
+//
+// `createDaceLook(group, positionAt)` is what the open land's sign view calls. `buildDaceStand(name, options)` stands one of the
+// things for the QA page's look stand (tools/open-look-stand.js), where no storyline is running.
 import * as THREE from 'three';
-import {createVehicle} from '../../../vehicles.js';
+import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {distance, sitePosition} from '../site-rule.js';
-import {stripOfSheet} from '../../tin-town-shacks.js';
 import {DACE_ID, DACE_PLACES as places, daceMarked} from '../content/dace-goes-looking-places.js';
+import {KEY_HEIGHT, buildMossPickup, buildPickupKey} from './dace-pickup-look.js';
+import {buildCrowsStep, buildDeepSign, buildHangar, buildPickupTracks, buildWalkerStones} from './dace-sites-look.js';
+
+// What each thing may cost in the picture: its draws and its triangles.
+export const DACE_LOOK_BUDGET = Object.freeze({
+  pickup: Object.freeze({draws: 14, triangles: 16000}), key: Object.freeze({draws: 3, triangles: 300}),
+  stones: Object.freeze({draws: 2, triangles: 2500}), tracks: Object.freeze({draws: 1, triangles: 8000}),
+  'deep-sign': Object.freeze({draws: 8, triangles: 12000}), hangar: Object.freeze({draws: 5, triangles: 40000}),
+  'crows-step': Object.freeze({draws: 6, triangles: 9000}),
+});
+export const DACE_SITES = Object.freeze({'deep-sign': buildDeepSign, hangar: buildHangar, 'crows-step': buildCrowsStep});
+const SITE_NAMES = Object.freeze({'deep-sign': 'The Deep Sign', hangar: 'The Hangar', 'crows-step': "The Crow's Step"});
+
+// How far the ground at a point near `at` stands above the ground at `at`. `turn` is the heading of the thing's own z.
+function groundRound(at, turn = 0) {
+  const cos = Math.cos(turn), sin = Math.sin(turn), base = scablandsSurfaceHeightAt(at.x, at.z);
+  return (x, z) => scablandsSurfaceHeightAt(at.x + x * cos + z * sin, at.z - x * sin + z * cos) - base;
+}
+// The way he drove from where his tracks are found: on towards the hill.
+const TRACKS_HEADING = Math.atan2(places.hill.x - places['his-tracks'].x, places.hill.z - places['his-tracks'].z);
 
 export function createDaceLook(group, positionAt) {
   const root = new THREE.Group();
   root.name = 'Dace goes looking';
   group.add(root);
 
-  const truck = createVehicle({color: 0x7e5d3f, accent: 0x554b3a});
-  truck.name = "Moss's old pickup";
-  root.add(truck);
-  function box(parent, name, color, size, at) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), new THREE.MeshStandardMaterial({color, roughness: .91}));
-    mesh.name = name;
-    mesh.position.set(...at);
-    parent.add(mesh);
-    return mesh;
-  }
-  const cover = box(truck, 'Grey pickup cover', 0x787975, [2.16, 1.25, 4.55], [0, .92, 0]);
-  const folded = box(truck, 'Cover dropped on the ground', 0x787975, [.95, .10, 1.2], [1.65, .06, -1.38]);
-  const bonnet = box(truck, 'Open bonnet', 0x836344, [1.77, .07, 1.45], [0, 1.22, 1.58]);
-  bonnet.rotation.x = -.57;
-  const aerial = box(truck, 'Pickup aerial', 0x39332b, [.03, 1.08, .03], [.84, 1.4, .8]);
-  const blanket = box(truck, "Rell's red blanket", 0x942e25, [.42, .59, .05], [1.03, 1.65, .82]);
-  const key = box(root, 'Pickup key on its nail', 0x86734d, [.055, .18, .02], [0, 0, 0]);
-  const stones = new THREE.Group();
-  stones.name = 'Three Walker stones';
-  [.35, .26, .16].forEach((size, index) => {
-    const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(size, 0),
-      new THREE.MeshStandardMaterial({color: 0x8f7861, roughness: 1}));
-    stone.position.set(-index * .66, size * .48, index * .13);
-    stones.add(stone);
-  });
-  const tracks = new THREE.Group();
-  tracks.name = "The old pickup's tracks";
-  for (const x of [-.86, .86]) box(tracks, 'Tyre rut', 0x77624a, [.18, .018, 5], [x, .021, 0]);
-  root.add(stones, tracks);
-
-  // Tin Town's corrugated sheets mark the three unplaced destinations until their site art is ready.
-  const iron = new THREE.MeshStandardMaterial({color: 0x706052, roughness: .96, side: THREE.DoubleSide});
-  const sheet = (parent, width, height, x, z, angle = 0) => {
-    const mesh = new THREE.Mesh(stripOfSheet(width, height), iron);
-    mesh.position.set(x, 0, z);
-    mesh.rotation.y = angle;
-    parent.add(mesh);
-    return mesh;
-  };
-  const sites = [
-    {id: 'deep-sign', name: 'The Deep Sign', build(site) {
-      box(site, 'Well casing', 0x454646, [.48, .62, .48], [-2, .31, 0]);
-      sheet(site, 1.5, .45, -1.5, -1.5);
-      sheet(site, 1.4, .48, -2.3, -.75, Math.PI / 2);
-    }},
-    {id: 'hangar', name: 'The Hangar', build(site) {
-      sheet(site, 8, 3.3, 0, -3.8);
-      sheet(site, 7, 2.8, -3.9, -.3, Math.PI / 2);
-      sheet(site, 4, 2.4, 3.9, -1.8, Math.PI / 2);
-      const roof = sheet(site, 8, 3.9, 0, -3.8);
-      roof.rotation.x = Math.PI / 2;
-      roof.position.y = 3.15;
-    }},
-    {id: 'crows-step', name: "The Crow's Step", build(site) {
-      sheet(site, 4.8, .9, 0, -2.4);
-      for (const x of [-2.1, 2.1]) box(site, 'Lookout rail post', 0x554739, [.16, 1.25, .16], [x, .625, -2.45]);
-      box(site, 'Lookout bench', 0x635643, [1.9, .12, .42], [-.9, .48, -1.8]);
-    }},
-  ].map(({id, name, build}) => {
+  const truck = buildMossPickup();
+  const {cover, folded, blanket} = truck.userData;
+  const key = buildPickupKey();
+  root.add(truck, key);
+  // The stones and the tracks lie on ground that is known only when they are first shown, so they are drawn then.
+  let stones = null, tracks = null;
+  const sites = Object.keys(DACE_SITES).map(id => {
     const mesh = new THREE.Group();
-    mesh.name = name;
-    build(mesh);
+    mesh.name = SITE_NAMES[id];
+    mesh.visible = false;
     root.add(mesh);
-    return {id, mesh};
+    return {id, mesh, built: null};
   });
   let departureAt = null;
 
@@ -82,15 +55,26 @@ export function createDaceLook(group, positionAt) {
       const world = open?.world, record = enabled && world.open.threads[DACE_ID];
       root.visible = !!enabled;
       if (!enabled) return;
-      for (const {id, mesh} of sites) {
-        const at = sitePosition(id, world.open.landSeed);
+      const seconds = open.seconds ?? 0;
+      for (const site of sites) {
+        const {id, mesh} = site, at = sitePosition(id, world.open.landSeed);
         mesh.visible = (record?.cast.site === id && !['sign', 'asking'].includes(record.beat) || world.open.found.includes(id)) &&
           distance(here, at) < 350;
-        if (mesh.visible) positionAt(mesh, at, drawnShift);
+        if (!mesh.visible) continue;
+        if (!site.built || site.built.userData.at !== at.x + ':' + at.z) {
+          site.built?.userData.dispose();
+          site.built?.removeFromParent();
+          site.built = DACE_SITES[id]({heightAt: groundRound(at)});
+          site.built.name = SITE_NAMES[id] + ', drawn';
+          site.built.userData.at = at.x + ':' + at.z;
+          mesh.add(site.built);
+        }
+        positionAt(mesh, at, drawnShift);
+        site.built.userData.update(seconds);
       }
       if (!record) {
         departureAt = null;
-        for (const item of [truck, key, stones, tracks]) item.visible = false;
+        for (const item of [truck, key, stones, tracks]) if (item) item.visible = false;
         return;
       }
       const {beat, end} = record;
@@ -111,38 +95,84 @@ export function createDaceLook(group, positionAt) {
       const at = taken ? places.den : roadside || (leaving ? places.start : yard ? places.pickup : null);
       truck.visible = distance(here, at) <= 500;
       if (truck.visible) {
-        positionAt(truck, at, drawnShift);
-        if (leaving) truck.position.z += age * 8;
+        // As it leaves it keeps to the ground it drives over, and its lamps' light lies on the road ahead of it.
+        positionAt(truck, leaving ? {x: at.x, z: at.z + age * 8} : at, drawnShift);
+        const {x, y, z} = truck.position;
+        truck.userData.groundAt = leaving ? (dx, dz) => scablandsSurfaceHeightAt(x + dx, z + dz) + (drawnShift?.(x + dx, z + dz) ?? 0) - y : null;
         const uncovered = !!sign || !end && ['asking', 'ready', 'radio-check', 'telling', 'leaving', 'together'].includes(beat);
         cover.visible = yard && !uncovered && (!end || end === 'never-asked' || end === 'stayed');
         folded.visible = yard && uncovered;
-        bonnet.visible = !!roadside || beat === 'ready';
-        const flat = !daceMarked(world, 'spare-mended') && (yard || staged?.rescue?.reason === 'stones');
-        truck.userData.wheelPivots[0].scale.y = flat ? .64 : 1;
-        aerial.visible = !cover.visible;
+        truck.userData.setBonnet(!!roadside || beat === 'ready');
+        truck.userData.setFlat(!daceMarked(world, 'spare-mended') && (yard || staged?.rescue?.reason === 'stones'));
+        truck.userData.setLamps(!!leaving);
         blanket.visible = !!roadside && (!fetch?.walking || daceMarked(world, 'told-stay'));
+        truck.userData.update(seconds);
       }
       key.visible = ['asking', 'key', 'night-after'].includes(beat) && !daceMarked(world, 'key-taken') &&
         !daceMarked(world, 'took-it-in-the-night') && distance(here, places.key) < 24;
       if (key.visible) {
         positionAt(key, places.key, drawnShift);
-        key.position.y += 1.45;
+        key.position.y += KEY_HEIGHT;
+        key.userData.update(seconds);
       }
-      stones.visible = !!fetch && (fetch.reason === 'rocks' || fetch.walking) && distance(here, places.walking) < 85;
-      tracks.visible = !!fetch && distance(here, places['his-tracks']) < 85;
-      if (stones.visible) positionAt(stones, places.walking, drawnShift);
-      if (tracks.visible) positionAt(tracks, places['his-tracks'], drawnShift);
+      const stonesShown = !!fetch && (fetch.reason === 'rocks' || fetch.walking) && distance(here, places.walking) < 85;
+      const tracksShown = !!fetch && distance(here, places['his-tracks']) < 85;
+      if (stonesShown && !stones) root.add(stones = buildWalkerStones({heightAt: groundRound(places.walking)}));
+      if (tracksShown && !tracks) {
+        root.add(tracks = buildPickupTracks({heightAt: groundRound(places['his-tracks'], TRACKS_HEADING)}));
+        tracks.rotation.y = TRACKS_HEADING;
+      }
+      if (stones) stones.visible = stonesShown;
+      if (tracks) tracks.visible = tracksShown;
+      if (stonesShown) { positionAt(stones, places.walking, drawnShift); stones.userData.update(seconds); }
+      if (tracksShown) { positionAt(tracks, places['his-tracks'], drawnShift); tracks.userData.update(seconds); }
     },
     dispose() {
-      const resources = new Set();
-      root.traverse(node => {
-        if (!node.isMesh) return;
-        for (const resource of [node.geometry, node.material]) {
-          if (!resource.userData.sharedAsset) resources.add(resource);
-        }
-      });
-      for (const resource of resources) resource.dispose();
+      for (const thing of [truck, key, stones, tracks, ...sites.map(site => site.built)]) thing?.userData.dispose();
       root.removeFromParent();
     },
   };
+}
+
+// ---- For the look stand ---------------------------------------------------------------------------------------------------
+// Where each stood thing is, in the land's own metres, and how wide a piece of land it takes. `at(landSeed)`.
+export const DACE_STAND = Object.freeze({
+  'dace-forge': {at: () => places.pickup, radius: 12, stages: ['ready', 'covered', 'mended']},
+  'dace-gate': {at: () => places['gate-at-dusk'], radius: 12, stages: ['leaving']},
+  'dace-roadside': {at: () => places.hill, radius: 12, stages: ['stopped']},
+  'dace-stones': {at: () => places.walking, radius: 12, stages: ['left']},
+  'dace-tracks': {at: () => places['his-tracks'], radius: 30, stages: ['left']},
+  'deep-sign': {at: seed => sitePosition('deep-sign', seed), radius: 12, stages: ['found']},
+  hangar: {at: seed => sitePosition('hangar', seed), radius: 34, stages: ['found']},
+  'crows-step': {at: seed => sitePosition('crows-step', seed), radius: 14, stages: ['found']},
+});
+
+// One thing stood for a picture. `heightAt(x, z)` is the ground's own height at a point measured from the thing's spot.
+export function buildDaceStand(name, {stage, heightAt = () => 0} = {}) {
+  const row = DACE_STAND[name];
+  if (!row) throw new RangeError(`Dace Goes Looking has nothing called ${JSON.stringify(name)} to stand.`);
+  stage = row.stages.includes(stage) ? stage : row.stages[0];
+  const base = heightAt(0, 0), round = (x, z) => heightAt(x, z) - base, group = new THREE.Group(), things = [];
+  group.name = 'Dace look stand: ' + name;
+  const add = (thing, x = 0, z = 0, lift = 0) => { thing.position.set(x, heightAt(x, z) + lift, z); group.add(thing); things.push(thing); return thing; };
+  if (name === 'dace-forge' || name === 'dace-gate' || name === 'dace-roadside') {
+    const truck = add(buildMossPickup()), {cover, folded, blanket} = truck.userData;
+    cover.visible = stage === 'covered';
+    folded.visible = stage === 'ready' || stage === 'mended';
+    blanket.visible = stage === 'stopped';
+    truck.userData.setBonnet(stage === 'ready' || stage === 'stopped');
+    truck.userData.setFlat(stage === 'ready' || stage === 'covered');
+    truck.userData.setLamps(stage === 'leaving');
+    truck.userData.groundAt = round;
+    if (name === 'dace-forge') add(buildPickupKey(), places.key.x - places.pickup.x, places.key.z - places.pickup.z, KEY_HEIGHT);
+  } else if (name === 'dace-stones') add(buildWalkerStones({heightAt: round}));
+  else if (name === 'dace-tracks') {
+    const cos = Math.cos(TRACKS_HEADING), sin = Math.sin(TRACKS_HEADING);
+    add(buildPickupTracks({heightAt: (x, z) => round(x * cos + z * sin, -x * sin + z * cos)})).rotation.y = TRACKS_HEADING;
+  } else add(DACE_SITES[name]({heightAt: round}));
+  const draws = things.flatMap(thing => thing.userData.draws), triangles = things.reduce((sum, thing) => sum + thing.userData.triangles, 0);
+  group.userData = {stage, draws, triangles, lights: [], things,
+    update(seconds) { for (const thing of things) thing.userData.update(seconds); },
+    dispose() { for (const thing of things) thing.userData.dispose(); }};
+  return group;
 }
