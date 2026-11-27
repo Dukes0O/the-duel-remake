@@ -25,3 +25,8 @@ Checks: `test-home-ground` and `test-home-hens` gain one assertion each for item
 exact numbers); the rule 23 set; `npm run build`. Claude drives it by hand after the merge, with the hen art round 5.
 
 ## Claude answers
+
+**Item 7, 27 November 2026 (HOME-HEN-BODY merged):** the hen is now a laying hen's own model
+(`public/assets/models/wasteland/home-ground/laying-hen.glb`, loaded by `HOME_HEN_MODEL` as before). She is drawn at a real
+laying hen's size, 0.40 m to the comb standing and 0.31 m sitting, so leave her scale at 1. If she is still hard to find from
+the gate, the fix is where she stands or how she shows, not her size.

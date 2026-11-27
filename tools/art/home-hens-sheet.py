@@ -85,6 +85,13 @@ def sheet(round_number, pictures):
                 return image.resize(CELL, Image.NEAREST), 'Game: ' + label
         return cover(image), 'Game: ' + label
 
+    def earlier(round_before, label):
+        # The same view from an earlier round's sheet, so that each round is judged against the last.
+        path = ROOT / 'docs/board/looks/home-ground' / f'hens-round-{round_before}.jpg'
+        if not path.exists():
+            return Image.new('RGB', CELL, (48, 44, 40)), f'No round {round_before} sheet'
+        return Image.open(path).convert('RGB').crop((2 * CELL[0], 56, 3 * CELL[0], 56 + CELL[1])), f'Round {round_before}: {label}'
+
     rows = [
         ('The hens: two Tin Town Brown hens from the wildlife chicken', [
             photo('lohmann-brown-side.jpg'), photo('lohmann-brown-peck.jpg'),
@@ -101,12 +108,31 @@ def sheet(round_number, pictures):
             game('coop-day', 'from the lane by day'), game('coop-dusk', 'from the lane at dusk'),
             game('coop-door', 'pop door, ramp, set-down egg'), game('coop-back', 'far corner and his door')]),
     ]
+    heading = f'HOME-GROUND-LOOK-1, round {round_number}'
+    if round_number >= 5:
+        # HOME-HEN-BODY: from round 5 the coop, nest box and egg have passed, and the sheet is the hen's alone.
+        heading = f"HOME-HEN-BODY, round {round_number}, a laying hen's own body"
+        rows = [
+            ('The hen standing, beside photographed Lohmann Browns, and the last round', [
+                photo('lohmann-brown-side.jpg'), photo('lohmann-brown-peck.jpg'),
+                earlier(round_number - 1, 'hen A from 1.2 m'),
+                game('hen-side', 'hen A from 1.2 m, crouched', (640, 360, 640)),
+                game('hen-near', 'hen A from 2 m, standing', (640, 360, 640)),
+                game('hen-far', 'hen A from 10 m, 1:1 doubled', (640, 360, 180), actual=True)]),
+            ('The hen sitting in the nest box, and hens from farther off', [
+                photo('hen-on-nest.jpg'),
+                game('nest-sit', 'hen B sitting in the box', (640, 390, 520)),
+                game('nest-sit', 'hen B in the box, 1:1 doubled', (640, 395, 300), actual=True),
+                photo('brown-hens-tin.jpg'),
+                game('coop-day', 'both hens from the lane, 9 m'),
+                game('coop-day', 'from the lane, 1:1 doubled', (730, 420, 240), actual=True)]),
+        ]
     title = 34
     width = CELL[0] * 6
     height = title + len(rows) * (22 + CELL[1] + CAPTION) + 40
     out = Image.new('RGB', (width, height), (26, 24, 22))
     draw = ImageDraw.Draw(out)
-    draw.text((10, 9), f'HOME-GROUND-LOOK-1, round {round_number}: the game (Performance, 1280 x 720) beside real photographs',
+    draw.text((10, 9), f'{heading}: the game (Performance, 1280 x 720) beside real photographs',
               fill=(236, 228, 210), font=ImageFont.load_default(size=16))
     y = title
     for heading, cells in rows:
@@ -119,7 +145,9 @@ def sheet(round_number, pictures):
             draw.text((x + 6, y + CELL[1] + 9), caption, fill=(230, 224, 212) if caption.startswith('Game') else (180, 200, 214), font=font)
             draw.line((x, y, x, y + CELL[1] + CAPTION), fill=(26, 24, 22), width=2)
         y += CELL[1] + CAPTION
-    credits = 'Photographs, Wikimedia Commons: ' + '; '.join(f"{p['author']} ({p['licence']})" for p in PLAN['photos'])
+    shown = PLAN['photos'] if round_number < 5 else [p for p in PLAN['photos'] if p['file'] in
+                                                     ('lohmann-brown-side.jpg', 'lohmann-brown-peck.jpg', 'hen-on-nest.jpg', 'brown-hens-tin.jpg')]
+    credits = 'Photographs, Wikimedia Commons: ' + '; '.join(f"{p['author']} ({p['licence']})" for p in shown)
     draw.text((10, y + 6), credits[:250], fill=(170, 164, 152), font=small)
     if len(credits) > 250:
         draw.text((10, y + 21), credits[250:], fill=(170, 164, 152), font=small)

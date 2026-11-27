@@ -6,16 +6,16 @@ import {readFile, readdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {HOME_COOP_SIZE, HOME_EGG_SIZE, HOME_HEN_HEIGHT, HOME_HEN_POSES, HOME_HENS_BUDGET, HOME_HENS_LAYOUT, HOME_HENS_PARTS,
+import {HOME_COOP_SIZE, HOME_EGG_SIZE, HOME_HEN_HEIGHT, HOME_HEN_MODEL, HOME_HEN_POSES, HOME_HENS_BUDGET, HOME_HENS_LAYOUT, HOME_HENS_PARTS,
   HOME_HENS_STAGES, HOME_NEST_SIZE, buildHomeHens, createEgg, createHen, createNestBox, createTinCoop, partCost}
   from '../src/world/open/looks/home-hens-look.js';
 import {PICTURES, pageSources, views} from './scenarios/look-home-hens.mjs';
 
 const root = new URL('../', import.meta.url);
 
-// The wildlife line's chicken, read with its pictures left out (Node has no image decoder).
-async function chicken() {
-  const bytes = await readFile(new URL('public/assets/wildlife/chicken.glb', root));
+// The laying hen's model (HOME-HEN-BODY), read with its pictures left out (Node has no image decoder).
+async function henModel() {
+  const bytes = await readFile(new URL('public' + HOME_HEN_MODEL, root));
   const length = bytes.readUInt32LE(12), json = JSON.parse(bytes.toString('utf8', 20, 20 + length));
   const strip = value => { if (!value || typeof value !== 'object') return; for (const key of Object.keys(value)) if (/Texture$/.test(key)) delete value[key]; else strip(value[key]); };
   strip(json.materials); delete json.images; delete json.textures; delete json.samplers;
@@ -26,7 +26,7 @@ async function chicken() {
   encoded.copy(result, 20); binary.copy(result, 20 + padded);
   return new GLTFLoader().parseAsync(result.buffer.slice(result.byteOffset, result.byteOffset + result.byteLength), '');
 }
-const model = await chicken();
+const model = await henModel();
 const within = (cost, budget, what) => {
   assert.ok(cost.draws <= budget.draws, `${what}: ${cost.draws} draws is over ${budget.draws}`);
   assert.ok(cost.triangles <= budget.triangles, `${what}: ${cost.triangles} triangles is over ${budget.triangles}`);

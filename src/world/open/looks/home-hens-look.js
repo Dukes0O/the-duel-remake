@@ -4,10 +4,11 @@
 // save, and no game file imports it yet: step 2 places these parts and gives the hens their laying. Until then the QA
 // page's look stand (tools/open-look-stand.js, behind the switch `home-ground`) stands them on his ground.
 //
-// The hen is the wildlife line's chicken (public/assets/wildlife/chicken.glb, a thin black village hen) made into a
-// brown laying hen in code: her body is widened, her comb and wattles enlarged, and her coat baked afresh onto the
-// model's own texture from the colours of real brown laying hybrids (Lohmann Brown). Her poses are the model's own
-// clips (Idle looks about and pecks twice, Walk) and two drawn here (scratch, sit). Everything else is drawn in code
+// The hen is a brown laying hybrid's own body (HOME-HEN-BODY: tools/blender/wildlife/laying-hen.py, measured from a
+// photographed Lohmann Brown), built with the wildlife line's kit and the wildlife chicken's bones: round, low and heavy,
+// a full breast, a short neck of hackles and a short tail held up. Her coat is baked afresh in code onto the model's own
+// texture from the colours of real Lohmann Browns, feather by feather. Her poses are the model's own clips (Idle looks
+// about and pecks twice, Walk) and two drawn here (scratch, sit). Everything else is drawn in code
 // on canvases: the crate's weathered boards and stencil, the straw, the coop's galvanised sheet and its rust, the egg.
 //
 // Parts and their names (HOME_HENS_PARTS): createHen -> 'home-hen', createNestBox -> 'home-nest-box',
@@ -17,7 +18,7 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {createGroundShade} from '../../scrap-look.js';
 
-export const HOME_HEN_MODEL = '/assets/wildlife/chicken.glb';
+export const HOME_HEN_MODEL = '/assets/models/wasteland/home-ground/laying-hen.glb';
 
 // What each part may cost when drawn once. `triangles` counts every instance of an instanced mesh.
 export const HOME_HENS_PARTS = Object.freeze({
@@ -634,10 +635,14 @@ export async function loadHenModel(url = HOME_HEN_MODEL) {
 }
 
 // A Lohmann Brown's coat, in sRGB, at a point of the model in its own metres (x forward, y up, z across). `part`
-// is the bone the point rides on.
+// is the bone the point rides on. HEN gives where the laying hen's parts lie in those metres, from her recipe.
 const COAT = Object.freeze({
-  chestnut: [90, 36, 15], gold: [134, 68, 26], dark: [42, 18, 9], buff: [150, 102, 58], tail: [40, 22, 14],
+  chestnut: [84, 34, 15], gold: [126, 66, 28], dark: [44, 19, 10], buff: [150, 102, 58], tail: [56, 28, 15],
   cream: [196, 172, 128], red: [168, 24, 22], horn: [196, 166, 98], leg: [188, 154, 78], eye: [190, 108, 32],
+});
+const HEN = Object.freeze({
+  hock: .078, headTop: .37, wattleBelow: .343, billFrom: .176, eye: Object.freeze({x: .162, y: .364}),
+  hackle: .225, back: .225, wingFrom: .066, wingLow: .12, wingHigh: .235, tail: -.125, under: .1, dust: .07,
 });
 function coatAt(x, y, z, part) {
   if (part === 'leg') {
@@ -645,52 +650,54 @@ function coatAt(x, y, z, part) {
     return COAT.leg.map(value => value * scale);
   }
   const lateral = Math.abs(z);
-  // Small feathers lapping from the head back, their edges only a little darker, the rows broken up by noise so that
-  // the coat reads as feathers and not as scales. Broad patches of lighter and darker chestnut over it.
-  const wobble = (noise(x * 90, y * 90, 5) - .5) * .7;
-  const fu = x / .011 + wobble, fv = y / .008 + lateral / .013;
+  // Small feathers lapping from the head back. The rows bend with the noise and each feather sits a little off its
+  // neighbours, so that the coat reads as feathers and not as bricks or scales (round 5: even rows read as brickwork).
+  const wobble = (noise(x * 90, y * 90, 5) - .5) * 1.2;
+  const fu = x / .012 + wobble, fv = y / .009 + lateral / .014 + (noise(x * 50, z * 50, 6) - .5) * .9;
   const row = Math.floor(fv), cell = Math.floor(fu + (row & 1) * .5);
-  const lu = fu + (row & 1) * .5 - cell - .5, lv = fv - row;
-  const edge = smooth((Math.hypot(lu, lv - .3) - .36) / .22);
+  const lu = fu + (row & 1) * .5 - cell - .5 + (hash(cell, row, 3) - .5) * .3, lv = fv - row + (hash(cell, row, 4) - .5) * .25;
+  const edge = smooth((Math.hypot(lu, lv - .3) - .36) / .26);
   const tone = .9 + .2 * hash(cell, row, 9);
   const patch = fbm(x * 22, y * 22 + z * 22, 3);
-  // Each feather dark chestnut in the middle with a paler golden fringe, as on the photographed Lohmann Browns.
-  let colour = mix(COAT.chestnut, COAT.gold, .1 + .3 * patch);
-  colour = mix(colour, COAT.dark, (1 - edge) * smooth(lv) * .25);
-  colour = mix(colour, COAT.gold, edge * .38).map(value => value * tone);
+  // Each feather dark chestnut in the middle with a paler golden fringe, as on the photographed Lohmann Browns, and
+  // broad darker patches where the feathers lie in shade, as on their backs and wing shields.
+  let colour = mix(COAT.chestnut, COAT.gold, .08 + .3 * patch);
+  colour = mix(colour, COAT.dark, (1 - edge) * smooth(lv) * .3);
+  colour = mix(colour, COAT.gold, edge * .26).map(value => value * tone);
+  colour = mix(colour, COAT.dark, .45 * smooth((fbm(x * 30 + z * 21 + 3, y * 30 - z * 17, 3) - .52) / .14));
   // A golden sheen over the back and shoulders.
-  colour = mix(colour, COAT.gold, .25 * smooth((y - .255) / .03) * smooth((.07 - x) / .05));
+  colour = mix(colour, COAT.gold, .25 * smooth((y - HEN.back) / .03) * smooth((.07 - x) / .05));
   // The hackles: long golden feathers with darker shafts falling from the head over the shoulders.
-  const hackle = smooth((y - .27) / .035) * smooth((x - .03) / .05);
+  const hackle = smooth((y - HEN.hackle) / .035) * smooth((x - .05) / .05);
   if (hackle > 0) {
     const streak = .5 + .5 * Math.sin((z * 1.0 + x * .5) * 380 + noise(y * 80, z * 80, 2) * 5);
     colour = mix(colour, mix(COAT.gold, COAT.chestnut, .2 + streak * .6), hackle);
   }
   // The wings: coverts lapped like the body, and towards the tail darker flight feathers, a few with pale edges.
-  const wing = smooth((lateral - .05) / .012) * smooth((y - .2) / .02) * smooth((.27 - y) / .02);
+  const wing = smooth((lateral - HEN.wingFrom) / .012) * smooth((y - HEN.wingLow) / .02) * smooth((HEN.wingHigh - y) / .02);
   if (wing > 0) {
     const tips = smooth((-.04 - x) / .05), bar = Math.sin(x * 300 - y * 140);
     const flight = mix(COAT.chestnut, COAT.dark, .4).map(value => value * (.88 + .18 * hash(Math.floor(x * 70), 3)));
-    colour = mix(colour, bar > .9 && hash(Math.floor(x * 70), 5) > .5 ? mix(flight, COAT.cream, .55) : flight, wing * tips);
+    colour = mix(colour, bar > .9 && hash(Math.floor(x * 70), 5) > .5 ? mix(flight, COAT.gold, .35) : flight, wing * tips);
   }
-  // The tail: dark brown feathers laced with chestnut.
-  if (part === 'tail' || x < -.1) {
+  // The tail: dark brown feathers laced with chestnut, paler and creamy at the tips as a Lohmann's are.
+  if (part === 'tail' || x < HEN.tail + .02) {
     const lace = .5 + .5 * Math.sin((y + x * .3) * 300 + noise(x * 60, y * 60, 8) * 3);
-    const tail = mix(COAT.tail, COAT.chestnut, .25 + lace * .5);
-    colour = mix(colour, tail, smooth((-.09 - x) / .035));
+    const tail = mix(mix(COAT.tail, COAT.chestnut, .3 + lace * .5), COAT.cream, .35 * smooth((y - .31) / .025) * (.5 + .5 * lace));
+    colour = mix(colour, tail, smooth((HEN.tail + .03 - x) / .035));
   }
   // The underside and the fluff round the thighs are paler, buff.
-  colour = mix(colour, COAT.buff, .7 * smooth((.18 - y) / .04) * smooth((x + .1) / .06));
+  colour = mix(colour, COAT.buff, .7 * smooth((HEN.under - y) / .04) * smooth((x + .12) / .06));
   // A little dust low down.
-  return mix(colour, [150, 124, 96], .25 * smooth((.16 - y) / .06));
+  return mix(colour, [150, 124, 96], .25 * smooth((HEN.dust - y) / .05));
 }
 
-// Reshape and repaint the model once; every hen shares the result. In Node (no canvas) only the shape is changed.
+// Repaint the model once; every hen shares the result. In Node (no canvas) the model is used as it is.
 function henLook(model) {
   if (model.userData.henLook) return model.userData.henLook;
   let source = null;
   model.scene.traverse(node => { if (node.isSkinnedMesh && !source) source = node; });
-  if (!source) throw Error('The chicken model has no skinned mesh.');
+  if (!source) throw Error('The hen model has no skinned mesh.');
   const geometry = source.geometry.clone();
   const names = source.skeleton.bones.map(bone => bone.name);
   const position = geometry.attributes.position, joints = geometry.attributes.skinIndex, weights = geometry.attributes.skinWeight;
@@ -722,7 +729,8 @@ function henLook(model) {
   const index = geometry.index;
   const triangleCount = index.count / 3;
   const kindOf = new Array(triangleCount);
-  const isRed = c => c && c[0] > 70 && c[0] > c[1] * 1.9 && c[0] > c[2] * 1.7;
+  // Her comb, face and wattles are painted a strong red in the recipe; her chestnut coat is darker and less red.
+  const isRed = c => c && c[0] > 110 && c[0] > c[1] * 3 && c[0] > c[2] * 3;
   for (let t = 0; t < triangleCount; t++) {
     const [a, b, c] = [0, 1, 2].map(k => index.getX(t * 3 + k));
     const u = (uv.getX(a) + uv.getX(b) + uv.getX(c)) / 3, v = (uv.getY(a) + uv.getY(b) + uv.getY(c)) / 3;
@@ -730,65 +738,12 @@ function henLook(model) {
     const y = (position.getY(a) + position.getY(b) + position.getY(c)) / 3, x = (position.getX(a) + position.getX(b) + position.getX(c)) / 3;
     const part = partOf[a];
     let kind = 'coat';
-    if (/^(shank|foot)/.test(part) || (/^thigh/.test(part) && y < .12)) kind = 'leg';
-    else if (isRed(colour)) kind = y > .392 ? 'comb' : y < .37 && x > .14 ? 'wattle' : 'face';
-    else if (part === 'head' && x > .152 && colour && colour[0] > 60 && colour[1] > 45) kind = 'bill';
-    else if (part === 'head' && colour && colour[0] + colour[1] + colour[2] < 40 && x > .13 && y > .372) kind = 'eye';
+    if (/^(shank|foot)/.test(part) || (/^thigh/.test(part) && y < HEN.hock)) kind = 'leg';
+    else if (isRed(colour)) kind = y > HEN.headTop ? 'comb' : y < HEN.wattleBelow && x > .15 ? 'wattle' : 'face';
+    else if (part === 'head' && x > HEN.billFrom && colour && colour[0] > 60 && colour[1] > 45 && colour[2] > 40) kind = 'bill';
+    else if (part === 'head' && colour && colour[0] + colour[1] + colour[2] < 40 && x > .145 && y > .35) kind = 'eye';
     kindOf[t] = kind;
   }
-  // The shape: a laying hen is deeper and wider in the body than the village hen, with a big single comb and long
-  // wattles. Vertices are moved in the model's bind pose, so the bones carry them as before.
-  // `along` pushes a point away from a bone's line by `k`: the line runs from a to b ({x, y}) at the side z.
-  const along = (p, a, b, z, k) => {
-    const dx = b.x - a.x, dy = b.y - a.y, t = Math.min(1, Math.max(0, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy)));
-    const qx = a.x + dx * t, qy = a.y + dy * t;
-    p.x = qx + (p.x - qx) * k; p.y = qy + (p.y - qy) * k; p.z = z + (p.z - z) * k;
-  };
-  const HIP = {x: -.012, y: .2}, HOCK = {x: -.042, y: .104}, FOOT = {x: -.004, y: .014};
-  const NECK = {x: .082, y: .25}, HEAD = {x: .124, y: .372};
-  const moved = new Uint8Array(position.count), p = {x: 0, y: 0, z: 0};
-  for (let t = 0; t < triangleCount; t++) for (let k = 0; k < 3; k++) {
-    const n = index.getX(t * 3 + k);
-    if (moved[n]) continue;
-    moved[n] = 1;
-    p.x = position.getX(n); p.y = position.getY(n); p.z = position.getZ(n);
-    const part = partOf[n], kind = kindOf[t], side = Math.sign(p.z) * .036;
-    if (['body', 'tail', 'neck1'].includes(part) && p.y > .13) {
-      // Wider, and deeper in the belly.
-      const middle = .225;
-      p.z *= 1.32 * (part === 'tail' ? .9 : 1);
-      if (p.y < middle) p.y = middle - (middle - p.y) * (1 + .8 * smooth((middle - p.y) / .06));
-      // The round, feathery rear of a laying hen behind her legs.
-      if (p.x < -.02 && part === 'body') { const back = smooth((-.02 - p.x) / .06); p.x = -.02 + (p.x + .02) * (1 + .12 * back); p.y = middle + (p.y - middle) * (1 + .1 * back); }
-    }
-    // The tail fans out a little sideways, as a laying hen's does, so that from above it is a wedge and not two spikes.
-    if (part === 'tail') {
-      p.z *= 1 + 2 * smooth((-.1 - p.x) / .06);
-      // Shorter than the village hen's, so that it reads as a laying hen's tail and not as spikes.
-      const rx = p.x + .104, ry = p.y - .247;
-      if (rx < 0) { p.x = -.104 + rx * .78; p.y = .247 + ry * .78; }
-    }
-    // The folded wings lie on the flanks: where the widened body narrows towards the back, the wing's upper edge is
-    // drawn in to the body so that from above it does not stand out like a flap.
-    if (part === 'body' && p.y > .225 && p.x > -.13 && p.x < .08) {
-      const body = .064 * 1.32 * Math.sqrt(Math.max(0, 1 - ((p.y - .222) / .075) ** 2)) + .006, out = Math.abs(p.z);
-      if (out > body) p.z = Math.sign(p.z) * (body + (out - body) * .3);
-    }
-    // A full neck of hackles, not a village hen's thin one.
-    if (['neck1', 'neck2'].includes(part) || (part === 'body' && p.x > .05 && p.y > .24)) along(p, NECK, HEAD, 0, 1.35);
-    // Fluffy thighs down to the hock, and stouter shanks.
-    if (/^thigh/.test(part) && kind !== 'leg') {
-      const down = Math.min(1, Math.max(0, (HIP.y - p.y) / (HIP.y - HOCK.y)));
-      along(p, HIP, HOCK, side, 1.7 + 1.3 * down);
-    }
-    if (/^shank/.test(part)) along(p, HOCK, FOOT, side, 1.3);
-    if (kind === 'comb') { p.y = .392 + (p.y - .392) * 2.8; p.x = .142 + (p.x - .142) * 1.3; }
-    if (kind === 'wattle') { p.y = .368 - (.368 - p.y) * 1.9; p.x = .156 + (p.x - .156) * 1.3; p.z *= 1.25; }
-    position.setXYZ(n, p.x, p.y, p.z);
-  }
-  geometry.computeVertexNormals();
-  geometry.computeBoundingBox(); geometry.computeBoundingSphere();
-
   // The coat, baked into the model's own picture triangle by triangle, at the size of the original.
   let map = null;
   if (original) {
@@ -817,7 +772,7 @@ function henLook(model) {
           const fold = .72 + .28 * noise(x * 600, y * 600, 7);
           colour = COAT.red.map(value => value * fold * (kind === 'face' ? .92 : 1));
         } else if (kind === 'bill') colour = COAT.horn.map((value, i) => value * .7 + (was?.[i] ?? value) * .3);
-        else if (kind === 'eye') colour = Math.hypot(y - .381, x - .146) < .0035 ? [20, 14, 10] : COAT.eye;
+        else if (kind === 'eye') colour = Math.hypot(y - HEN.eye.y, x - HEN.eye.x) < .0022 ? [20, 14, 10] : COAT.eye;
         else colour = coatAt(x, y, z, kind === 'leg' ? 'leg' : part);
         const at = (flip ? height - 1 - py : py) * width + px;
         // A texel already painted by a triangle that covers it properly keeps its colour.
@@ -897,12 +852,7 @@ export function createHen(model, {name = HOME_HENS_PARTS.hen.name, band = 'blue'
     for (const other of Object.values(actions)) if (other !== action) other.stop();
     action.play(); action.time = time % action.getClip().duration; mixer.update(0);
   };
-  // A laying hen's neck is shorter and thicker than the village hen's: the upper neck and the head sit lower, into the hackles.
-  const shorten = () => { bones.neck2.position.multiplyScalar(.8); bones.head.position.multiplyScalar(.85); };
   function update(seconds = 0) {
-    drawPose(seconds); shorten();
-  }
-  function drawPose(seconds) {
     const t = seconds + phase;
     body.position.y = 0; body.scale.set(1, 1, 1);
     if (current === 'peck') play(actions.idle, t);
@@ -924,11 +874,13 @@ export function createHen(model, {name = HOME_HENS_PARTS.hen.name, band = 'blue'
         turn(bones.neck1, LATERAL, -.3 * down - .35 * peck, body);
         turn(bones.head, LATERAL, -.4 * down - .3 * peck, body);
       } else if (current === 'sit') {
-        // Sunk down on the straw with her legs folded under, her head turning slowly as she watches.
-        body.position.y = -.135; body.scale.set(1.05, 1, 1.25);
+        // Sunk down on the straw with her legs folded under and her neck drawn in, her head turning slowly as she watches.
+        body.position.y = -.09; body.scale.set(1.05, 1, 1.2);
         for (const side of ['L', 'R']) bones['thigh' + side].scale.setScalar(.2);
-        turn(bones.body, LATERAL, .1, body);
-        turn(bones.neck1, LATERAL, .12, body);
+        turn(bones.body, LATERAL, .06, body);
+        turn(bones.neck1, LATERAL, .3, body);
+        turn(bones.neck2, LATERAL, -.55, body);
+        turn(bones.head, LATERAL, .2, body);
         turn(bones.head, UP, Math.sin(t * .5) * .55, body);
       }
     }

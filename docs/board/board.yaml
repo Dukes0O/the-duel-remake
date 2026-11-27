@@ -1209,18 +1209,6 @@ tasks:
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-2-DRIVE.md"
 
-  - id: HOME-HEN-BODY
-    title: "Home Ground art, round 5: the brown hen's own round, low body (the coop, box and egg pass)"
-    owner: "claude"
-    lane: "ART"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude Fable session, 27 November 2026"
-    needs: []
-    locks: []
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-HEN-BODY.md"
-
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"

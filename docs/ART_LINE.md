@@ -635,3 +635,22 @@ the game.
 - **A breed made from another breed's model is limited by its bones.** Widening, deepening and repainting the slim village
   hen made a brown laying hen that reads, but two rounds of reshaping moved her little towards a plump Lohmann. When the
   body's proportions are the fault, build the breed's own body with the same bones and clips, not more vertex moves.
+- **How the laying hen's own body was built** (HOME-HEN-BODY, 27 November 2026; `tools/blender/wildlife/laying-hen.py`).
+  One round of this method did what two rounds of reshaping could not. Take millimetres per pixel from one side photograph
+  and a known height, read the body's top and bottom lines at a dozen stations, and turn each pair into a loft ring (centre
+  and half-height). Render the model side-on, orthographic, at the photograph's scale, draw the render's outline over the
+  photograph, and move rings until the outline sits on the bird. Keep the donor's bone names and clip names, so the
+  look's poses and leg band take the new body unchanged; numbers in the look's code that described the old body
+  (where the hackles start, the hock, the comb) move to one table (`HEN`) and are set again.
+- **A neck that starts on the back flows into the body.** A neck loft whose first ring lies on the shoulders and curves
+  up drapes the hackles with no crease; a separate cape laid over the shoulders read as a plate.
+- **A tail of thin feathers reads as a fist from behind and to one side.** Give the tail a core: a feathered wedge,
+  thin across and deep fore and aft, with the separate feathers lying on it to give the edge.
+- **A folded wing built as its own piece showed a bright line along its edge** in the game. Leave the wing flush in the
+  body and paint it.
+- **Feathers laid in even rows read as brickwork.** Bend the rows with noise and set each feather a little off its
+  neighbours (`coatAt` in `home-hens-look.js`).
+- **The smoothing pass rounds off a comb's points.** Lay the notches as stations between the points and make the points
+  about half as tall again as wanted.
+- **A loose test for red finds a chestnut coat too.** When the look finds the comb by the model's texture colour, paint
+  the comb a strong red in the recipe and test for it strictly.
