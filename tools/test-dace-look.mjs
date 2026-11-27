@@ -100,7 +100,7 @@ const slope = (x, z) => .03 * x - .02 * z;
   assert.equal(stones.name, 'Three Walker stones');
   within(stones, DACE_LOOK_BUDGET.stones, 'the stones');
   const solid = meshes(stones).find(mesh => mesh.name.endsWith('stone and rubber')), box = new THREE.Box3().setFromObject(solid);
-  assert.ok(box.max.y > 1.1 && box.max.y < 1.5, `the stack stands ${box.max.y.toFixed(2)} m high, to be seen from a car at 40 m`);
+  assert.ok(box.max.y > 1.75 && box.max.y < 2.1, `the stack stands ${box.max.y.toFixed(2)} m high, to be seen from a car at 40 m`);
   assert.ok(Math.abs(box.max.y - DACE_SITE_LAYOUT.stones.high) < .2);
   stones.userData.dispose();
 
@@ -150,8 +150,8 @@ for (const [id, build, name, parts] of [
   const root = land.children[0];
   assert.equal(root.name, 'Dace goes looking');
   for (const name of ["Moss's old pickup", 'Pickup key on its nail', 'The Deep Sign', 'The Hangar', "The Crow's Step"]) assert.ok(root.getObjectByName(name), `the look holds "${name}"`);
-  const open = (beat, {marks = [], site = 'hangar', found = [], end, active = null, staged = null, events = [], seconds = 10} = {}) => ({
-    parts: {threads: {places: {checkpointsEnabled: true}, dace: staged}, missions: {active}}, events, seconds,
+  const open = (beat, {marks = [], site = 'hangar', found = [], end, active = null, staged = null, events = [], seconds = 10, partOfDay = 'day'} = {}) => ({
+    parts: {threads: {places: {checkpointsEnabled: true}, dace: staged}, missions: {active}}, events, seconds, partOfDay,
     world: {open: {threads: {[DACE_ID]: {beat, end, cast: {site}}}, found, landSeed: 0}, ledger: {marks: marks.map(mark => DACE_ID + '/' + mark), night: 3}},
   });
   const truck = root.getObjectByName("Moss's old pickup"), key = root.getObjectByName('Pickup key on its nail'), data = truck.userData;
@@ -163,10 +163,12 @@ for (const [id, build, name, parts] of [
   // Ready: the cover is off and on the ground, the bonnet is up, and the mended spare is on.
   look.update(open('ready', {marks: ['spare-mended']}), null, places.pickup);
   assert.ok(truck.visible && !data.cover.visible && data.folded.visible && data.bonnet.rotation.x < 0 && !data.flat && !key.visible);
-  // Leaving: it drives off from the gate with its lamps lit.
-  look.update(open('away', {events: [{cue: 'open.pickup.started', seq: 4}], seconds: 10}), null, places.start);
-  look.update(open('away', {events: [{cue: 'open.pickup.started', seq: 4}], seconds: 12}), null, places.start);
-  assert.ok(truck.visible && data.pool.visible && Math.abs(truck.position.z - places.start.z - 16) < 1e-9, 'it leaves the gate at 8 m a second, lamps lit');
+  // Leaving: it drives off from the gate, its lamps lit at dusk and in the dark and not by day.
+  look.update(open('away', {events: [{cue: 'open.pickup.started', seq: 4}], seconds: 10, partOfDay: 'dusk'}), null, places.start);
+  look.update(open('away', {events: [{cue: 'open.pickup.started', seq: 4}], seconds: 12, partOfDay: 'dusk'}), null, places.start);
+  assert.ok(truck.visible && data.pool.visible && data.groundAt && Math.abs(truck.position.z - places.start.z - 16) < 1e-9, 'it leaves the gate at 8 m a second, lamps lit at dusk');
+  look.update(open('away', {events: [{cue: 'open.pickup.started', seq: 4}], seconds: 12.5}), null, places.start);
+  assert.ok(truck.visible && !data.pool.visible && data.groundAt === null, 'and unlit by day');
   // The search: the pickup by the road with the blanket on its aerial, the stones and the tracks on the land, and the place itself.
   const fetch = {id: DACE_ID + '/fetch'};
   look.update(open('search', {active: fetch, staged: {rescue: {reason: 'hill', truck: places.hill, walking: true}}, marks: ['told-stay']}), null, places.walking);
@@ -176,6 +178,14 @@ for (const [id, build, name, parts] of [
   look.update(open('search', {active: fetch, staged: {rescue: {reason: 'hill', truck: places.hill, walking: false}}}), null, places['his-tracks']);
   const tracks = root.getObjectByName("The old pickup's tracks");
   assert.ok(tracks?.visible && !stones.visible && tracks.rotation.y !== 0, 'his tracks lie along the way he drove');
+  // In the dark its lamps are lit while Dace waits with it, and stay as they are laid while it stands; not once he has walked on.
+  const waiting = {active: fetch, staged: {rescue: {reason: 'hill', truck: places.hill, walking: false}}, partOfDay: 'dark'};
+  look.update(open('search', waiting), null, places.hill);
+  const laid = data.groundAt;
+  look.update(open('search', waiting), null, places.hill);
+  assert.ok(data.pool.visible && laid && data.groundAt === laid, 'the lamps are lit while he waits with it in the dark');
+  look.update(open('search', {...waiting, staged: {rescue: {reason: 'hill', truck: places.hill, walking: true}}}), null, places.hill);
+  assert.ok(!data.pool.visible && !data.blanket.visible, 'and dark once he has walked on');
   const hangar = sitePosition('hangar', 0);
   look.update(open('away', {site: 'hangar'}), null, hangar);
   const shown = root.getObjectByName('The Hangar');
@@ -204,8 +214,8 @@ for (const [id, build, name, parts] of [
   assert.deepEqual(named, ['forge-day', 'stones-car', 'deep-sign', 'hangar', 'crows-step', 'gate-dusk'], 'the pictures the card lists, by name');
   assert.equal(new Set(PICTURES.map(picture => picture.name)).size, PICTURES.length);
   assert.ok(PICTURES.every(picture => DACE_STAND[picture.stand]?.stages.includes(picture.stage)));
-  assert.equal(PICTURES.at(-1).name, 'gate-dusk', 'the dusk picture is taken last');
-  assert.ok(PICTURES.filter(picture => picture.dusk).length === 1);
+  assert.deepEqual(PICTURES.filter(picture => picture.dusk).map(picture => picture.name), PICTURES.slice(-2).map(picture => picture.name), 'the dusk pictures are taken last');
+  assert.equal(PICTURES.at(-1).name, 'gate-dusk');
   const car = PICTURES.find(picture => picture.name === 'stones-car'), far = Math.hypot(car.eye.x, car.eye.z);
   assert.ok(Math.abs(far - 40) < .1 && car.eye.up === 1.2, `the stones are looked at from a car ${far.toFixed(1)} m off`);
   const forge = viewOf(PICTURES[0]);

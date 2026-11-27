@@ -47,7 +47,7 @@ export function createDaceLook(group, positionAt) {
     root.add(mesh);
     return {id, mesh, built: null};
   });
-  let departureAt = null;
+  let departureAt = null, lit = null;
 
   return {
     update(open, sign, here, drawnShift) {
@@ -95,17 +95,24 @@ export function createDaceLook(group, positionAt) {
       const at = taken ? places.den : roadside || (leaving ? places.start : yard ? places.pickup : null);
       truck.visible = distance(here, at) <= 500;
       if (truck.visible) {
-        // As it leaves it keeps to the ground it drives over, and its lamps' light lies on the road ahead of it.
+        // As it leaves it keeps to the ground it drives over.
         positionAt(truck, leaving ? {x: at.x, z: at.z + age * 8} : at, drawnShift);
-        const {x, y, z} = truck.position;
-        truck.userData.groundAt = leaving ? (dx, dz) => scablandsSurfaceHeightAt(x + dx, z + dz) + (drawnShift?.(x + dx, z + dz) ?? 0) - y : null;
         const uncovered = !!sign || !end && ['asking', 'ready', 'radio-check', 'telling', 'leaving', 'together'].includes(beat);
         cover.visible = yard && !uncovered && (!end || end === 'never-asked' || end === 'stayed');
         folded.visible = yard && uncovered;
         truck.userData.setBonnet(!!roadside || beat === 'ready');
         truck.userData.setFlat(!daceMarked(world, 'spare-mended') && (yard || staged?.rescue?.reason === 'stones'));
-        truck.userData.setLamps(!!leaving);
         blanket.visible = !!roadside && (!fetch?.walking || daceMarked(world, 'told-stay'));
+        // The lamps are lit at dusk and in the dark while Dace is with the pickup: as he drives off, and while he waits with it
+        // by the road, so that a player can find it there. Their light is laid on the ground once for each place the truck is.
+        const lamps = ['dusk', 'dark'].includes(open.partOfDay) && (!!leaving || blanket.visible);
+        truck.userData.setLamps(lamps);
+        const {x, y, z} = truck.position, place = x + ':' + z;
+        if (!lamps) lit = truck.userData.groundAt = null;
+        else if (lit !== place) {
+          lit = place;
+          truck.userData.groundAt = (dx, dz) => scablandsSurfaceHeightAt(x + dx, z + dz) + (drawnShift?.(x + dx, z + dz) ?? 0) - y;
+        }
         truck.userData.update(seconds);
       }
       key.visible = ['asking', 'key', 'night-after'].includes(beat) && !daceMarked(world, 'key-taken') &&
@@ -139,7 +146,7 @@ export function createDaceLook(group, positionAt) {
 export const DACE_STAND = Object.freeze({
   'dace-forge': {at: () => places.pickup, radius: 12, stages: ['ready', 'covered', 'mended']},
   'dace-gate': {at: () => places['gate-at-dusk'], radius: 12, stages: ['leaving']},
-  'dace-roadside': {at: () => places.hill, radius: 12, stages: ['stopped']},
+  'dace-roadside': {at: () => places.hill, radius: 12, stages: ['stopped', 'waiting']},
   'dace-stones': {at: () => places.walking, radius: 12, stages: ['left']},
   'dace-tracks': {at: () => places['his-tracks'], radius: 30, stages: ['left']},
   'deep-sign': {at: seed => sitePosition('deep-sign', seed), radius: 12, stages: ['found']},
@@ -159,10 +166,10 @@ export function buildDaceStand(name, {stage, heightAt = () => 0} = {}) {
     const truck = add(buildMossPickup()), {cover, folded, blanket} = truck.userData;
     cover.visible = stage === 'covered';
     folded.visible = stage === 'ready' || stage === 'mended';
-    blanket.visible = stage === 'stopped';
-    truck.userData.setBonnet(stage === 'ready' || stage === 'stopped');
+    blanket.visible = stage === 'stopped' || stage === 'waiting';
+    truck.userData.setBonnet(stage === 'ready' || stage === 'stopped' || stage === 'waiting');
     truck.userData.setFlat(stage === 'ready' || stage === 'covered');
-    truck.userData.setLamps(stage === 'leaving');
+    truck.userData.setLamps(stage === 'leaving' || stage === 'waiting');
     truck.userData.groundAt = round;
     if (name === 'dace-forge') add(buildPickupKey(), places.key.x - places.pickup.x, places.key.z - places.pickup.z, KEY_HEIGHT);
   } else if (name === 'dace-stones') add(buildWalkerStones({heightAt: round}));

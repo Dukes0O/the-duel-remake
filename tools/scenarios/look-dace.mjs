@@ -1,4 +1,4 @@
-// OPEN-LOOK-DACE, round 1: the pictures by which Claude judges the things of Dace Goes Looking. Not a frame check and not a test
+// OPEN-LOOK-DACE, rounds 1 and 2: the pictures by which Claude judges the things of Dace Goes Looking. Not a frame check and not a test
 // of any rule.
 //
 // It enters Light the Town (the job that has an evening) on a memory-only player, stands each thing where the storyline puts it
@@ -10,7 +10,8 @@
 //   hangar         the Hangar from in front of its open end
 //   crows-step     the Crow's Step from where the car stops
 // and more than the card asks for: `forge-covered` (the cover on and the tyre flat, from the side where the cover hangs loose), `forge-key` (the key on its
-// nail), `roadside` (the pickup stopped with Rell's blanket on the aerial), `stones-near`, `tracks` (the ruts from behind, along
+// nail), `roadside` (the pickup stopped with Rell's blanket on the aerial), `roadside-dusk` (the same at dusk from a car coming
+// up the road, its lamps lit: round 2), `stones-near`, `tracks` (the ruts from behind, along
 // the way he drove), `deep-sign-near` (the strainer), `hangar-side` (the roof coming down to the ground) and `crows-step-far`.
 //
 // The browser uses memory-only storage.
@@ -42,6 +43,7 @@ export const PICTURES = Object.freeze([
   {name: 'crows-step', stand: 'crows-step', stage: 'found', eye: {x: 5.2, z: 2.6, up: EYE}, look: {x: .2, z: -6.6, up: 2.1}, car: {x: 16, z: 14}},
   {name: 'crows-step-far', stand: 'crows-step', stage: 'found', eye: {x: -14, z: 12, up: EYE}, look: {x: -1, z: -6, up: 1.8}, car: {x: -22, z: 22}, extra: true},
   // Dusk last: the sky does not blend back to day between pictures.
+  {name: 'roadside-dusk', stand: 'dace-roadside', stage: 'waiting', dusk: true, eye: {x: 9, z: 16, up: CAR_HEIGHT}, look: {x: -.4, z: 3.6, up: .6}, car: {x: 16, z: 30}, extra: true},
   {name: 'gate-dusk', stand: 'dace-gate', stage: 'leaving', dusk: true, eye: {x: 7.6, z: 14.6, up: 1.6}, look: {x: -.4, z: 3.6, up: .5}, car: {x: 14, z: 30}},
 ]);
 
@@ -94,7 +96,7 @@ export function pageSources() {
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  const report = {card: 'OPEN-LOOK-DACE', round: 1, quality: 'performance', budget: DACE_LOOK_BUDGET, pictures: [], failures: []};
+  const report = {card: 'OPEN-LOOK-DACE', round: 2, quality: 'performance', budget: DACE_LOOK_BUDGET, pictures: [], failures: []};
   const persist = () => writeFile(join(context.outputDir, 'look-dace.json'), JSON.stringify(report, null, 2) + '\n');
   try {
     await context.navigate('/tools/menu-check.html?flags=hidden-road,story-everburn,warlord-cards,scablands-realism,story-choices&harness=look-dace&open-look-stand=1');

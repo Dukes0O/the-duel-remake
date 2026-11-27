@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import {MARK, clamp01, corrugated, createKit, createMaterials, finish, finishThing, groundPatch, mulberry, noiseAlong, palette, rgb, shade, smooth, span, stone} from './dace-look-kit.js';
 
 export const DACE_SITE_LAYOUT = Object.freeze({
-  stones: Object.freeze({high: 1.3}),
+  stones: Object.freeze({high: 1.9}),
   tracks: Object.freeze({from: -16, to: 28, gauge: 1.6}),
   'deep-sign': Object.freeze({well: Object.freeze({x: -3.7, z: -2.0}), strainer: Object.freeze({x: -2.15, z: -1.7}), roof: Object.freeze({x: -4.4, z: -6.0, long: 5.4, half: 2.5, ridge: 1.3}), sign: Object.freeze({x: .4, z: -3.2})}),
   hangar: Object.freeze({front: -6, bay: 4, arches: 7, half: 8.5, rise: 7.2, fallen: Object.freeze([0, 0, 0, .05, .4, .82, 1])}),
@@ -26,15 +26,20 @@ function thing(name, heightAt, draw, update) {
 }
 
 // ---- The Walker stones ----------------------------------------------------------------------------------------------------
-// Three stones stacked by a walker's hand, pale against the red land, each smaller than the one under it: about a metre high, so
-// that they are seen from a car at 40 m. Round them a few small stones, the scuffed ground, and footprints going on.
+// Three stones stacked by a walker's hand on a boulder that was there before, each smaller than the one under it, and across the
+// top a flat dark slab wider than the stone it lies on, with a marker stone stood on end. The stack is as tall as a tall man
+// (round 2): from a car's seat 40 m off its top third stands above the skyline, dark against the sky, and the slab makes an
+// outline that no boulder has. Round it a few small stones, the scuffed ground, and footprints going on.
 export function buildWalkerStones({heightAt = () => 0} = {}) {
   return thing('Three Walker stones', heightAt, kit => {
     const P = palette(), random = mulberry(0x57a1c);
     let y = -.04;
-    for (const [size, colour, squash, dx, dz] of [[.6, P.stoneGrey, .64, 0, 0], [.46, P.stonePale, .68, .04, -.03], [.32, P.stonePale, .78, -.03, .02]]) {
+    for (const [size, colour, squash, dx, dz] of [[.7, P.stoneGrey, .7, 0, 0], [.52, P.stonePale, .74, .05, -.03], [.38, P.stoneGrey, .8, -.04, .03]]) {
       y += stone(kit, random, size, top => shade(colour, .72 + .5 * top), dx, y, dz, {squash, detail: 1, tilt: (random() - .5) * .12, rough: .7}) - size * .13;
     }
+    // The slab across the top and the marker on it: dark stone, so that they stand out against the sky.
+    y += stone(kit, random, .46, top => shade(P.stoneDark, .8 + .5 * top), 0, y - .03, 0, {squash: .34, detail: 1, wide: 1.25, deep: .85, turn: .5, rough: .6, tilt: .05}) - .05;
+    stone(kit, random, .17, top => shade(P.stoneDark, .9 + .5 * top), .06, y - .04, 0, {squash: 1.2, detail: 0, wide: 1.05, deep: .55, turn: .9, rough: .5, tilt: .1});
     for (let index = 0; index < 7; index++) {
       const angle = index / 7 * 6.28 + random(), out = .75 + random() * .5, size = .07 + random() * .08;
       stone(kit, random, size, index % 3 ? P.stone : P.stoneGrey, Math.cos(angle) * out, kit.ground(Math.cos(angle) * out, Math.sin(angle) * out) - .02, Math.sin(angle) * out);

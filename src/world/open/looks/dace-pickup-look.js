@@ -347,7 +347,7 @@ export function buildMossPickup() {
   const coverMesh = cover.children[0], coverRest = coverMesh.geometry.attributes.position.array.slice(), coverCount = cover.extra;
   const blanketMesh = blanket.children[0], blanketPoints = blanketMesh.geometry.attributes.position;
   const poolPoints = light.attributes.position, poolRest = poolPoints.array.slice();
-  let flat = false;
+  let flat = false, laid = null;
   function setFlat(on) {
     flat = !!on;
     tyre.scale.set(flat ? 1.14 : 1, flat ? .72 : 1, flat ? 1.05 : 1);
@@ -368,9 +368,11 @@ export function buildMossPickup() {
       }
       points.needsUpdate = true;
     }
-    // The lamps' light lies on the road ahead, which is seldom level with the truck: each point of it is laid on the ground.
+    // The lamps' light lies on the road ahead, which is seldom level with the truck: each point of it is laid on the ground,
+    // once for each `groundAt` the look gives.
     const groundAt = truck.userData.groundAt;
-    if (pool.visible && groundAt) {
+    if (pool.visible && groundAt && groundAt !== laid) {
+      laid = groundAt;
       for (let index = 0; index < poolPoints.count; index++) poolPoints.setY(index, groundAt(poolRest[index * 3], poolRest[index * 3 + 2] + T.shift) + POOL_LIFT);
       poolPoints.needsUpdate = true;
     }
