@@ -16,3 +16,9 @@ Still open, and Gratian's: the seventh power food (section 8).
 his own ground (it covers the lower right of the view); tint his ground a shade apart from the plain so it reads from
 above; a second pass of wear and a few bent sheets on the tin. Owed before Kyle and Gratian try it: Claude's drive by
 hand of step 1.
+
+**27 November 2026, Claude's drive of step 1** (`docs/board/looks/home-ground/drive-1.md`): it works end to end. Six
+things for step 2's card: show the hammering (a hammer in his hands, the panel rising, progress, the sound); put the
+rocket launcher away and drop the car-aim label on his ground; mark where he stands from above and draw built pieces
+clearly there; show the build outline only when he means to build, and offer to pick up the panel he faces; tell him to
+step to the edge when hanging the gate; tint his ground. Step 1 is ready for Kyle's and Gratian's try.
