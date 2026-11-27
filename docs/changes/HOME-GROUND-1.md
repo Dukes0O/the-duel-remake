@@ -1,0 +1,8 @@
+# HOME-GROUND-1: the ground, the tin fence, the gate and the lane, the view from above, the burst
+
+- **What changed.** Behind the new dev switch `home-ground`: a 40 m ground at `LAND.at('tin-town', -100, 100)`, given by Auntie Solder's one talk; tin panels (2 m, 3 s of holding B) and a gate (8 m, 4 s) on a 2 m grid, turned by R, changed by G, picked up by B; a red outline with a sentence off the ground, across the gate's 8 m lane, on another piece; solid fence and gate (it opens within 7 m); V for the view from above, where B marks; X for a 3 s burst at 15 m/s with a bar; the name on a board at the gate. Rules in `src/world/open/home-rule.js`, the part `parts/home.js`, content `content/home-ground.js`, the look `looks/home-ground-look.js`, the camera `home-camera.js`; hooks in input-contexts, game (two lines), world-job, onfoot, onfoot-transition, render3d and world-hud.
+- **Save.** `world.open.home = {version: 1, name, pieces, marks}`, written only with the switch on by a counting effect `home` (no journal rows); `open-save.js` reads it only if `readableHome` passes. Saves made before it load unchanged (fixture `26-story-open.json`).
+- **Cues (named, not registered):** `home.fence.hammer`, `home.fence.up`, `home.piece.lift`, `home.gate.hang`, `home.place.refused`, `home.mark.set`, `home.mark.clear`, `foot.sprint`, `foot.burst`, `foot.burst.spent`, `home.view.up`, `home.view.down`.
+- **Checks:** PENDING.
+- **Changed assertion:** `tools/test-open-shared.mjs` lists the open land's parts in order; `home` is added at the end. Nothing is loosened.
+- **Removed:** nothing; the old town screen is untouched until a later step replaces it.
