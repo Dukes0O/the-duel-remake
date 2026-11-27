@@ -35,6 +35,13 @@ const LOOKS = Object.freeze({
       build: ({stage, heightAt}) => look.buildRadioHill({stage: look.RADIO_HILL_STAGES.includes(stage) ? stage : 'camp', night: stage === 'dusk' || stage === 'night', heightAt}),
       update: look.updateRadioHill};
   },
+  // OPEN-LOOK-DACE. The things of Dace Goes Looking, each where the storyline puts it: the pickup at the forge (stages 'ready',
+  // 'covered', 'mended'), at the gate ('leaving') and by the road ('stopped'), the stones, the tracks, and its three places.
+  ...Object.fromEntries(['dace-forge', 'dace-gate', 'dace-roadside', 'dace-stones', 'dace-tracks', 'deep-sign', 'hangar', 'crows-step'].map(name => [name, async () => {
+    const look = await import('../src/world/open/looks/dace-goes-looking-look.js'), row = look.DACE_STAND[name];
+    return {at: row.at(0), onDrawnGround: true, layout: {radius: row.radius, spots: {}}, build: ({stage, heightAt}) => look.buildDaceStand(name, {stage, heightAt}),
+      update: (group, seconds) => group.userData.update(seconds)};
+  }])),
 });
 
 const NIGHT = Object.freeze({hemisphere: .22, sun: .09, environment: .14, fog: .07, sky: .06});
@@ -75,6 +82,10 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
     scene.onBeforeRender = function (...args) {
       before.apply(this, args);
       if (!stood) return;
+      // The open land's own views stand a thing on the ground as it is drawn (road mats and the near ground lie a little off the
+      // surface the rules read). A row that asks for it is lifted the same way.
+      if (stood.onDrawnGround && stood.land.userData.drawnGroundHeightAt)
+        stood.group.position.y = stood.land.userData.drawnGroundHeightAt(stood.at.x, stood.at.z) - scablandsSurfaceHeightAt(stood.at.x, stood.at.z);
       stood.update?.(stood.group, stood.seconds);
       if (stood.night && !dimmed) dim(scene);
     };
@@ -118,7 +129,7 @@ export function createOpenLookStand(app, view = () => globalThis.__render) {
     group.position.set(at.x, 0, at.z);
     scene.add(group);
     hook(scene);
-    stood = {name, group, update: look.update, seconds, night: stage === 'night', restoreGround, land};
+    stood = {name, group, update: look.update, seconds, night: stage === 'night', restoreGround, land, at, onDrawnGround: look.onDrawnGround === true};
     let low = Infinity, high = -Infinity;
     for (let z = -layout.radius; z <= layout.radius; z += 8) for (let x = -layout.radius; x <= layout.radius; x += 8) {
       const height = scablandsNaturalHeightAt(at.x + x, at.z + z); low = Math.min(low, height); high = Math.max(high, height);

@@ -1200,17 +1200,6 @@ tasks:
     locks: []
     details: "docs/board/cards/AGENTS-REWRITE.md"
 
-  - id: OPEN-LOOK-DACE
-    title: "Open Scablands: Dace's pickup, the stones, the Deep Sign, the Hangar and the Crow's Step look real"
-    owner: "claude"
-    lane: "ART"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-DACE.md"
-
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"
     owner: "claude"
