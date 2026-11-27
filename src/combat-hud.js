@@ -239,7 +239,8 @@ export function footActionPresentation(state) {
   const reload = Math.max(0, (weapons.nextFireAt || 0) - (state.stageTimeSec || 0));
   if (reload > 0) return {text: `RELOADING ${reload.toFixed(1)}s`, locked: false};
   if (weapons.lockTargetIndex === null || weapons.lockTargetIndex === undefined)
-    return {text: 'HOLD AIM ON A CAR', locked: false};
+    // HOME-GROUND-2: there is no car to aim at on his own ground.
+    return {text: job?.open?.parts?.home?.onGround === true ? '' : 'HOLD AIM ON A CAR', locked: false};
   if ((weapons.lockSeconds || 0) < COMBAT_TUNING.foot.rpgLockSeconds)
     return {text: 'LOCKING TARGET', locked: false};
   return {text: 'TARGET LOCKED', locked: true};

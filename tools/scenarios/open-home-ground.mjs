@@ -1,15 +1,19 @@
-// HOME-GROUND-1: the player's own ground, by real key presses (docs/board/cards/HOME-GROUND-1.md). He talks to Auntie
-// Solder, walks out of Tin Town's gate, sprints and bursts, hangs the gate and names the ground, fences the whole edge,
-// is refused across the lane, walks into his fence, picks a panel up and sets it elsewhere, marks a piece from above and
-// builds it on the ground, leaves, and finds it all where he left it on his next outing. Memory-only storage.
+// HOME-GROUND-1 and HOME-GROUND-2: the player's own ground, by real key presses (docs/board/cards/HOME-GROUND-1.md and
+// HOME-GROUND-2.md). He talks to Auntie Solder, walks out of Tin Town's gate, sprints and bursts, hangs the gate with a
+// wrench and names the ground, fences the whole edge with a hammer, is refused across the lane, walks into his fence,
+// picks a panel up and sets it elsewhere, marks a piece from above and builds it on the ground. Then Moss brings two hens
+// in a crate, he names them, makes a nest box and sees the first egg laid; he leaves, the laptop's clock is put two days
+// on, and on his next outing the board at the gate says what was laid and he gathers the eggs. Memory-only storage.
 //
 // Keys go to the page as the browser's own key events. Between them the page's simulation is stepped with
 // window.__qaApp.advance, and the walker is turned to face where he is going (the mouse's job in play).
 import {HOME_CORNER, HOME_STEP, HOME_WORDS} from '../../src/world/open/content/home-ground.js';
+import {boxInLand, crateSpot, newsBoardSpot} from '../../src/world/open/home-rule.js';
 
 const FLAGS = 'hidden-road,story-choices,crew-gear,warlord-cards,home-ground';
 const KEYS = {KeyW: ['w', 87], KeyB: ['b', 66], KeyR: ['r', 82], KeyG: ['g', 71], KeyV: ['v', 86], KeyX: ['x', 88],
   KeyF: ['f', 70], KeyD: ['d', 68], ShiftLeft: ['Shift', 16], Space: [' ', 32], Digit1: ['1', 49], Enter: ['Enter', 13]};
+const DAY = 24 * 60 * 60;
 const point = (a, b) => ({x: HOME_CORNER.x + a * HOME_STEP, z: HOME_CORNER.z + b * HOME_STEP});
 
 export const pageFunctions = {
@@ -53,6 +57,12 @@ export const pageFunctions = {
   },
   camera: mode => { window.__qaApp.setFootCamera(mode); return window.__qaApp.footCameraMode; },
   face: yaw => { window.__qaApp.duel.state.fighter.yaw = yaw; window.__qaApp.advance(.05); return true; },
+  // He tips his head up or down (the mouse's job in play); negative looks down.
+  look: pitch => { window.__qaApp.duel.state.fighter.pitch = pitch; window.__qaApp.advance(.02); return true; },
+  hen: index => {
+    const hen = window.__qaApp.duel.state.arena.worldJob.open.parts.home.flock[index];
+    return hen ? {x: hen.x, z: hen.z, mode: hen.mode} : null;
+  },
   talk: () => {
     const talk = document.querySelector('.story-talk:not([hidden])');
     return talk ? {phase: talk.dataset.phase, words: talk.textContent} : null;
@@ -62,8 +72,13 @@ export const pageFunctions = {
     const record = job?.open?.world.open.home ?? null;
     const visible = selector => { const el = document.querySelector(selector); return !!el && !el.hidden && !!el.getClientRects().length; };
     const panels = window.__render?.scene.getObjectByName('home-panels');
+    const hens = window.__render?.scene.getObjectByName('home-hens');
     return {record, kind: part?.kind, outline: part?.outline ? {mode: part.outline.mode, reason: part.outline.reason,
-      piece: part.outline.piece, marked: part.outline.marked} : null, above: part?.above, naming: part?.naming,
+      piece: part.outline.piece, marked: part.outline.marked, progress: part.outline.progress} : null, above: part?.above, naming: part?.naming,
+      namingHen: part?.namingHen, tool: part?.tool ?? null, strike: part?.strike ?? null, lowered: state.footWeapons?.lowered === true,
+      flock: part?.flock?.length ?? 0, board: visible('.world-hud-board') ? document.querySelector('.world-hud-board').textContent : '',
+      drawnHens: hens?.visible ? hens.children.filter(child => child.visible).length : 0,
+      aimWords: visible('.combat-foot-action') ? document.querySelector('.combat-foot-action').textContent : '',
       burst: part?.burst, prompt: visible('.world-hud-home') ? document.querySelector('.world-hud-home').textContent : '',
       burstBar: visible('.world-hud-burst'), nameBox: visible('.world-hud-name'),
       drawnPanels: panels?.visible !== false && panels?.parent?.visible ? panels.count : null,
@@ -95,6 +110,28 @@ export const pageFunctions = {
   savedHome: () => {
     const app = window.__qaApp, profile = app.profile;
     return profile?.story?.open?.home ?? null;
+  },
+  // HOME-GROUND-2: the laptop's clock, put on by a number of seconds for every reading the page makes from now on.
+  clockOn: seconds => {
+    const real = Date.now;
+    Date.now = () => real() + seconds * 1000;
+    return Date.now() - real();
+  },
+  talkShows: text => {
+    const talk = document.querySelector('.story-talk:not([hidden])');
+    return !!talk && talk.textContent.includes(text);
+  },
+  nameBoxHas: text => {
+    const box = document.querySelector('.world-hud-name');
+    return !!box && !box.hidden && box.querySelector('input')?.value === text;
+  },
+  hensDrawn: count => {
+    const hens = window.__render?.scene.getObjectByName('home-hens');
+    return !!hens?.visible && hens.children.filter(child => child.visible).length === count;
+  },
+  boardShows: text => {
+    const el = document.querySelector('.world-hud-board');
+    return !!el && !el.hidden && el.textContent.includes(text);
   },
 };
 
@@ -172,13 +209,23 @@ export async function run(context) {
   if (await walk(first, .2) > .4) fail('He could not walk onto his ground.');
   if (await evaluate('marker')) fail('The marker stayed after he reached his ground.');
   await evaluate('face', Math.PI);
-  await wait('promptStarts', 'Hold B to hammer up the tin panel.');
+  // HOME-GROUND-2 (the drive of step 1, item 4): on his ground no outline stands in front of him until he asks for one.
+  await wait('promptStarts', HOME_WORDS.startBuild);
+  if ((await home()).outline) fail('An outline stood in front of him before he pressed a build key.');
+  if (!(await home()).lowered) fail('The launcher was not lowered on his ground.');
 
   // ---- The gate, and its name. ----------------------------------------------------------------------------------
   await tap('KeyG');
   now = await home();
   if (now.outline?.piece?.kind !== 'gate') fail('G did not put the gate in his hands.', now.outline);
-  await hold('KeyB', 4.2);
+  if (now.tool !== 'wrench') fail('He did not hold a wrench for the gate.', now.tool);
+  await key('keyDown', 'KeyB');
+  await evaluate('advance', 2);
+  now = await home();
+  if (now.tool !== 'wrench' || !(now.outline?.progress > .4)) fail('Hanging the gate showed no wrench or no progress.', now);
+  await evaluate('advance', 2.2);
+  await key('keyUp', 'KeyB');
+  await evaluate('advance', .05);
   now = await home();
   if (JSON.stringify(now.record.pieces) !== JSON.stringify([{kind: 'gate', i: 8, j: 0, axis: 'x'}])) fail('Holding B did not hang the gate.', now.record);
   if (!now.naming) fail('Hanging the gate did not ask for a name.');
@@ -193,6 +240,7 @@ export async function run(context) {
   // ---- The lane: a panel across it is refused, with a sentence. --------------------------------------------------
   if (await walk(point(10.5, 5.8), .2) > .4) fail('He could not walk into the lane.');
   await evaluate('face', Math.PI);
+  await tap('KeyB');
   if ((await home()).outline?.mode !== 'refused') fail('A panel across the lane was not refused.');
   await wait('promptStarts', HOME_WORDS.lane);
   await hold('KeyB', 3.3);
@@ -209,11 +257,23 @@ export async function run(context) {
   for (const [index, {stand, yaw, piece}] of ring.entries()) {
     if (await walk(stand, .12) > .3) fail('He could not reach the stand for panel ' + index + '.', piece);
     await evaluate('face', yaw);
+    if (!(await home()).outline) await tap('KeyR'), await tap('KeyR');
     now = await home();
     if (now.outline?.mode !== 'build' || JSON.stringify(now.outline.piece) !== JSON.stringify(piece)) fail('The outline for panel ' + index + ' was wrong.', now.outline);
-    await hold('KeyB', 3.1);
+    if (index === 3) {
+      // The hammer in his hands and the panel rising, half way through its three seconds.
+      await key('keyDown', 'KeyB');
+      await evaluate('advance', 1.5);
+      now = await home();
+      if (now.tool !== 'hammer' || now.strike === null || !(now.outline.progress > .4)) fail('Hammering showed no hammer or no rising panel.', now);
+      if (now.aimWords) fail('The car-aim words showed on his ground.', now.aimWords);
+      await wait('hudShows', '.world-hud-home', true);
+      await context.screenshot('home-ground-hammering');
+      await evaluate('advance', 1.6);
+      await key('keyUp', 'KeyB');
+      await evaluate('advance', .05);
+    } else await hold('KeyB', 3.1);
     if ((await home()).record.pieces.length !== index + 2) fail('Panel ' + index + ' did not go up.', piece);
-    if (index === 3) await context.screenshot('home-ground-hammering');
   }
   now = await home();
   report.fenced = now.record.pieces.length;
@@ -229,7 +289,6 @@ export async function run(context) {
   // ---- Pick a panel up and set it elsewhere; then put it back. ---------------------------------------------------
   if (await walk(point(2.5, .8), .12) > .3) fail('He could not reach the panel to pick up.');
   await evaluate('face', Math.PI);
-  if ((await home()).outline?.mode !== 'lift') fail('Facing a panel did not offer to pick it up.');
   await wait('promptStarts', 'Press B to pick up this tin panel.');
   await tap('KeyB');
   if ((await home()).record.pieces.length !== 76) fail('B did not pick the panel up.');
@@ -262,6 +321,7 @@ export async function run(context) {
   const markStand = mark.axis === 'x' ? point(mark.i + .5, mark.j + .7) : point(mark.i + .7, mark.j + .5);
   if (await walk(markStand, .1) > .3) fail('He could not walk to his mark.');
   await evaluate('face', mark.axis === 'x' ? Math.PI : -Math.PI / 2);
+  if (!(await home()).outline) await tap('KeyR'), await tap('KeyR');
   now = await home();
   if (!now.outline?.marked) fail('The outline in front of him is not his mark.', now.outline);
   await hold('KeyB', 3.1);
@@ -276,18 +336,113 @@ export async function run(context) {
   await context.screenshot('home-ground-at-the-gate');
   await evaluate('camera', 'first-person');
 
-  // ---- He leaves; on his next outing it is all where he left it. -------------------------------------------------
-  const left = now.record;
+
+  // ---- HOME-GROUND-2: the fence is closed, so Moss has brought two hens in a crate by the gate. ------------------
+  const gatePiece = now.record.pieces.find(piece => piece.kind === 'gate');
+  const crate = crateSpot(gatePiece);
+  if (await walk({x: crate.x, z: crate.z - 1.2}, .3) > .6) fail('He could not walk to the hens\' crate.');
+  await evaluate('face', 0);
+  await wait('promptStarts', HOME_WORDS.crateWaiting);
+  await key('keyDown', 'KeyF');
+  await evaluate('advance', .2);
+  await key('keyUp', 'KeyF');
+  await wait('talkShows', 'two hens');
+  for (let n = 0; n < 16 && (await evaluate('talk'))?.phase !== 'options'; n++) { await tap('Space'); await evaluate('advance', .3); }
+  if ((await evaluate('talk'))?.phase !== 'options') fail('The talk with Moss did not reach its answer.', await evaluate('talk'));
+  await tap('Digit1');
+  await evaluate('advance', .3);
+  await wait('roaming');
+  await wait('nameBoxHas', 'Clover');
+  await context.command('Input.insertText', {text: 'Pepper'});
+  await key('keyDown', 'Enter'); await key('keyUp', 'Enter');
+  await evaluate('advance', .3);
+  await wait('nameBoxHas', 'Nutmeg');
+  await key('keyDown', 'Enter'); await key('keyUp', 'Enter');
+  await evaluate('advance', .3);
+  await wait('hudShows', '.world-hud-name', false);
+  now = await home();
+  if (JSON.stringify(now.record.hens.map(hen => hen.name)) !== JSON.stringify(['Pepper', 'Nutmeg'])) fail('The hens were not named as he typed.', now.record.hens);
+  report.hens = now.record.hens.map(hen => hen.name);
+
+  // A nest box from the old crate, hammered up inside the fence, west of the lane.
+  if (await walk(point(10, 3), .3) > .6) fail('He could not walk back in through his gate.');
+  if (await walk(point(4.5, 6.3), .12) > .3) fail('He could not walk to where the nest box will go.');
+  await evaluate('face', Math.PI);
+  await wait('hensDrawn', 2);
+  if ((await home()).flock !== 2) fail('The two hens are not on his ground.');
+  await tap('KeyB');
+  for (let n = 0; n < 3 && (await home()).kind !== 'box'; n++) await tap('KeyG');
+  now = await home();
+  if (now.kind !== 'box' || JSON.stringify(now.outline?.piece) !== JSON.stringify({kind: 'box', i: 4, j: 5})) fail('G did not give him the old crate.', now);
+  await hold('KeyB', 2.7);
+  now = await home();
+  if (JSON.stringify(now.record.boxes) !== JSON.stringify([{i: 4, j: 5, eggs: 0}])) fail('Holding B did not make the nest box.', now.record.boxes);
+  // The first egg, before he leaves.
+  if (await walk(point(8, 9), .3) > .6) fail('He could not step back from the box.');
+  await evaluate('advance', 130);
+  now = await home();
+  if (!(now.record.boxes[0].eggs >= 1)) fail('No egg was laid in the first few minutes.', now.record);
+  report.firstEggs = now.record.boxes[0].eggs;
+  const nest = boxInLand({i: 4, j: 5});
+  // Pictures for the look: the box with its first egg, looked down into, and a hen close to.
+  if (await walk({x: nest.x, z: nest.z + 1.4}, .15) > .4) fail('He could not walk back to look at the box.');
+  await evaluate('face', Math.PI);
+  await evaluate('look', -.62);
+  await context.screenshot('home-hens-nest-box');
+  await evaluate('look', 0);
+  const hen = await evaluate('hen', 1);
+  if (hen) {
+    const from = {x: hen.x + 1.1, z: hen.z + 1.1};
+    await walk(from, .2);
+    const close = await evaluate('hen', 1);
+    await evaluate('face', Math.atan2(close.x - from.x, close.z - from.z));
+    await evaluate('look', -.42);
+    await context.screenshot('home-hens-on-his-ground');
+    await evaluate('look', 0);
+  }
+
+  // ---- He leaves; two days later on the laptop's clock, his next outing brings it all back with eggs laid. -------
+  const left = (await home()).record;
   if (!await evaluate('pause')) fail('Could not pause the outing.');
   await click('arena-yard');
   await wait('yardHome');
   const saved = await evaluate('savedHome');
-  if (JSON.stringify(saved) !== JSON.stringify(left)) fail('The ground was not saved as he left it.', saved);
+  if (JSON.stringify({...saved, lastSeen: 0}) !== JSON.stringify({...left, lastSeen: 0})) fail('The ground was not saved as he left it.', saved);
+  if (!(await evaluate('clockOn', 2 * DAY) > 2 * DAY * 1000 - 5000)) fail('The page clock could not be put on two days.');
   await click('yard-cards');
   await click('story-open-roam');
   await wait('ready');
   await evaluate('advance', .5);
   now = await home();
-  if (JSON.stringify(now.record) !== JSON.stringify(left) || now.drawnPanels !== 77) fail('The next outing did not bring his ground back.', now);
+  if (JSON.stringify(now.record.pieces) !== JSON.stringify(left.pieces) || now.drawnPanels !== 77) fail('The next outing did not bring his ground back.', now);
+  if (now.record.boxes[0].eggs !== 18) fail('Two days away did not fill the nest box.', now.record);
+  report.laidAway = now.record.boxes[0].eggs - left.boxes[0].eggs;
+  // The board at the gate says what happened while he was away.
+  const news = newsBoardSpot(gatePiece);
+  if (await walk({x: 5975, z: 48}, 1.5, true) > 2) fail('He could not reach the inside of the Tin Town gate again.');
+  if (await walk({x: 5975, z: 80}, 1.5, true) > 2) fail('He could not walk out through the Tin Town gate again.');
+  if (await walk({x: news.x, z: news.z - 9}, 1.5, true) > 2.5) fail('He could not walk back to his gate.');
+  await wait('boardShows', 'Your hens laid');
+  now = await home();
+  report.board = now.board;
+  if (!/full|hold/.test(now.board)) fail('The board did not say what the boxes hold.', now.board);
+  await evaluate('face', Math.atan2(news.x - (await home()).fighter.x, news.z - (await home()).fighter.z));
+  await evaluate('camera', 'overhead');
+  await evaluate('advance', .3);
+  await context.screenshot('home-hens-board');
+  await evaluate('camera', 'first-person');
+  // He gathers the eggs: one press at the box.
+  if (await walk(point(10, 3), .3) > .6) fail('He could not walk in through his gate.');
+  if (await walk({x: nest.x, z: nest.z + 1.3}, .12) > .3) fail('He could not walk to the nest box.');
+  await evaluate('face', Math.PI);
+  await wait('promptStarts', 'Press F to gather');
+  await evaluate('look', -.62);
+  await context.screenshot('home-hens-full-box');
+  await evaluate('look', 0);
+  const before = (await home()).record;
+  await tap('KeyF');
+  now = await home();
+  if (now.record.boxes[0].eggs !== 0 || now.record.eggs !== before.eggs + before.boxes[0].eggs) fail('F did not gather the eggs.', now.record);
+  report.gathered = now.record.eggs;
   return {...report, pieces: left.pieces.length, kept: true};
 }

@@ -1194,18 +1194,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
 
-  - id: HOME-GROUND-2
-    title: "Home Ground, step 2: two brown hens, nest boxes, the real clock and the board at the gate, plus the step 1 drive's fixes"
-    owner: "claude"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Claude Opus session (local), 27 November 2026"
-    needs: []
-    locks: []
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-2.md"
-
   - id: HOME-HEN-BODY
     title: "Home Ground art, round 5: the brown hen's own round, low body (the coop, box and egg pass)"
     owner: "claude"

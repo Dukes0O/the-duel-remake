@@ -901,8 +901,10 @@ export class App {
     this._refreshPlayer();
     const routineRoads = night2Banked(savedLedger(this.profile)) && this.gasRunAvailable() ?
       (emberBattleOpen(this.profile) ? ['long'] : GAS_RUN_ROADS) : [];
+    // HOME-GROUND-2: the one reading of the laptop's clock for the player's ground, as the outing opens.
+    const homeClock = this._switches().enabled('home-ground') === true ? Date.now() / 1000 : undefined;
     const job = openRoamJob(this.profile, this.seed, {
-      playerName: this.player.name, legacyHandRuns: emberRuns(this.profile), routineRoads,
+      playerName: this.player.name, legacyHandRuns: emberRuns(this.profile), routineRoads, homeClock,
     });
     return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0, job});
   }

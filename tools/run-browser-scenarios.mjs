@@ -100,7 +100,9 @@ export const SCENARIO_AREAS = [
   // HOME-GROUND-1: the player's own ground, its keys, its view from above and its HUD.
   {prefixes:['open-home-ground'], paths:['src/world/open/parts/home.js','src/world/open/home-rule.js','src/world/open/home-camera.js',
     'src/world/open/content/home-ground.js','src/world/open/looks/home-ground-look.js','src/world/world-hud.js','src/input-contexts.js',
-    'src/onfoot.js','src/onfoot-transition.js','src/world/open/open-save.js','src/world/open/open-effects.js']},
+    'src/onfoot.js','src/onfoot-transition.js','src/world/open/open-save.js','src/world/open/open-effects.js',
+    // HOME-GROUND-2: the hens, the clock read as an outing opens, and the hammer in his hands.
+    'src/world/open/roam-job.js','src/first-person-gear.js','src/first-person-presentation.js','src/onfoot-weapons.js']},
   {prefixes:['open-runaway'], paths:['src/story/threads/content/runaway.js','src/story/threads/signs.js',
     'src/world/open/content/runaway-places.js','src/world/open/content/mission-kinds.js',
     'src/world/open/content/sites.js','src/world/open/content/talk-threads.js','src/world/open/parts/threads.js',

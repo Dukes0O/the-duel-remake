@@ -16,6 +16,12 @@ export function selectFirstPersonPresentation(entry, {time = 0} = EMPTY, out = {
   out.crewId = crewMember(fighter.crewId) ? fighter.crewId : 'rook';
   out.weapon = weapons.selected === 'shock-charge' ? 'shock-charge' : weapons.selected === 'wrench' ? 'wrench' : 'rpg';
   out.lowered = weapons.lowered === true;
+  // HOME-GROUND-2: while he builds on his own ground he holds a hammer, or a wrench for the gate's hinges, and `strike` is
+  // how far through a blow he is (src/world/open/parts/home.js). The launcher is on his back meanwhile.
+  const homeTool = entry?.homeTool === 'hammer' || entry?.homeTool === 'wrench' ? entry.homeTool : null;
+  out.homeTool = homeTool;
+  out.strike = homeTool && Number.isFinite(entry.homeStrike) ? fraction(entry.homeStrike) : null;
+  if (homeTool) { out.weapon = homeTool; out.lowered = false; }
   out.aim = !out.lowered && out.weapon === 'rpg' && input.aim === true;
   out.loaded = out.weapon === 'rpg' && weapons.ammo > 0;
   out.action = 'idle';
@@ -26,7 +32,9 @@ export function selectFirstPersonPresentation(entry, {time = 0} = EMPTY, out = {
     ? 'jump' : fighter.speed > .01
       ? fighter.locomotion === 'sprint' || input.sprint ? 'sprint' : 'walk'
       : 'idle';
-  if (out.weapon === 'wrench' && weapons.repairing) {
+  if (homeTool) {
+    if (homeTool === 'wrench' && out.strike !== null) { out.action = 'repair'; out.actionProgress = out.strike; }
+  } else if (out.weapon === 'wrench' && weapons.repairing) {
     out.action = 'repair';
     out.actionTime = Math.max(0, finite(weapons.repairSeconds));
     out.actionProgress = fraction(finite(weapons.repairAmount) /

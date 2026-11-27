@@ -164,10 +164,14 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
 export const TOWN_GATE_ARROW = Object.freeze({pastMetres: 2});
 // HOME-GROUND-1: the sentence under the ground's outline, the burst bar (only while it is in use or filling) and the
 // name box. Read from the ground's part (src/world/open/parts/home.js); nothing is changed.
+// HOME-GROUND-2: the board at the gate's sentences while it is shown, and the box asks for a hen's name as well.
 function homeHudOf(worldJob) {
-  const home = worldJob.open.parts.home;
+  const home = worldJob.open.parts.home, record = worldJob.open.world.open.home;
+  const hen = Number.isSafeInteger(home.namingHen) ? record?.hens?.[home.namingHen] : null;
   return {prompt: home.prompt || '', burst: home.burst?.shown ? {share: home.burst.charge, spent: home.burst.spent} : null,
-    naming: home.naming === true, name: worldJob.open.world.open.home?.name ?? ''};
+    naming: home.naming === true, namingKey: home.naming === true ? home.namingKey || 'ground' : '',
+    ask: hen ? HOME_WORDS.henAsk : HOME_WORDS.nameAsk, name: hen ? hen.name : record?.name ?? '',
+    board: home.board?.lines?.length ? home.board.lines : null};
 }
 
 export function worldHudModel({worldJob, player = null, speedKmh = null, found = [], onFoot = false, places = SCABLANDS_PLACES} = {}) {
@@ -557,13 +561,18 @@ export function createWorldHud({host, app = null, picture = null}) {
   burstGauge.innerHTML = '<b>BURST</b><span><i></i></span>';
   const nameBox = doc.createElement('form'); nameBox.className = 'world-hud-name'; nameBox.hidden = true;
   nameBox.innerHTML = `<label><b>${HOME_WORDS.nameAsk}</b><input type="text" maxlength="${HOME_NAME_LONGEST}" autocomplete="off" spellcheck="false"></label><p>${HOME_WORDS.nameHint}</p>`;
-  root.append(homeLine, burstGauge, nameBox);
-  const nameInput = nameBox.querySelector('input'), burstBar = burstGauge.querySelector('i');
-  let naming = false;
+  // HOME-GROUND-2: the board at the gate, in three or four sentences.
+  const boardCard = doc.createElement('section'); boardCard.className = 'world-hud-board'; boardCard.hidden = true;
+  boardCard.setAttribute('role', 'status'); boardCard.setAttribute('aria-label', 'The board at your gate');
+  root.append(homeLine, burstGauge, nameBox, boardCard);
+  const nameInput = nameBox.querySelector('input'), nameAsk = nameBox.querySelector('b'), burstBar = burstGauge.querySelector('i');
+  let naming = '', boardText = '';
   nameBox.addEventListener('submit', event => {
     event.preventDefault();
     if (app?.duel?.homeNameInput(nameInput.value)) nameInput.blur();
   });
+  // HOME-GROUND-2: the name in the box is chosen whenever the box takes the keys, so that typing replaces it.
+  nameInput.addEventListener('focus', () => nameInput.select?.());
   nameInput.addEventListener('keydown', event => {
     event.stopPropagation();
     if (event.code === 'Escape') { event.preventDefault(); app?.duel?.homeNameInput(null); nameInput.blur(); }
@@ -696,13 +705,25 @@ export function createWorldHud({host, app = null, picture = null}) {
       homeLine.hidden = !homeLine.textContent;
       burstGauge.hidden = !home?.burst;
       if (home?.burst) { burstBar.style.width = `${(home.burst.share * 100).toFixed(1)}%`; burstGauge.classList.toggle('is-spent', home.burst.spent); }
-      if (!!home?.naming !== naming) {
-        naming = !!home?.naming; nameBox.hidden = !naming;
+      const lines = home?.board && !home.naming ? home.board : null;
+      const nextBoard = lines ? lines.join('|') : '';
+      if (nextBoard !== boardText) {
+        boardText = nextBoard; boardCard.hidden = !lines;
+        boardCard.replaceChildren(...(lines ?? []).map(text => { const line = doc.createElement('p'); line.textContent = text; return line; }));
+      }
+      if ((home?.namingKey ?? '') !== naming) {
+        naming = home?.namingKey ?? ''; nameBox.hidden = !naming;
         if (naming) {
+          nameAsk.textContent = home.ask;
           nameInput.value = home.name;
           if (doc.pointerLockElement) doc.exitPointerLock?.();
           nameInput.focus?.(); nameInput.select?.();
         }
+      }
+      // HOME-GROUND-2: the box may open while a talk is still closing, before it can take the keys; until it has them it
+      // takes them, with the old name chosen so that typing replaces it.
+      if (naming && !nameBox.hidden && doc.activeElement !== nameInput && nameInput.getClientRects?.().length) {
+        nameInput.focus?.(); nameInput.select?.();
       }
       // The maps read the game and change nothing in it. What the player has learnt stays for the job.
       const worldJob = state.arena.worldJob;

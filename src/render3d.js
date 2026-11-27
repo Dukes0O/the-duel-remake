@@ -546,7 +546,7 @@ export function attachRenderer(host, app) {
   const bowlView=createBowlView({retire:release=>{if(warmup)warmup.releaseWhenIdle(release);else release();}});scene.add(bowlView.group);const bowlTrucks=[];
   const bountyEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
-  const firstPersonEntry={fighter:null,input:null,weapons:null};
+  const firstPersonEntry={fighter:null,input:null,weapons:null,homeTool:null,homeStrike:null};
   const firstPersonOptions={enabled:false,active:false,firstPerson:false,camera,time:0};
   const roadsideDebris=createRoadsideDebris();scene.add(roadsideDebris.group);
   const combatEffects=createCombatEffects({crashPresentation:true});
@@ -1327,6 +1327,10 @@ export function attachRenderer(host, app) {
     firstPersonEntry.fighter=st.fighter;
     firstPersonEntry.input=st.fighterInput;
     firstPersonEntry.weapons=st.footWeapons;
+    // HOME-GROUND-2: the hammer or wrench in his hands while he builds on his own ground (read only).
+    const homeHands=st.arena?.worldJob?.open?.parts?.home;
+    firstPersonEntry.homeTool=homeHands?.on===true?homeHands.tool??null:null;
+    firstPersonEntry.homeStrike=homeHands?.on===true?homeHands.strike??null:null;
     firstPersonOptions.enabled=armoredField;
     firstPersonOptions.active=!menu&&st.onFoot&&st.status==='racing'&&!st.arena?.worldJob?.night2?.holstered;
     firstPersonOptions.firstPerson=firstPersonView;

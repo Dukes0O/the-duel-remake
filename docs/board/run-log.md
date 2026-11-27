@@ -1834,3 +1834,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge OPEN-PEN-DRAIN-BANK (Codex, laptop lane): a walkable floor inside the Rats' Nest drain
 - Merge SCENERY-FENCE-BOUNCE (Codex, laptop lane): a car shoved into a thin fence stays at its face
 - Merge HOME-GROUND-LOOK-1 (Claude session): Home Ground's coop, nest box and egg pass; the hen goes to round 5
+- Merge HOME-GROUND-2 (Claude session): hens, nest boxes, the real clock and the board at the gate

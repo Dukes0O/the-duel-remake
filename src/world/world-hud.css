@@ -89,3 +89,5 @@
 .world-hud-name label{display:grid;gap:10px;font-size:17px}
 .world-hud-name input{font:inherit;font-size:20px;font-weight:800;letter-spacing:.04em;text-align:center;padding:7px 10px;background:#0c0b0a;color:#f3eddf;border:1px solid #b8c88a88;border-radius:3px}
 .world-hud-name p{margin:10px 0 0;font-size:13px;color:#d8cfbb}
+.world-hud-board{position:absolute;left:50%;top:22%;transform:translateX(-50%);max-width:min(64vw,34rem);padding:12px 20px;background:#22261fe8;border:1px solid #e4d4b255;border-left:4px solid #b8c88a;border-radius:4px;font-size:16px;line-height:1.45}
+.world-hud-board p{margin:0 0 4px}
