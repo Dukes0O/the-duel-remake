@@ -8,6 +8,7 @@ import {BRAND_RULE} from '../../jobs/brand-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {nameOf} from '../register.js';
 import {rescueByCar} from './rescue-by-car.js';
+import {partyRescue} from './party-rescue.js';
 import {routinePose} from '../routine-rule.js';
 
 const height = (view, point) => (view.missionHeightAt ?? scablandsSurfaceHeightAt)(point.x, point.z);
@@ -29,7 +30,7 @@ export function lookoutSees(post, car, heightAt = scablandsSurfaceHeightAt) {
 function missionMoment(mission, name, requests, events, cue) {
   for (const [index, row] of [...(mission.lines ?? []), ...(mission.thoughts ?? [])].entries()) {
     if (row.moment !== name) continue;
-    const text = row.words ? (nameOf(row.speaker) ?? row.speaker) + ': ' + row.words : row.thought;
+    const text = row.words ? (row.as ?? nameOf(row.speaker) ?? row.speaker) + ': ' + row.words : row.thought;
     requests.push({type: 'say', lineId: mission.id + '/' + name + '/' + index, text});
     if (row.cue) events.push({type: 'threadMissionMoment', id: mission.id, moment: name, cue: row.cue});
   }
@@ -969,5 +970,6 @@ export const MISSION_KINDS = Object.freeze({
   lookout: Object.freeze(lookout),
   squeeze: Object.freeze(squeeze),
   rescue: Object.freeze(rescueByCar),
+  'party-rescue': Object.freeze(partyRescue({escortPoint, missionMoment, height})),
   drive: Object.freeze(drive),
 });

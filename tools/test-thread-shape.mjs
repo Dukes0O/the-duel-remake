@@ -45,7 +45,8 @@ const COUNTS = {
   // so the counts are the two files' sums; the shared choices were only ever in the Ash Men's file. OPEN-BURNED-PEN
   // (26 November 2026) adds the Road Rats' Scene 4 as section 21 writes it: 19 lines and Sump's rider's tie-back,
   // the pen's two thoughts and its choices' three, its three questions, and the pen's and the offer's five choices.
-  'burned-camp': {lines: 96, thoughts: 59, questions: 21, choices: 27},
+  // OPEN-BURNED-RESCUE adds Scenes 5–7 and restores their tie-backs.
+  'burned-camp': {lines: 118, thoughts: 63, questions: 26, choices: 33},
   'dace-goes-looking': {lines: 100, thoughts: 31, questions: 11, choices: 16},
   'dry-pump': {lines: 65, thoughts: 31, questions: 11, choices: 18},
   'lights-on-the-whites': {lines: 66, thoughts: 20, questions: 15, choices: 13},

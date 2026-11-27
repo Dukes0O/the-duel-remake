@@ -5,6 +5,7 @@ import {LAND} from '../../scablands-names.js';
 import {RATS_NEST_LAYOUT} from '../looks/rats-nest-look.js';
 import {buildBurnedScout} from './burned-scout.js';
 import burned from '../../../story/threads/content/burned-camp.js';
+import {heldGrowers} from '../burned-rescue-rule.js';
 
 const SPOTS = {
   // Inside the ring of wrecks, between the gate and the growers.
@@ -36,19 +37,15 @@ export function nestPlace(id, land = LAND) {
 
 // The growers sit in the pen while the Road Rats hold them. Finch and two growers are gone once they came out with
 // the player; Finch alone once he broke out.
-const HELD = ['sign', 'clues', 'scout', 'rim', 'alone', 'drain', 'pen', 'waiting', 'ransom', 'break-out', 'offer', 'home', 'rescue'];
+const HELD = ['sign', 'clues', 'scout', 'rim', 'alone', 'drain', 'pen', 'waiting', 'ransom', 'break-out', 'offer', 'home', 'party', 'rescue', 'buy-back-drive'];
 const CAPTIVES = [['marigold', 'captive-2'], ['finch', 'captive-9'], ['grower-1', 'captive-1'], ['grower-2', 'captive-3'],
   ['grower-3', 'captive-6']];
 export function penPeople(world) {
   const record = world.open.threads['burned-camp'];
   if (!record || record.end || record.cast?.enemy !== 'road-rats' || !HELD.includes(record.beat) ||
       !world.ledger.marks.includes('burned-camp/burned')) return [];
-  const marks = world.ledger.marks;
-  const drained = marks.includes('burned-camp/drain-out'), broke = marks.includes('burned-camp/broke-out');
-  // Those waved along on a break-out (`waved-along-1` to `-3`) come out with Finch, the first grower first.
-  const waved = ['grower-1', 'grower-2', 'grower-3'].filter((_, index) => marks.includes('burned-camp/waved-along-' + (index + 1)));
-  const gone = new Set([...(drained ? ['finch', 'grower-1', 'grower-2'] : []), ...(broke ? ['finch', ...waved] : [])]);
-  const captives = CAPTIVES.filter(([id]) => !gone.has(id)).map(([id, spot]) => ({id: 'pen/' + id, figure: id, talk: null,
+  const held = heldGrowers(world);
+  const captives = CAPTIVES.filter(([id]) => held.includes(id)).map(([id, spot]) => ({id: 'pen/' + id, figure: id, talk: null,
     routine: {day: {kind: 'post', at: nestPlace(spot), yaw: RATS_NEST_LAYOUT.spots[spot].heading, task: 'sit'}}}));
   const {round, pace} = PEN_GUARD;
   const guard = {id: 'pen/guard', figure: 'road-rat-lamp', talk: null, routine: {pace, day: {...round,

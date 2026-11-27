@@ -1,4 +1,5 @@
 import {checkThread, requireSound} from '../check-tables.js';
+import {applyEffects} from '../open-effects.js';
 import {isHeld, USUAL_HOLDS} from '../holds.js';
 import {resolveRoles} from '../roles.js';
 import {prepareThreadMission} from './missions.js';
@@ -14,12 +15,16 @@ import runaway from '../../../story/threads/content/runaway.js';
 import {RUNAWAY_GATE_RIDERS, RUNAWAY_SIGN, runawayBeat, runawayCanStart, runawayPlace} from '../content/runaway-places.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {canFindSite, distance, residentPose, sitePosition} from '../site-rule.js';
-import {ransomEffects, ransomTerms} from '../ransom-rule.js';
+import {ransomEffects, ransomTerms, settleRoadRatsRansom, claimRoadRatsSurcharge, roadRatsPrice} from '../ransom-rule.js';
+import {availableRescueHelpers, buyBackPrice, commitParty, currentParty, growersHome, partyAttempt, rescueEffects,
+  rescueMission, heldGrowers, rescuePage} from '../burned-rescue-rule.js';
+import {nobodyComes, raisedPriceLine} from '../../../story/scenes/burned-camp-home.js';
 import dryPump from '../../../story/threads/content/dry-pump.js';
 import {mallPlace} from '../content/dry-pump-places.js';
 import {DRY_PUMP_HOLD, dryPumpAllowsCamp, dryPumpStep} from './dry-pump.js';
 import burnedCamp from '../../../story/threads/content/burned-camp.js';
 import {placeForThread, radioScene} from '../../../story/scenes/burned-camp.js';
+import {scoutGullyRoute} from '../content/burned-scout.js';
 import strandedHauler from '../../../story/threads/content/stranded-hauler.js';
 import {HAULER_ID, haulerPlaces, haulerStop, haulerMission, haulerReading, haulerAction, haulerGate,
   haulerAtGate, haulerMarked, haulerIsTrap} from '../content/stranded-hauler-places.js';
@@ -60,6 +65,13 @@ function withPlaces(context) {
   } : undefined, placeAt: (place, cast) => {
       if (Array.isArray(place) && place[0] === 'tin-town' && place[1] === 'forge-yard') return DACE_PLACES.pickup;
       const hauler = haulerPlaces(world);
+      if (Array.isArray(place) && place[0] === 'rats-nest' && place[1] === 'rescue-gully') return [...scoutGullyRoute].reverse();
+      if (Array.isArray(place) && place[0] === 'grey-camp' && place[1]?.startsWith('rescue-')) {
+        const centre = position('grey-camp');
+        if (!centre) return null;
+        const offset = {'rescue-lookout': [-25, 32], 'rescue-pen': [9, 5], 'rescue-tip': [12, -31], 'rescue-riders': [-34, 45]}[place[1]];
+        return offset && {x: centre.x + offset[0], z: centre.z + offset[1]};
+      }
       if (place?.checkpoint?.who === 'traders') return hauler.sign ?? null;
       if (typeof place === 'string' && Object.hasOwn(hauler, place)) return hauler[place];
       const toll = tollPlace(place);
@@ -94,7 +106,19 @@ function withPlaces(context) {
 export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
   const available = threads.filter(thread => thread !== runaway ||
     runawayCanStart({...context, view: {...context.view, checkpointsEnabled: true}}));
-  return applyThreadDirector(available, withPlaces({...context, bankedHearth: true}), 'hearth');
+  const banked = applyThreadDirector(available, withPlaces({...context, bankedHearth: true}), 'hearth');
+  if (!available.includes(burnedCamp)) return banked;
+  const {ledger} = banked;
+  const aged = (mark, nights) => {
+    const row = ledger.history.findLast(change => change.type === 'mark' && change.key === 'burned-camp/' + mark);
+    return row && ledger.night - row.night >= nights;
+  };
+  const effects = [];
+  if (aged('stayed-inside', 3) && !ledger.marks.includes('burned-camp/bean-bed-ready'))
+    effects.push({type: 'mark', id: 'burned-camp/bean-bed-ready', text: 'The beans by the south fence are feeding Tin Town.'});
+  if (aged('car-with-sump', 1) && !ledger.marks.includes('burned-camp/car-back-at-town'))
+    effects.push({type: 'mark', id: 'burned-camp/car-back-at-town', text: 'Your car came back from the Rats’ Nest at first light.'});
+  return effects.length ? applyEffects(banked, {id: 'burned-camp/banked/' + ledger.night, effects: rescuePage(effects)}).world : banked;
 }
 
 export function openThreadSigns(context) {
@@ -136,10 +160,21 @@ const voiceAtWar = radioHillVoice.beats['pocket-fight'].mission.rule.atWar;
 
 function outputFor(thread, context, record, state, observed, decision, dt) {
   const isRunaway = thread === runaway;
+  const burned = thread === burnedCamp;
   const {world, view, seconds, previousEvents} = context;
   const hill = thread.id === RADIO_ID;
   const beat = isRunaway ? runawayBeat(record, context) : hill ? radioBeat(record.beat, world) : thread.beats[record.beat];
   const beatId = beat?.id ?? record.beat;
+  const rescue = burned && beatId === 'rescue';
+  const hearth = burned && ['home', 'party'].includes(beatId);
+  const campGate = burned && beatId === 'gate';
+  const attempt = (hearth || rescue) ? partyAttempt(world) : 0;
+  const attemptSuffix = hearth || rescue ? '/' + attempt : '';
+  const atCampGate = () => rule.ask({reach: ['tin-town', 'gate'], within: 100});
+  const priceDrive = burned && beatId === 'buy-back-drive';
+  const captive = thread.id + '/pen';
+  const outingKey = `${beatId}-start/${attempt}/night-${world.ledger.night}`;
+  const outingStarted = (rescue || priceDrive) && world.ledger.marks.includes(thread.id + '/' + outingKey);
   const hauling = thread.id === HAULER_ID;
   const lights = thread.id === LIGHTS_ID;
   const atDeck = view.onFoot && view.fighter?.deckPlate === 'whites-patience-deck';
@@ -169,10 +204,13 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     // Some authored end names also have a report scene on the way out.
     const travel = lights ? next.map(effect => effect.end && effect.end !== beatId && thread.beats[effect.end] ?
       {type: 'thread', id: thread.id, to: effect.end} : effect) : next;
-    choose(id, [...effects, ...rule.effects(authoredEffects, cast), ...travel]);
+    const written = [...effects, ...rule.effects(authoredEffects, cast), ...travel];
+    choose(id, burned && (hearth || rescue || campGate || beatId === 'haul-glass') ? rescuePage(written) : written);
   };
 
   if (!beat) return out;
+  if ((hearth || campGate || rescue || burned && ['buy-back-drive', 'buy-back-ransom', 'haul-glass'].includes(beatId))
+      && !view.checkpointsEnabled) return out;
   if (lights && beatId === 'shelved') return out;
   // A beat that `takes` the player holds them on foot at one spot and the car at another for as long as the storyline
   // stands there, and takes them back there in any roam that meets it again. The day is brought on to dusk.
@@ -221,7 +259,8 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       const outcome = sold ? beat.choices.find(row => row.id === 'drive-through') :
         Object.hasOwn(outcomes ?? {}, finished.outcome) && outcomes[finished.outcome];
       if (outcome && rule.ask(outcome.when)) {
-        (outcome.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`${beatId}/outcome/${index}`, row));
+        if (!rescue || finished.outcome !== 'none-home' || currentParty(world).some(row => row.id === 'rell'))
+          (outcome.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`${beatId}/outcome/${index}`, row));
         if (!(toll && beatId === 'break')) cue(beatId, outcome.cue);
         if (toll) {
           const extra = tollMissionResult(beatId, finished.outcome, finished.result, world);
@@ -233,7 +272,8 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
         } else {
           const effects = hill && finished.outcome === 'caught' ? [mark(RADIO_MARK.watched),
             radioHillVoice.beats['wheels-off'].effects.find(row => row.type === 'mark')] : [];
-          const num = hill ? '/' + (state.missionCount ?? 1) : '';
+          const num = hill ? '/' + (state.missionCount ?? 1) : attemptSuffix;
+          if (rescue) effects.push(...rescueEffects(world, finished.outcome, finished.result));
           move(`mission/${beatId}/${finished.outcome}${num}`, outcome, effects);
         }
       }
@@ -306,7 +346,11 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const startingMission = mission && carParked && !decision.journey && !decision.activeMission && view.openRoam && view.checkpointsEnabled &&
     (mission.by !== 'car' || !view.onFoot) && (!isRunaway || mission.by !== 'foot' || view.onFoot) &&
     (!view.combatWrecking || (isRunaway && beatId === 'breakout')) && !view.missionLeaving &&
-    !(mission.outing && view.outingAvailable === false);
+    !(mission.outing && view.outingAvailable === false && !outingStarted) &&
+    (!priceDrive || !view.dayClock || outingStarted || view.partOfDay === 'dawn') &&
+    (!rescue || atCampGate() && (!view.dayClock || outingStarted ||
+      view.partOfDay === 'dusk' && world.ledger.history.some(row => row.key === thread.id + '/party/' + attempt &&
+        row.night < world.ledger.night)));
   const returning = hill && state.returning && ['after-pocket', 'wheels-off', 'talking-over'].includes(beatId);
   const returningToRadio = hill && beatId === 'second-voice' && !state.beatSeconds['first-call'] && rule.has('entered', 'first-call');
   const tollPayment = toll && beatId === 'paying';
@@ -314,7 +358,8 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   if ((!entered || startingMission || returning || tollPayment) && (!lights || beatId !== 'aboard' || atDeck) && ready) {
     if (mission) {
       if (!startingMission) return out;
-      const authored = hill ? radioMission(mission, context, record) : hauling ? haulerMission(mission, world) :
+      const authored = rescue ? rescueMission(mission, world, record.cast, rule.ask) :
+        hill ? radioMission(mission, context, record) : hauling ? haulerMission(mission, world) :
         lights ? lightsMission(mission, world, state, seconds) :
         {...mission, enemy: resolveRoles(mission.enemy, record.cast)};
       const route = prepareThreadMission(authored, place => context.placeAt(place, record.cast));
@@ -326,6 +371,10 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       out.events.push({type: 'threadMission', id: mission.id, thread: thread.id, beat: beatId, holder, mission: authored, route});
       if (hauling) out.requests.push({type: 'missionLookouts', id: HAULER_ID + '/sign', group: 'road-rats', posts: []});
       if (hill) state.missionCount = (state.missionCount ?? 0) + 1;
+      if ((rescue || priceDrive) && !outingStarted) {
+        choose(outingKey, [mark(thread.id + '/' + outingKey)]);
+        if (rescue) cue(beatId, 'open.party.ride');
+      }
       if (entered) return out;
     }
     state.beatSeconds[beatId] = seconds;
@@ -338,7 +387,17 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     const entry = [remember('entered', beatId), ...rule.effects(beat.effects)];
     // A ransom is paid on entry, from what the world holds now (ransom-rule.js). The choice's id names the ransom, so
     // that a store left short is read as a loss by the apprentice run.
-    if (beat.ransom) entry.push(...ransomEffects(ransomTerms(beat.ransom, world, rule.ask)));
+    if (beat.ransom) entry.push(...(beat.ransom.roadRats ? settleRoadRatsRansom(beat.ransom, world, rule.ask, captive)
+      : ransomEffects(ransomTerms(beat.ransom, world, rule.ask))));
+    if (burned && beatId === 'buy-back-ransom' && heldGrowers(world).length)
+      entry.push(...ransomEffects(ransomTerms({price: [{scrap: buyBackPrice(world)}]}, world)), ...growersHome(world));
+    if (burned && beatId === 'pen') {
+      const claim = claimRoadRatsSurcharge(world, captive);
+      if (claim.length) {
+        entry.push(...claim);
+        line('next-ransom', raisedPriceLine);
+      }
+    }
     if (beat.leaves) out.leave = {to: beat.leaves, night: world.ledger.night};
     // `frees` lets go of both; a spot (the held car's) puts the player beside the car to drive it home.
     if (beat.frees && state.taken) {
@@ -350,14 +409,14 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       .forEach((row, i) => line(beatId + '/mission/' + i, row));
     if (hill && beatId === 'wheels-off' && !view.combatWrecking)
       out.requests.push({type: ROAD_REQUEST, action: 'mission-loss', id: RADIO_ID});
-    (beat.lines ?? []).filter(row => (!isRunaway || !(beat.walked || beat.choices?.some(choice => choice.by !== 'go'))) && rule.ask(row.when) && !(opening && thread.sign.kind === 'smoke' && row.radio)).forEach((row, index) => line(`${beatId}/${index}`, row));
+    (beat.oneTalk && (hearth || campGate) ? [] : beat.lines ?? []).filter(row => (!isRunaway || !(beat.walked || beat.choices?.some(choice => choice.by !== 'go'))) && rule.ask(row.when) && !(opening && thread.sign.kind === 'smoke' && row.radio)).forEach((row, index) => line(`${beatId}/${index}`, row));
     if (!approachedCold) cue(beatId, beat.cue ?? (opening && !(hill && !beat.choices?.length) ? thread.sign.cue : undefined));
     if (toll) (beat.cues ?? []).forEach((sound, index) => cue(beatId + '/' + index, sound));
     if (!lights && !beat.walked && beat.next && !beat.choices?.length && !beat.mission && !beat.explore?.length && !beat.questions?.length && !beat.mend && !beat.mends?.length)
       entry.push(...rule.move(beat.next));
     const paidCount = tollPayment ? world.ledger.marks.filter(id => id.startsWith(TOLL_ID + '/paid-')).length : 0;
     const enteredId = hill ? beatId + '/' + world.open.journal.filter(row => row.type === 'thread' && row.key === RADIO_ID).length : beatId + (tollPayment ? '/' + paidCount : '');
-    choose(`entered/${enteredId}`, entry);
+    choose(`entered/${enteredId}`, burned && beatId === 'buy-back-ransom' ? rescuePage(entry) : entry);
     if (opening && !approachedCold) (beat.thoughts ?? []).forEach((row, index) => {
       const thought = typeof row === 'string' ? {thought: row} : row;
       if (rule.ask(thought.when)) text(`${beatId}/thought/${index}`, thought.thought);
@@ -365,6 +424,41 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     return out;
   }
   if (!rule.has('entered', beatId)) return out;
+  if ((hearth || campGate) && !rule.ask(beat.when)) return out;
+  if (hearth && view.dayClock && !['dusk', 'dark'].includes(view.partOfDay)) return out;
+  if (campGate && view.dayClock && view.partOfDay !== 'dawn') return out;
+  if (burned && beatId === 'party') {
+    const id = trackId(thread, record).slice('thread:'.length) + '/decision';
+    const helpers = availableRescueHelpers(world, record.cast, rule.ask);
+    const picked = state.party ?? [];
+    const selected = (view.jobEvents ?? []).find(event => event.type === 'talkChoice' && event.scene === id &&
+      event.id?.startsWith(id + '/'))?.id.slice(id.length + 1);
+    const helper = helpers.find(row => row.id === selected);
+    if (helper) {
+      const nextParty = picked.includes(selected) ? picked.filter(id => id !== selected) : [...picked, selected];
+      if (commitParty(world, helpers, nextParty)) state.party = nextParty;
+    } else if (selected === 'ride' || selected === 'back') {
+      const option = beat.choices.find(row => row.id === selected);
+      const effects = selected === 'ride' ? commitParty(world, helpers, picked) : [];
+      if (effects) {
+        const visit = world.open.journal.filter(row => row.type === 'thread' && row.key === thread.id).length;
+        move('choice/' + selected + '/' + visit, option, effects);
+        state.party = [];
+        return out;
+      }
+    }
+    if (view.onFoot && view.openRoam && (decision.interact || helper)) {
+      decision.interact = false;
+      const picked = state.party ?? [];
+      const choices = helpers.filter(row => picked.includes(row.id) || commitParty(world, helpers, [...picked, row.id])).map(row => ({
+        id: id + '/' + row.id, words: picked.includes(row.id) ? 'Let ' + (row.as ?? nameOf(row.person)) + ' stay.' : row.pick,
+      }));
+      choices.push(...beat.choices.map(row => ({id: id + '/' + row.id, words: row.words})));
+      out.requests.push({type: 'talk', id, scene: {id, lines: !helpers.length ? [nobodyComes] : [], choices},
+        speaker: 'auntie-solder', threadPriority: true, radio: true});
+    }
+    return out;
+  }
   state.beatSeconds[beatId] ??= seconds;
   if (isRunaway) {
     if (record.end) return out;
@@ -613,7 +707,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const radio = isRunaway || beat.oneTalk ? null : radioScene(thread, beat, rule);
   // One talk (`oneTalk`): a question asked in the decision's own talk is written down as a radio question is.
   const decisionId = `${thread.id}/${beatId}/decision`;
-  if (beat.oneTalk) for (const event of view.jobEvents ?? []) {
+  if (beat.oneTalk && !hearth) for (const event of view.jobEvents ?? []) {
     const question = event.type === 'openTalkQuestion' && event.scene === decisionId && !rule.has('asked', event.id) &&
       beat.questions?.find(row => row.id === event.id);
     if (question) once('asked', question.id, rule.effects(question.effects));
@@ -672,7 +766,7 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     return out;
   }
 
-  const available = beat.choices?.filter(row => (!rule.has('chose', row.id) || !hauling && row.by === 'do' && row.next) && rule.ask(row.when)) ?? [];
+  const available = beat.choices?.filter(row => (hearth || !rule.has('chose', row.id) || !hauling && row.by === 'do' && row.next) && rule.ask(row.when)) ?? [];
   const spoken = available.filter(row => row.by === 'say' || !hauling && row.by === 'do' || !row.by);
   const lightsTalk = lights && (byCar || atDeck && rule.ask({reach: ['ships-in-sand', 'whites-bridge-wing'], within: 4})) && (beatId !== 'ships' || rule.ask(beat.when)) &&
     (beatId !== 'crew' && beatId !== 'crew-after-sounding' || rule.ask({reach: ['ships-in-sand', 'whites-crew'], within: 100}));
@@ -682,6 +776,14 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
     const id = decisionId;
     const choices = spoken.map(row => ({id: `${id}/${row.id}`, words: lights ? rule.line(row.words) : rule.line(row.words).replace(/([^.!?])$/, '$1.'),
       ...(row.plain ? {detail: rule.line(row.plain)} : {})}));
+    if (burned && beatId === 'pen') {
+      const terms = roadRatsPrice(thread.beats.ransom.ransom, world, rule.ask, captive);
+      const wait = choices.find(row => row.id.endsWith('/wait'));
+      if (wait && terms.extra) {
+        const fuel = terms.asked === 1 ? ' and one ember' : terms.asked ? ' and ' + terms.asked + ' embers' : '';
+        wait.detail = 'Sump is asking ' + terms.scrap + ' scrap' + fuel + '.';
+      }
+    }
     if (questionTalk || lights && radio) {
       choices.push(...radio.choices);
       const scene = {...radio, choices};
@@ -689,16 +791,21 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       else out.requests.push({type: 'talk', id: radio.id, scene,
         speaker: 'you', radio: true, threadPriority: true});
     } else {
-      const lines = lights && beatId === 'aboard' ? beat.notes.watch : undefined;
+      const campTalk = hearth || campGate;
+      const lines = campTalk ? beat.lines.filter(row => rule.ask(row.when)).map(row => ({...row, words: rule.line(row.words)})) :
+        lights && beatId === 'aboard' ? beat.notes.watch : undefined;
       const scene = {id, choices, ...(lines && {lines})};
       if (beat.oneTalk) {
-        scene.questions = (beat.questions ?? []).filter(row => !rule.has('asked', row.id) && rule.ask(row.when)).map(row => ({
+        const offered = hearth ? new Set(availableRescueHelpers(world, record.cast, rule.ask).map(row => row.id)) : null;
+        scene.questions = (beat.questions ?? []).filter(row => (hearth || !rule.has('asked', row.id)) && rule.ask(row.when) &&
+          (!offered || row.id === 'who-tally' || offered.has(row.id.replace(/^(?:rats-)?who-/, '')))).map(row => ({
           id: row.id, words: rule.line(row.words),
-          lines: row.lines.filter(line => rule.ask(line.when)).map(line => ({speaker: line.speaker, words: rule.line(line.words)}))}));
+          lines: row.lines.filter(line => rule.ask(line.when)).map(line => ({...line, speaker: line.as ?? line.speaker, words: rule.line(line.words)}))}));
         scene.thoughts = (beat.thoughts ?? []).map(row => typeof row === 'string' ? {thought: row} : row)
           .filter(row => rule.ask(row.when)).map(row => rule.line(row.thought));
       }
-      out.requests.push({type: 'talk', id, scene, speaker: 'you', ...(lights && {radio: true, threadPriority: true})});
+      out.requests.push({type: 'talk', id, scene, speaker: campTalk ? (hearth ? 'auntie-solder' : 'marigold') : 'you',
+        ...(campTalk || lights ? {radio: true, threadPriority: true} : {})});
     }
   }
   const option = available.find(row => hauling && row.by === 'do' ? haulerAction(row, context) : row.by === 'go' ? !view.onFoot &&
@@ -719,9 +826,10 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       if (rule.ask(thought.when)) text(`choice/${option.id}`, thought.thought);
     }
     (option.lines ?? []).filter(row => rule.ask(row.when)).forEach((row, index) => line(`choice/${option.id}/${index}`, row));
-    const count = option.by === 'do' ? world.open.journal.filter(change => change.type === 'thread' &&
+    const count = hearth ? world.open.journal.filter(row => row.type === 'thread' && row.key === thread.id).length :
+      option.by === 'do' ? world.open.journal.filter(change => change.type === 'thread' &&
       change.choiceId.startsWith(`${thread.id}/choice/${option.id}/`)).length : null;
-    move(`choice/${option.id}${count === null ? '' : '/' + count}`, option, [remember('chose', option.id)]);
+    move(`choice/${option.id}${count === null ? attemptSuffix : '/' + count}`, option, [remember('chose', option.id)]);
   }
   return out;
 }
@@ -914,6 +1022,12 @@ export function createThreadsPart(threads) {
             const dot = view.people?.find(person => person.id === 'dot')?.position;
             return distanceBetween(playerPoint(view), dot) <= 2.5 || distanceBetween(playerPoint(view), NIGHT_2_SITES.gate) <= 3;
           }
+          if (thread === burnedCamp && row.id === 'trader-bolts') {
+            const left = world.ledger.history.findLast(change => change.key === thread.id + '/left-at-rats-nest');
+            const trader = view.people?.find(person => ['tally', 'nan-tallow'].includes(person.id));
+            return !!left && night - left.night >= 2 &&
+              distanceBetween(playerPoint(view), trader?.position ?? NIGHT_2_SITES.gate) <= 4;
+          }
           if (thread.id === TOLL_ID) return atTollPerson(threadContext, record, row.by, 2.5);
           const at = row.at ?? (thread.id === FLAG_ID && FLAG_LATER_PLACES[row.by]);
           if (at) return laterRule.ask({reach: thread.id === RADIO_ID ? ['radio-hill', 'hut'] : at, within: 3});
@@ -929,6 +1043,7 @@ export function createThreadsPart(threads) {
           const id = `${thread.id}/later/${later.id}`;
           requests.push({type: 'talk', id, speaker: later.by, threadPriority: thread.id === RADIO_ID || thread.id === TOLL_ID,
             ...(thread.id === RADIO_ID ? {position: playerPoint(view), anchorPosition: true} : {}),
+            ...(thread === burnedCamp && later.id === 'trader-bolts' ? {radio: true} : {}),
             scene: {id,
             lines: later.lines.filter(row => laterRule.ask(row.when)).map(row => ({...row, speaker: laterRule.line(row.speaker), words: laterRule.line(row.words)})),
             choices: [{id, words: later.words ?? 'I hear you.'}]}});
@@ -944,6 +1059,17 @@ export function createThreadsPart(threads) {
               text: nameOf(row.speaker) + ': ' + laterRule.line(row.words)}));
           }
         }
+        if (thread === burnedCamp && enabled && view.openRoam && !previous.parkedAtNest &&
+            world.ledger.marks.includes('burned-camp/car-with-sump') &&
+            !world.ledger.marks.includes('burned-camp/car-back-at-town') &&
+            world.ledger.history.some(row => row.type === 'mark' && row.key === 'burned-camp/car-with-sump' && row.night === night)) {
+          // A same-day reload must not put the held car back in the player's hands.
+          const distant = context.placeAt(['rats-nest', 'held-car'], record.cast);
+          if (distant) {
+            requests.push({type: 'threadTaken', id: thread.id, held: true, parkOnly: true, car: distant});
+            state.parkedAtNest = true;
+          }
+        } else if (thread === burnedCamp) state.parkedAtNest = previous.parkedAtNest;
         if (record.end && thread !== runaway) {
           if (thread.id === TOLL_ID) {
             const service = tollAfterEnd(threadContext, record, decision.interact);

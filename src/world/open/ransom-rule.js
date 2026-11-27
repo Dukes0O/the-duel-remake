@@ -45,3 +45,27 @@ export function ransomEffects(terms) {
     ...(terms.embers ? [{type: 'stock', stock: 'embers', by: -terms.embers}] : []),
   ];
 }
+
+const BUY_BACK = 'burned-camp/bought-back';
+const SURCHARGE_CLAIMED = 'burned-camp/next-ransom-claimed';
+const SURCHARGE_PAID = 'burned-camp/next-ransom-paid';
+const surchargeMark = encounter => SURCHARGE_CLAIMED + '/' + encounter;
+
+// Claim the increase at the next captivity. Escaping or making a deal uses up
+// that encounter's claim just as paying it does. Reloading keeps the claim.
+export function claimRoadRatsSurcharge(world, encounter) {
+  if (!world.ledger.marks.includes(BUY_BACK) || world.ledger.marks.includes(SURCHARGE_CLAIMED)) return [];
+  return [{type: 'mark', id: SURCHARGE_CLAIMED}, {type: 'mark', id: surchargeMark(encounter)}];
+}
+
+export function roadRatsPrice(ransom, world, ask, encounter) {
+  const extra = world.ledger.marks.includes(surchargeMark(encounter)) && !world.ledger.marks.includes(SURCHARGE_PAID) ? 50 : 0;
+  const priced = extra ? {...ransom, price: ransom.price.map(row => ({...row, scrap: row.scrap + extra}))} : ransom;
+  return {...ransomTerms(priced, world, ask), extra};
+}
+
+export function settleRoadRatsRansom(ransom, world, ask, encounter) {
+  const terms = roadRatsPrice(ransom, world, ask, encounter);
+  return [...ransomEffects(terms),
+    ...(terms.extra ? [{type: 'mark', id: SURCHARGE_PAID}] : [])];
+}

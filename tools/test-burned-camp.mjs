@@ -138,7 +138,7 @@ assert.match(ashQuestion.lines[0].words, /somebody tipped that ash onto a fire t
 
 for (const [beat, point, question, decision, outcome] of [
   ['grey-pen', placeForThread('grey-camp', cast), 'grey-watch', 'grey-offer', 'grey-offer'],
-  ['home', placeForThread(['tin-town', 'hearth'], cast), 'who-moss', 'raise-party', 'rescue'],
+  ['home', placeForThread(['tin-town', 'hearth'], cast), 'who-moss', 'raise-party', 'party'],
 ]) {
   const world = apply(started, `fixture/${beat}`, [{type: 'thread', id, to: beat, cast: {...cast, enemy: 'ash-men'}}]);
   const view = {openRoam: true, checkpointsEnabled: true};

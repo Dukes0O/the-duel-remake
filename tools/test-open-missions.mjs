@@ -255,7 +255,7 @@ for (const branch of ['alone', 'drain', 'home']) {
   assert.equal(chosen.open.world.scrap, world.scrap);
 }
 
-// `home` has had ways out since OPEN-ASH-FOLD put the Ash Men's choices there; OPEN-BURNED-RESCUE builds the Road Rats'.
+// `home` leads to the party, a buyback or a decision to leave the growers.
 // OPEN-BURNED-PEN gave `alone` and `drain` theirs (26 November 2026), so the walk finds no beat without a way out.
 assert.deepEqual(walkThread(burned).faults, []);
 

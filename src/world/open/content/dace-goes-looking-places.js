@@ -35,6 +35,11 @@ export const DACE_LANDMARKS = Object.freeze(['deep-sign', 'hangar', 'crows-step'
 const person = id => ({id, figure: id, home: 'tin-town', talk: id});
 export const DACE_CAST = Object.freeze(['dace', 'moss', 'rell', 'wim', 'auntie-solder'].map(person));
 
+export function daceIsAway(world) {
+  const record = world.open.threads[DACE_ID];
+  return !!record && !record.end && ['away', 'call', 'late', 'search', 'together'].includes(record.beat);
+}
+
 export function dacePeople(world, morning, mission) {
   const record = world.open.threads[DACE_ID];
   if (!record) return [];

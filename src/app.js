@@ -1849,7 +1849,7 @@ export class App {
         });
         if (kept?.ok) {
           arrived.profile = kept.profile;
-          result.routineGas = {gas: measured.load, embers: delivery.embers};
+          result.routineGas = {gas: delivery.gas, embers: delivery.embers};
         } else {
           console.warn('The gas run finished without a usable gas delivery. Keeping the earned run result.',
             {road: runDefinition.road, reason: kept?.reason || 'The measurement is missing, invalid or for another night.'});

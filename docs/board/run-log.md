@@ -1814,3 +1814,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge OPEN-T-DACE (Codex, laptop handoff): Dace Goes Looking; rule 23 set and open-land suites 10/10 passed
 - FAR-JOBS-1 lane janitor: no unrelated removals; generated build output recycled, no evidence kept; no asset growth or size-target change proposed.
 - Merge FAR-JOBS-1 (Codex, laptop lane): the goat, Too High, the Long Shaft as pure rules behind far-jobs; rule 23 set and touched-file suites passed
+- Merge OPEN-BURNED-RESCUE (Codex cloud): the rescue party, the road home and where the growers live; card suites, laptop-only suites and burned-camp scenarios passed
