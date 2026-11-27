@@ -403,16 +403,6 @@ tasks:
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
 
-  - id: LAB-UX-FIXES
-    title: "Lab: routine fixes from the 11 November survey"
-    owner: "claude"
-    lane: "UI"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/LAB-LOOK.md"
-
   - id: EVERBURN-RUN-AT-TOWN
     title: "Old Smoke is seen before he is fought, and his last fight is a run at Tin Town"
     owner: "claude"
