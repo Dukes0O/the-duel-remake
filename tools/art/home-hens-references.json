@@ -1,0 +1,24 @@
+{
+  "use": "reference only, never runtime: real photographs shown beside the game's pictures on the HOME-GROUND-LOOK-1 sheets",
+  "source": "Wikimedia Commons, fetched without an account by tools/art/home-hens-sheet.py --fetch; public domain, CC0 or CC BY, each credited on the sheet",
+  "directory": "C:/Users/kyleb/dev/art-library/home-ground/reference",
+  "width": 960,
+  "photos": [
+    {"file": "lohmann-brown-side.jpg", "title": "File:Lohmann brown 2.jpg", "author": "Arie M. den Toom", "licence": "CC BY 4.0",
+     "caption": "Lohmann Brown hen, a brown laying hybrid", "crop": [0.0, 0.0, 1.0, 1.0]},
+    {"file": "lohmann-brown-peck.jpg", "title": "File:Lohmann brown 1.jpg", "author": "Arie M. den Toom", "licence": "CC BY 4.0",
+     "caption": "Lohmann Brown pecking", "crop": [0.0, 0.0, 1.0, 1.0]},
+    {"file": "hen-on-nest.jpg", "title": "File:Bondi, 8 - Hen, laying lunch - Bondi, 2011.jpg", "author": "Newtown grafitti", "licence": "CC BY 2.0",
+     "caption": "A hen sitting in a straw nest", "crop": [0.0, 0.0, 1.0, 1.0]},
+    {"file": "brown-hens-tin.jpg", "title": "File:Mullumbimby Community Garden 16.jpg", "author": "Aliceinthealice", "licence": "CC0",
+     "caption": "Brown hens and small tin shelters", "crop": [0.1, 0.25, 0.9, 0.95]},
+    {"file": "tin-shed.jpg", "title": "File:Tin-roof.JPG", "author": "Billbeee", "licence": "CC BY 2.5",
+     "caption": "A small rusted corrugated-iron shed", "crop": [0.0, 0.0, 1.0, 1.0]},
+    {"file": "crate-board.jpg", "title": "File:Board from a wooden shipping crate with stencil \"Glass With Care\" and hand lettering \"Bath B(?)\" LCCN2010651505.jpg",
+     "author": "Library of Congress", "licence": "Public domain", "caption": "A stencilled board from an old crate", "crop": [0.0, 0.0, 1.0, 1.0]},
+    {"file": "crates.jpg", "title": "File:Wooden crates for supermarkets.jpg", "author": "Fumikas Sagisavas", "licence": "CC0",
+     "caption": "Slatted wooden crates", "crop": [0.0, 0.0, 0.6, 0.6]},
+    {"file": "brown-egg.jpg", "title": "File:Brown chicken egg.jpg", "author": "Garitzko", "licence": "Public domain",
+     "caption": "A brown hen's egg", "crop": [0.0, 0.0, 1.0, 1.0]}
+  ]
+}

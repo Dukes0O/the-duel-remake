@@ -622,3 +622,15 @@ the game.
   foot mover walks the land's one surface, so the pipe could not be walked, and a scenario that set the fighter's
   position hid it. Give the passage its own floor and walls inside it; do not cut the land above it open. Walk every
   route with the real foot mover (OPEN-PEN-DRAIN-BANK, 27 November 2026).
+
+### Living things made from a wildlife model (HOME-GROUND-LOOK-1, 27 November 2026)
+
+- **Rust drawn as round patches reads as polka dots.** Radial-gradient blots on the coop's tin looked painted on. Draw rust
+  where a noise field passes a threshold, browner where it is thick, so that its edges are ragged (`coopTinTexture` in
+  `src/world/open/looks/home-hens-look.js`).
+- **A colour that looks wrong against the dark plain can be right.** The hen looked fox-orange on the cracked ground, yet her
+  median pixel was within a few points of the photographed hen's. Measure before recolouring; tone only what is off (here
+  her sunlit highlights).
+- **A breed made from another breed's model is limited by its bones.** Widening, deepening and repainting the slim village
+  hen made a brown laying hen that reads, but two rounds of reshaping moved her little towards a plump Lohmann. When the
+  body's proportions are the fault, build the breed's own body with the same bones and clips, not more vertex moves.
