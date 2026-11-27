@@ -151,6 +151,8 @@ const generators = [
     glb: ['public/assets/models/wasteland/scablands/mrs-vane.glb'] },
   { script: 'tools/blender/sea-camp.py', args: [], candidate: true, budget: 25000, maxBytes: 2*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/sea-camp.glb'] },
+  { id: 'ww-art-far', script: 'tools/blender/far-side.py', args: [], candidate: true, budget: 60000, maxBytes: 3*1024*1024,
+    glb: ['public/assets/models/wasteland/far-side/far-side.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
   { script: 'tools/blender/bowl-crush.py', args: [], glb: ['public/assets/models/wasteland/bowl/crush.glb'], budget: 20000 },

@@ -510,6 +510,19 @@ the game.
 - A recipe that holds a whole family builds one piece into a trial file for its sheet (`--only` in `town-works.py`), so that a trial never overwrites the file the game loads, and renders several sheets in one Blender job (`--render sawmill:3,heaps:1`), which takes one heavy-job turn and not five.
 - Review views of one part of a building (a shed inside its yard, a tree behind a wall) show only that part: name the parts to show, or the walls stand in the way.
 
+### A wet green place, built with no new photographs (WW-ART-FAR, 26 November 2026)
+
+- **A family can be built when nobody can generate photographs.** Codex's picture tool was out of quota. The Far Side's kit (`tools/blender/far-side.py`) wears photographs the repository already holds (the dam's stone, the town's timber and canvas, the borer's and the handcart's photo sets, the walkers, the goat's coat) and pictures drawn in the recipe (slate, moss, grass, spruce boughs, wool, bark). Look through both `textures` folders before deciding that a card needs new pictures.
+- **A cut-out of fine strokes vanishes at distance.** Spruce boughs drawn needle by needle average below the cut-off once the card is small on the screen, and the tree becomes a bare pole. Close the picture up wherever it is dense and keep only its edge ragged (`thicken` in `far-side.py`), and set the cut-off at about 0.4.
+- **A cut-out the importer leaves blended is missing from Blender's mist pass,** and takes the sky's mist: the same bare poles, for a different reason. In a review scene with mist, set every cut-out material to `DITHERED` after import.
+- **Dye paint, not rust, by brightness and strength of colour.** The borer's yellow and its rust are 7 degrees of hue apart, too close to separate; the paint is brighter and more saturated. PRUDENCE's green came from a test on saturation and value with only a loose test on hue.
+- **Dye a person's clothes below the neck row and keep skin by a colour test.** That gave Maud and Wick oilskins from the town walkers' photo sets without the green face of a whole-picture recolour. A hat built in code sits on the brow: 6 cm below the top of the head it covered the eyes.
+- **The walker rig has no photo for a person's left.** Faces there took the overhead photo and smeared. Add a fifth view that reads the profile photo turned over (`left` in `build_person`), and keep it out of the carve's tests. The walkers face +Z.
+- **A game animal's skin is split along every seam of its picture.** Moved along its normals as it comes from the file, a fleece tears into strips. Join the vertices first (`take_animal`), then reshape; horns and a beard are then separate pieces that can be found and taken off.
+- **A wall that leans in 2 cm for each metre is a toy.** It reads as a tent at mill height. Old rubble walls lean well under 1 cm a metre; corner stones standing 4 cm proud do more for the outline.
+- **Water and wet slate at low roughness mirror the review sky and come out white.** Judge colour at a roughness of 0.3 or more and leave the wet shine to the game's rain.
+- **A part far longer than 15 m cannot be judged whole from 15 m.** Frame the review picture on the stretch a player looks at, and fit the lens to the part's own points, not to its bounding box, or the subject is small in the frame again.
+
 ### Keeping the work
 
 - A job that loses its task after its memory is compacted reads
