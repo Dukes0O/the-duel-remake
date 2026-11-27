@@ -1810,3 +1810,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 2026-11-27 OPEN-BURNED-PEN (Claude, Opus session): the burned camp's Scene 4 and the ransom; independent review's three faults fixed in the session; Claude settled three conflicts with Lights. Guards and 24 open-land suites passed 29/29; build passed.
 - 2026-11-27 OPEN-TALK-CHOICES (Codex cloud): merged in the evening batch at 76d730838.
 - 2026-11-27 OPEN-SITE-LOOKS (Codex cloud): merged in the evening batch at 92f03402f.
+- 2026-11-27 QA-OPEN-DOORS-WASH (Codex on the laptop): test-open-doors began at dawn, when the Runaway can begin and its handprint clue at the wash door sends the boy into the shed; the fixture now starts in daytime, assertions unchanged. Open Doors, roam, apprentice, routines and Runaway suites passed.
