@@ -11,6 +11,10 @@ alone and once inside a four-job browser stage.
 
 ## Claude answers
 
+27 November 2026, round 4 verdict and round 5 method (Claude): Skyline is done, 5 of 5 clean alone. P4 passed 0 of 5 because its intact samples are measured through browser frame labels, displaced by about 19,000 to 24,000 frames after the handshake. Apply round 3's existing decision to window placement: the witness decides, not the labels. Map each cue's audio-clock start through the witness source frame into recorded samples. Labels remain clock notes only. Keep every window length, sound threshold, required cue and sound limit unchanged. Add a clean light fixture with labels offset 20,000 frames; keep a truly absent cue failing.
+
+Round 5 checks: focused fixtures; five P4 solos, one Skyline control, then p4-audio, skyline-audio, arsenal-core-audio and arsenal-wave1-audio together at jobs 4, even if a run fails. Count heavy Node/Blender jobs before each launch and wait for zero. Acceptance: P4 at least 4/5, Skyline control clean, four-job stage clean or exact reasons classified as capture disturbed, rerun alone. If P4 still fails, record reasons and stop. Run the lane tier since 5373d4a5c at jobs 2 and the build; hand back for review without pushing.
+
 27 November 2026, round 3 verdict and round 4 method (Claude): a clear improvement. Skyline passed 4 of 5 alone through the worklet; run 4's wrong labels were correctly noted without failing, and run 5 failed honestly as a disturbed startup. Not merged: P4 has not run in the browser since its continuity rule changed.
 
 Round 4 decision: confirm the worklet is running, then capture witness source frame 0 before starting Skyline's throttle timeline or P4's segments. Retain the first witness blocks. Trim any silence before frame 0; missing or repeated samples after frame 0 still fail. Keep all sound checks and limits unchanged. Count heavy jobs before each launch and wait for zero; run all five solos per scenario even after failures, then the four-job stage once. At least 4 of 5 per scenario must pass; record exact disturbed-capture reasons. If P4 falls below 4 of 5, stop with the reasons and do not try another idea.
@@ -110,3 +114,23 @@ P4 4: first silent block label 25,472; next block label 46,208, expected 27,520.
 P4 5: first silent block label 28,416; next block label 51,072, expected 30,464. Source frame 0 is 384 samples into that next block. First-light 0.3-second interface RMS is 0.000000 at the nominal window and 0.101858 after subtracting the startup label offset. All 10 segment handshakes and all retained witnesses pass. Segment startup silence counts: 2432, 2688, 2816, 2432, 2304, 2432, 2944, 2432, 2304, 2304 frames.
 
 Round 4 focused fixtures: 30 pass, including all damaged-capture cases. Added proof of arbitrary leading silence, retained frame-0 blocks, and missing/repeated/changed samples after frame 0. Final lane/build results are in the change note. Game code, sound limits, race rules and world signatures are unchanged; no sound cue was added. Raw evidence is removed after recording these measurements. Handed back for Claude's review, without a push or merge.
+
+## Round 5 measurements - 27 November 2026
+
+Acceptance met: P4 passed 5/5 alone, Skyline passed its solo control, and all four scenarios passed together at jobs 4. Every launch counted zero competing heavy Node/Blender jobs. Mid-run checks of P4 solos 1, 3, 4, 5 and the four-job stage found only their own outermost job. No holds were open. All ten scenario reports confirm memory-only saves and zero browser warnings/errors.
+
+P4 now schedules the independent witness on an explicit audio-clock sample boundary. Each block's source identity maps its PCM into that timeline; every cue window, full-tail check and segment boundary uses those witnessed coordinates. Browser labels remain clock notes only. Window lengths, signal thresholds, required cues and all sound limits are unchanged. The 20,000-frame wrong-label fixture finds the light cleanly and rejects both the label-based window and genuinely absent light PCM. All earlier damaged-capture fixtures still fail.
+
+| Run | Result | P4 mix clock notes | First light RMS / onset delay |
+| --- | --- | --- | --- |
+| P4 solo 1 | PASS; 19 cues, genuine three-lap finish | 16 | 0.106018 / -0.001 s |
+| P4 solo 2 | PASS; 19 cues, genuine three-lap finish | 20 | 0.106018 / -0.001 s |
+| P4 solo 3 | PASS; 19 cues, genuine three-lap finish | 11 | 0.106018 / -0.001 s |
+| P4 solo 4 | PASS; 19 cues, genuine three-lap finish | 34 | 0.106018 / -0.001 s |
+| P4 solo 5 | PASS; 19 cues, genuine three-lap finish | 24 | 0.106018 / -0.001 s |
+| Skyline solo control | PASS; intact witness, both blowoffs | - | - |
+| Four-job stage | PASS: P4, Skyline, Arsenal core, Arsenal wave 1 | 32 | - |
+
+Skyline solo control: -13.04 LUFS / -9.00 dBTP, no clock notes. Four-job Skyline: -13.07 LUFS / -9.23 dBTP; intact witness despite labels +512 frames. Advisory loudness remains advisory, as before. No disturbed capture occurred in this round.
+
+All six P4 races have fingerprint `17dc04326e09e5c1c4ad9c5239d030c5b263e404f83a4796b3d443088089c08a` and no normalized replay differences; each measured 19 native cue events. Checks and cleanup are recorded in the change note. No game code, sound cue, save or race rule changed. Handed back for Claude review; no push or merge.

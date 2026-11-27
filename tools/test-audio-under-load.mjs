@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {inspectNativeCallbacks} from './scenarios/p4-audio.mjs';
+import {inspectNativeCallbacks, witnessedChunkFrame, checkNativeCueWindow} from './scenarios/p4-audio.mjs';
 import {inspectSkylineCapture, validateSkylineAudio} from './scenarios/skyline-audio.mjs';
 import {createCaptureWitness, inspectCaptureWitness, inspectCaptureStartup} from './audio/capture-witness.mjs';
 
@@ -133,4 +133,20 @@ check('P4 accepts intact partial segment boundary chunks', () => {
   assert.equal(inspectNativeCallbacks(c, interval).complete, true);
   c.callbacks.splice(3, 1);
   assert.equal(inspectNativeCallbacks(c, interval).complete, false);
+});
+
+check('P4 light window follows witness time with labels offset by 20000 frames', () => {
+  const rate = 48000, sourceStartFrame = 96000, sourceOffset = 4096;
+  const c = {frame: sourceStartFrame + sourceOffset + 20000, witness: reference.slice(sourceOffset, sourceOffset + 2048)};
+  const start = witnessedChunkFrame(c, sourceStartFrame, reference);
+  assert.equal(start, sourceStartFrame + sourceOffset);
+  const left = new Float32Array(2048);
+  // Silence, then a distinct attack, at the cue's actual source frame.
+  left.fill(.1, 512, 1024);
+  const ui = {left, right: left, sampleRate: rate, audioStartSec: start / rate};
+  const event = {kind: 'light', duration: .03, audioTimeSec: (sourceStartFrame + sourceOffset + 512) / rate};
+  assert.ok(checkNativeCueWindow(ui, ui, event, false).interfaceRms > .00001);
+  const absent = {...ui, left: new Float32Array(2048), right: new Float32Array(2048)};
+  assert.throws(() => checkNativeCueWindow(absent, ui, event, false), /Native race cue absent.*light/);
+  assert.throws(() => checkNativeCueWindow({...ui, audioStartSec: c.frame / rate}, ui, event, false), /Native race cue absent.*light/);
 });

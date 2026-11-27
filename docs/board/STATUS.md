@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-27T22:10:38.937Z
+Observed at: 2026-11-27T22:52:15.774Z
 
-Observation commit: 3e02c850d4cce42ccbc67c36fbefa942be7c1a2c
+Observation commit: 5373d4a5cbd3e63ba2e3e3b6ccb449bb60c5ce87
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 3e02c850d4cce42ccbc67c36fbefa942be7c1a2c
+Integration HEAD: 5373d4a5cbd3e63ba2e3e3b6ccb449bb60c5ce87
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -38,7 +38,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/bowl-course | 22 | unknown | true | false | unknown |
 | codex/bowl-freestyle-nights | 6 | unknown | true | false | unknown |
 | codex/bowl-hud | 7 | unknown | true | false | unknown |
-| codex/bowl-rivals-2 | 6 | unknown | true | false | unknown |
+| codex/bowl-rivals-2 | 7 | unknown | true | false | unknown |
 | codex/car-art-bully | 21 | unknown | false | false | unknown |
 | codex/crew-story-join | 21 | unknown | true | false | unknown |
 | codex/mule-rails | 21 | unknown | true | false | unknown |
@@ -59,8 +59,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/ww-art-crew | 21 | unknown | true | false | unknown |
 | codex/ww-art-dam | 21 | unknown | true | false | unknown |
 | codex/ww-art-mule | 22 | unknown | false | false | unknown |
-| codex/ww-art-rail | 20 | unknown | true | false | unknown |
-| codex/ww-art-whites | 20 | unknown | true | false | unknown |
+| codex/ww-art-rail | 21 | unknown | true | false | unknown |
+| codex/ww-art-whites | 21 | unknown | true | false | unknown |
 | codex/ww-boss | 22 | unknown | true | false | unknown |
 
 ## Unmerged branches for idle review
@@ -92,7 +92,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 117,594,746 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 2,041,295 B | +0 B | 5,000,000 B |
 | All `public/` | 759,795,884 B | +0 B | unavailable |
-| Git objects | 1,159,236,608 B | +73,728 B | unavailable |
+| Git objects | 1,159,436,288 B | +199,680 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups

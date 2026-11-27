@@ -1836,3 +1836,5 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge HOME-GROUND-LOOK-1 (Claude session): Home Ground's coop, nest box and egg pass; the hen goes to round 5
 - Merge HOME-GROUND-2 (Claude session): hens, nest boxes, the real clock and the board at the gate
 - Janitor QA-AUDIO-UNDER-LOAD round 4: read-only lane audit; other lanes skipped, no uncertain removals; owned evidence, build and temp recycled; status refreshed.
+
+27 November 2026 ? QA-AUDIO-UNDER-LOAD round 5 janitor: read-only audit and size review; existing candidates left for their owners, external lane inspections skipped, own evidence/build/temp recycled.
