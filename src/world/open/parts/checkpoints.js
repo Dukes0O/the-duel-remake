@@ -1,10 +1,27 @@
 // OPEN-CHECKPOINTS: a crossing, the one encounter it may bring, and the way home from a wreck.
 import {isHeld} from '../holds.js';
 import {isTrue} from '../facts.js';
-import {OPEN_CHECKPOINTS, drawCheckpoint, friendlyCamps, gap, isArmed} from '../checkpoint-rule.js';
+import {OPEN_CHECKPOINTS, drawCheckpoint, friendlyCamps, gap, isArmed, mastheadWatches} from '../checkpoint-rule.js';
 import {startEncounter, stepEncounter, stepRecovery} from '../encounter-rule.js';
 import {haulerStop, haulerMarked} from '../content/stranded-hauler-places.js';
+import voice from '../../../story/threads/content/radio-hill-voice.js';
+import {RADIO_ID, radioMarked} from '../content/radio-hill-voice-places.js';
 import hauler from '../../../story/threads/content/stranded-hauler.js';
+
+const MASTHEAD_LEAD_SECONDS = 60;
+function mastheadPreview(world, view, point, camps, inside) {
+  if (inside || !point || view.onFoot || !world.ledger.made.some(id => id.startsWith('watch/ships-'))) return null;
+  const speed = Math.max(0, view.carSpeedMph ?? 0) / 2.236936;
+  const heading = view.checkpointHeading ?? point.heading;
+  if (!speed || !Number.isFinite(heading)) return null;
+  const early = OPEN_CHECKPOINTS.filter(row => mastheadWatches(row, world) && isArmed(row, world, camps))
+    .map(row => ({row, distance: gap(point, row.position)}))
+    .filter(({row, distance}) => distance <= row.radius + speed * MASTHEAD_LEAD_SECONDS &&
+      Math.cos(Math.atan2(row.position.x - point.x, row.position.z - point.z) - heading) > .65)
+    .sort((a, b) => a.distance - b.distance);
+  return early.find(({row}) => drawCheckpoint(row, world, (world.open.crossings[row.id] ?? 0) + 1,
+    {difficulty: view.difficulty, camps}))?.row.position ?? null;
+}
 
 const REST_NIGHT = 'checkpoint/rest-night-';
 function hearthBanked(world, events) {
@@ -60,6 +77,8 @@ export const checkpointsPart = {
       requests.push(...(out.requests ?? []));
       return {state: next, choices, requests};
     }
+    if (world.ledger.made.some(id => id === 'watch/ships-salt-road' || id === 'watch/ships-ridge-road'))
+      next.masthead = !held && !banked && !encounter ? mastheadPreview(world, view, point, camps(), inside) : null;
     if (held || banked || encounter || !inside || inside.id === state.inside) return {state: next, choices, requests};
     const haulerRecord = world.open.threads[hauler.id];
     if (haulerRecord && !haulerRecord.end && !['between', 'gate'].includes(haulerRecord.beat) &&
@@ -74,6 +93,12 @@ export const checkpointsPart = {
       const {encounter, requests: start} = startEncounter(inside, number, draw, {...point, heading: view.checkpointHeading ?? point.heading});
       next.encounter = encounter;
       requests.push(...start);
+      if (draw.group === 'road-rats' && radioMarked(world, RADIO_ID + '/took-the-set') &&
+          !radioMarked(world, RADIO_ID + '/later/took-the-set')) {
+        const row = voice.later.find(item => item.id === 'took-the-set').lines[0];
+        requests.push({type: 'say', lineId: 'open/' + RADIO_ID + '/took-the-set', text: row.as + ': ' + row.words});
+        effects.push({type: 'mark', id: RADIO_ID + '/later/took-the-set'});
+      }
       if (draw.group === 'road-rats' && haulerMarked(world, 'paid-the-trap') && !haulerMarked(world, 'said/rats-remember-the-payer')) {
         requests.push({type: 'say', lineId: 'open/hauler/remembered-payer',
           text: "Sump's rider: " + hauler.later.find(row => row.id === 'rats-remember-the-payer').lines[0].words});

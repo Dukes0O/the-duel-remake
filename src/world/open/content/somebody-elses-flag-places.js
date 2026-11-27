@@ -3,10 +3,13 @@ import story from '../../../story/threads/content/somebody-elses-flag.js';
 import {LAND} from '../../scablands-names.js';
 import {nameRow} from '../register.js';
 import {isTrue} from '../facts.js';
+import {landSite} from './sites.js';
 
 export const FLAG_ID = story.id;
 export const FLAG_WELL = 'sweet-seep';
-export const FLAG_WHERE = ['dead-mall', -850, -450];
+// The company, its people and its solids stand on the Sweet Seep's own place in the land, which has one position
+// (sites.js). A copy of the old position here stayed behind when the site moved at the merge of 26 November.
+export const FLAG_WHERE = landSite(FLAG_WELL).where[0].at;
 export const FLAG_SPOTS = Object.freeze({
   table: {x: 0, z: 28}, pell: {x: 0, z: 24}, rope: {x: -8, z: 24}, finch: {x: -11, z: 25},
   peg: {x: -18, z: 12}, reeds: {x: -13, z: -7}, board: {x: 8, z: 21}, stakes: {x: 20, z: 5},

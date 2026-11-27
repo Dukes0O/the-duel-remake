@@ -5,6 +5,7 @@ import {sees} from '../scablands-ways.js';
 import {isTrue} from './facts.js';
 import {feudOf} from './open-record.js';
 import {FEUD_WORDS, SITES} from './register.js';
+import {RADIO_MARK} from './content/radio-hill-voice-places.js';
 import {CHECKPOINTS, ROAD_GROUPS} from './content/checkpoints.js';
 
 export const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -64,11 +65,17 @@ export function isArmed(checkpoint, world, camps) {
     !camps.some(camp => gap(checkpoint.position, camp.position) <= TIN_TOWN_CLEARANCE);
 }
 
+export function mastheadWatches(checkpoint, world) {
+  const road = checkpoint.at?.road;
+  const id = road === 'salt-road' ? 'watch/ships-salt-road' : road === 'ridge-spur' ? 'watch/ships-ridge-road' : null;
+  return id !== null && world.ledger.made.includes(id);
+}
+
 const feudRank = (world, group) => Math.max(0, FEUD_WORDS.indexOf(feudOf(world, group)));
 export function arrivalChance(checkpoint, world, camps) {
   const {position, feud, chance} = checkpoint;
   const weighted = chance + (feud ? .10 * feudRank(world, feud) : 0) + .03 * world.ledger.roadWord
-    - (towerSees(world, position) ? .15 : 0) - (camps.some(camp => gap(position, camp.position) <= 2000) ? .10 : 0);
+    - (towerSees(world, position) ? .15 : 0) - (mastheadWatches(checkpoint, world) ? .15 : 0) - (camps.some(camp => gap(position, camp.position) <= 2000) ? .10 : 0);
   return Math.max(.05, Math.min(.75, weighted));
 }
 
@@ -92,7 +99,7 @@ export function drawCheckpoint(checkpoint, world, crossing, {difficulty, camps =
   const countWeights = intent.length === 1 ? [75, 25] : RIDER_CAR_WEIGHTS[feud];
   const count = checkpoint.cars[0] + weightedIndex(countWeights, draw, 'count');
   const weights = [...(intent[feud] ?? intent[0])];
-  if (group === 'ash-men' && world.open.car.dirt >= .5) {
+  if (group === 'ash-men' && world.open.car.dirt >= .5 || group === 'road-rats' && world.ledger.marks.includes(RADIO_MARK.peace)) {
     weights[1] += weights[0] / 2;
     weights[0] /= 2;
   }

@@ -299,7 +299,8 @@ function armoredVehicleContact(duel, {a, b, nx, nz, end, width, length, specA, s
       const armorRemoved = applyRamArmorDamage(duel, victim, impactMph,
         {spiked, owner: combatOwnerId(duel, attacker), contactFace: victimFace,
           contactPoint: hitPosition,
-          damageMultiplier: modifiers.multiplier, ...(dvDamage ? {dvMph: dvOf(victim)} : {})});
+          damageMultiplier: modifiers.multiplier * (victim === duel.state ? attacker.openMissionRamDamageScale ?? 1 : 1),
+          ...(dvDamage ? {dvMph: dvOf(victim)} : {})});
       const sawHit = armorRemoved > 0 && (modifiers.sideSaws || modifiers.warlordMove);
       // This existing bounded spark pool is already drawn by combat effects.
       // Ordinary contacts never add a burst or a new simulation field.

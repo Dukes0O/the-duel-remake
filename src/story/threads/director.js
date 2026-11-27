@@ -9,12 +9,15 @@ const occasionId = (night, occasion) => `threads/director/${night}/${occasion}`;
 export const visitId = (id, night) => `threads/visited/${id}/night-${night}`;
 
 export function directThreads(threads, context, occasion) {
-  const {world, holds = NO_HOLDS, view = {}, placeAt, allowsCast, startsEffects} = context;
+  const {world, holds = NO_HOLDS, view = {}, placeAt, allowsCast, allowsStart, dormant, startsEffects} = context;
   const {night, marks, stocks} = world.ledger;
   const {lastNight, outingAvailable = true} = view;
   if (isHeld(holds, 'signs') || (Number.isFinite(lastNight) && night >= lastNight) || marks.includes(occasionId(night, occasion))) return [];
 
-  const records = threads.map(thread => ({thread, record: world.open.threads[thread.id]}));
+  const records = threads.map(thread => {
+    const record = world.open.threads[thread.id];
+    return {thread, record: dormant?.(thread, record) ? null : record};
+  });
   const started = records.filter(({record}) => record);
   const start = world.open.journal.findLast(row => row.type === 'thread' && row.before === null &&
     started.some(({thread}) => thread.id === row.key));
@@ -25,7 +28,7 @@ export function directThreads(threads, context, occasion) {
   const ready = [];
   const effects = [];
   for (const {thread, record} of records) {
-    if (record || (Number.isFinite(lastNight) && night + (thread.sign.nightsNeeded ?? 1) > lastNight)) continue;
+    if (record || allowsStart?.(thread) === false || (Number.isFinite(lastNight) && night + (thread.sign.nightsNeeded ?? 1) > lastNight)) continue;
     const outing = Object.values(thread.beats).some(beat => beat.mission?.outing);
     if (Number.isFinite(lastNight) && outing && (stocks.embers <= 1 || !outingAvailable)) continue;
     const rule = threadRule(thread, context);

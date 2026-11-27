@@ -28,6 +28,8 @@ import {pageFunctions, pageSource} from './scenarios/open-somebody-elses-flag.mj
 import {Duel} from '../src/game.js';
 import {openRoamJob} from '../src/world/open/roam-job.js';
 import {placeActor} from '../src/arena/arena-event.js';
+import {LAND} from '../src/world/scablands-names.js';
+import {flagSolids} from '../src/world/open/content/somebody-elses-flag-places.js';
 
 assert.equal(FEATURE_STATES['story-choices'], 'dev');
 assert.equal(createFeatureFlags({qa: false, storage: null, search: ''}).enabled('story-choices'), false);
@@ -231,6 +233,7 @@ const visual = createSignView(), beforeDraw = structuredClone(sign.open);
 visual.update({open: sign.open}, table, 3);
 const tower = visual.group.getObjectByName('The Sweet Seep');
 assert.equal(tower.visible, true);
+assert.ok(Math.hypot(tower.position.x - well.x, tower.position.z - well.z) < .01, 'The tower is drawn on the well.');
 assert.ok(tower.getObjectByName('The white flag'));
 assert.equal(tower.children[0].visible, true);
 visual.update({open: {...sign.open, parts: {...sign.open.parts, threads: {...sign.open.parts.threads,
@@ -241,6 +244,18 @@ assert.deepEqual(sign.open, beforeDraw, 'Drawing never changes the rule state.')
 visual.update({open: {...sign.open, parts: {...sign.open.parts, threads: {places: {checkpointsEnabled: false}}}}}, table, 4);
 assert.equal(tower.visible, false, 'The site scenery is also behind the switch.');
 visual.dispose();
+
+// The company, its people and its drill stand on the Sweet Seep itself. Until OPEN-T-FLAG-2 they stood 780 m away, where
+// the site was before it moved, while its talks and clues were at the new place.
+{
+  const posts = Object.fromEntries(flagPeople(initial()).map(row => [row.id, LAND.at(...row.routine.day.at)]));
+  const near = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+  for (const [id, spot] of [['miss-pell', 'pell'], ['flag-crew-1', 'pickup-left'], ['flag-crew-2', 'pickup-right'],
+    ['flag-crew-3', 'stakes'], ['marigold', 'rope'], ['finch', 'finch']])
+    assert.ok(near(posts[id], locate(['sweet-seep', spot])) < .01, id + ' stands at the Sweet Seep.');
+  const drill = flagSolids(initial(), scablandsSurfaceHeightAt).find(row => row.id === 'flag-drill');
+  assert.ok(near(drill, well) < .01, 'The drill stands on the well.');
+}
 
 // The native adapter receives the same reusable fight request as the pure runner.
 const duel = new Duel({seed: 1234, featureFlags: {'hidden-road': true, 'story-choices': true, arsenal: true, 'scablands-realism': true}});

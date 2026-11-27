@@ -37,8 +37,11 @@ const at = place => place.position ?? place;
 const talk = (id, set, options = {}) => ({id, kind: 'talk', scene: NIGHT_2_SCENES[id], set, ...options});
 const walk = (id, place, what) => ({id, kind: 'reach', onFoot: true, place, radius: place.radius, what});
 
+const NIGHT_2_NUMBER = 2;
+export const night2Banked = ledger => (ledger?.night ?? 0) > NIGHT_2_NUMBER;
+
 export function night2Opening(seed) {
-  return {seed: seed >>> 0, night: 2, embers: 4};
+  return {seed: seed >>> 0, night: NIGHT_2_NUMBER, embers: 4};
 }
 
 const START_AFTER_ROAM = 'night-2/start-after-roam';
@@ -46,7 +49,7 @@ const START_AFTER_ROAM = 'night-2/start-after-roam';
 function night2StartingLedger(saved) {
   if (!saved) return null;
   const opening = night2Opening(saved.seed);
-  if (saved.night === opening.night) return saved;
+  if (!night2Banked(saved)) return saved.night === opening.night ? saved : null;
 
   // The first telling after roam records where the chapter began. Rebuild just
   // the preceding choices for a replay, using the same fact rules as replay

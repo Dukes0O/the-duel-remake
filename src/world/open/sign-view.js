@@ -18,6 +18,9 @@ import {RUNAWAY_PLACES} from './content/runaway-places.js';
 import {sitePosition} from './site-rule.js';
 import burnedCamp from '../../story/threads/content/burned-camp.js';
 import {createHaulerLook} from './looks/stranded-hauler-look.js';
+import {createLightsLook} from './looks/lights-on-the-whites-look.js';
+import {RADIO_ID, POCKET_ID, RADIO_MARK, radioMarked, radioPlace, pocketWrecks} from './content/radio-hill-voice-places.js';
+import {heistLampPose} from './content/mission-kinds.js';
 import {lookoutHeading} from './content/mission-kinds.js';
 import {TOLL_GATE, TOLL_ID, TOLL_WRECKS, tollPlace} from './content/mall-road-toll-places.js';
 import {createFlagSiteView} from './looks/somebody-elses-flag-look.js';
@@ -202,6 +205,86 @@ const disposeMeshes = root => {
   root.removeFromParent();
 };
 
+function radioBearings(group, positionAt) {
+  const props = new THREE.Group();
+  group.add(props);
+  const lamp = (name, color) => {
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(.38, 8, 5), new THREE.MeshBasicMaterial({color}));
+    glow.name = name;
+    glow.visible = false;
+    group.add(glow);
+    return glow;
+  };
+  const red = lamp('Radio Hill red lamp', 0xff3526), white = lamp('The Pocket white lamp', 0xfff4d2);
+  let placedSeed = null, beam = null;
+  const placeProps = pocket => {
+    for (const mesh of [...props.children]) disposeMeshes(mesh);
+    if (!pocket) return;
+    for (const row of pocketWrecks(pocket)) props.add(lookoutHeap(row));
+    const wheels = new THREE.Mesh(new THREE.CylinderGeometry(.49, .49, 1.02, 12, 4),
+      new THREE.MeshStandardMaterial({color: 0x34302d, roughness: 1}));
+    wheels.name = 'The Pocket stack of wheels';
+    positionAt(wheels, radioPlace([POCKET_ID, 'wheels'], null, pocket));
+    wheels.position.y += .51;
+    props.add(wheels);
+  };
+  return {
+    update(open, here, drawnShift) {
+      const state = open?.parts.threads;
+      const record = state?.places?.checkpointsEnabled && open.world.open.threads[RADIO_ID];
+      const seed = record ? open.world.open.landSeed : null;
+      const hill = record && sitePosition('radio-hill', seed), pocket = record && sitePosition(POCKET_ID, seed);
+      if (seed !== placedSeed) { placeProps(pocket); placedSeed = seed; }
+      props.visible = !!pocket && distanceBetween(here, pocket) < 700;
+      red.visible = white.visible = false;
+      if (beam) beam.visible = false;
+      if (!record || !state.radioDark) return;
+      const time = open.seconds;
+      const age = time - (state.progress?.[RADIO_ID]?.blinkedAt ?? -Infinity);
+      const blink = age < 3 ? age % 1 < .38 : time % 2 < 1.35;
+      const fuel = open.world.ledger.history.findLast(row => row.key === RADIO_MARK.fuel);
+      const broken = fuel?.type === 'settle' && fuel.choiceId.includes('/broken/');
+      red.visible = blink && !broken && distanceBetween(here, hill) < 4000;
+      if (red.visible) {
+        positionAt(red, hill, drawnShift);
+        red.position.y += 25;
+        red.scale.setScalar(Math.max(1, distanceBetween(here, hill) / 260));
+      }
+      const silenced = record.end === 'second-set' || radioMarked(open.world, RADIO_MARK.peace);
+      white.visible = !silenced && distanceBetween(here, pocket) < 4000;
+      if (white.visible) {
+        const at = radioPlace([POCKET_ID, 'lamp'], hill, pocket);
+        positionAt(white, at, drawnShift);
+        white.position.y += 2.5;
+        const distance = distanceBetween(here, pocket);
+        white.scale.setScalar(Math.max(1, distance / 260));
+        const mission = open.parts.missions?.active;
+        if (distance < 75 && mission?.id === RADIO_ID + '/take-set' && mission.state.route.lamps.length && !mission.state.delivering) {
+          const {rule} = mission.mission;
+          const lamp = heistLampPose(mission.state.route.lamps[0], mission.state.elapsed);
+          if (!beam) {
+            beam = new THREE.SpotLight(0xfff4d2, 210, rule.range, rule.coneDegrees * Math.PI / 360, .3, 1.35);
+            beam.name = 'The Pocket lamp beam';
+            group.add(beam, beam.target);
+          }
+          beam.visible = true;
+          beam.distance = rule.range;
+          beam.position.copy(white.position);
+          const x = at.x + Math.sin(lamp.heading) * rule.range, z = at.z + Math.cos(lamp.heading) * rule.range;
+          beam.target.position.set(x, scablandsSurfaceHeightAt(x, z) + (drawnShift?.(x, z) ?? 0), z);
+        }
+      }
+    },
+    dispose() {
+      placeProps(null);
+      disposeMeshes(red);
+      disposeMeshes(white);
+      props.removeFromParent();
+      if (beam) { beam.removeFromParent(); beam.target.removeFromParent(); beam.dispose(); }
+    },
+  };
+}
+
 function marketStall(pitch, index, stake) {
   const group = new THREE.Group();
   group.name = (stake ? 'Market stake ' : 'Market stall ') + pitch;
@@ -259,6 +342,7 @@ export function createSignView() {
   group.add(hauler.root);
   const flagSite = createFlagSiteView();
   group.add(flagSite.group);
+  const radio = radioBearings(group, (mesh, point, shift) => positionAt(mesh, point, shift));
   const smoke = new Map();
   const clues = runawayClues();
   for (const {mesh} of clues) group.add(mesh);
@@ -271,7 +355,7 @@ export function createSignView() {
   group.add(campHeap);
   const heaps = new Map();
   const stalls = new Map();
-  let dryPumpLook, tollLook, tollBuggy, tollLamp;
+  let dryPumpLook, lightsLook, tollLook, tollBuggy, tollLamp;
   const flare = lookoutFlare();
   group.add(flare);
   let trail = null, trailKey = '', flareSeq = 0, flareBorn = 0, lastJob = null;
@@ -304,6 +388,7 @@ export function createSignView() {
         }
       }
       const open = worldJob?.open;
+      radio.update(open, here, drawnShift);
       const market = open?.world.open.threads['market-day'];
       const marketActive = market && open.parts.missions?.active?.thread === 'market-day';
       const placing = market?.beat === 'stakes' && !market.end && !!open.parts.threads?.market;
@@ -429,6 +514,11 @@ export function createSignView() {
       if (view.dryPumpEnabled && open.world.open.threads['dry-pump'] && !dryPumpLook)
         dryPumpLook = makeDryPumpLook(group);
       dryPumpLook?.update(open, here, (place, cast) => placeForThread(place, cast, view), drawnShift);
+      if (view.checkpointsEnabled && !lightsLook) {
+        lightsLook = createLightsLook();
+        group.add(lightsLook.group);
+      }
+      lightsLook?.update(open, signs.find(({sign}) => sign.kind === 'lights'), here, drawnShift);
       const columns = signs.filter(({sign, at}) => sign.kind === 'smoke' && at);
       const kept = new Set(columns.map(({id}) => id));
       for (const [id, mesh] of smoke) if (!kept.has(id)) disposeSmoke(id, mesh);
@@ -465,6 +555,8 @@ export function createSignView() {
     dispose() {
       hauler.dispose();
       flagSite.dispose();
+      lightsLook?.dispose();
+      radio.dispose();
       if (tollBuggy) disposeMeshes(tollBuggy);
       if (tollLamp) disposeMeshes(tollLamp);
       if (tollLook) {

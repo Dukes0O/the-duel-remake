@@ -1256,42 +1256,52 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-T-RADIO
-    title: "Open Scablands: The Voice on Radio Hill comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-RADIO.md"
-
-  - id: OPEN-APPRENTICE-RUN-2
-    title: "Open Scablands: the kiln and the apprentice start after Night 2, and a gas run's pay is never lost (from the review)"
+  - id: OPEN-APPRENTICE-RUN-3
+    title: "Open Scablands: a gas run keeps its earnings when storage cannot be read (from the review)"
     owner: "codex"
     model: "sol"
     lane: "SIM"
     size: "S"
-    status: "building"
-    claimed_by: "Codex on the laptop (started by Claude), 26 November 2026"
+    status: "ready"
     needs: []
     locks: [busy-game-files, save-shape]
     flag: "story-choices"
-    details: "docs/board/cards/OPEN-APPRENTICE-RUN-2.md"
+    details: "docs/board/cards/OPEN-APPRENTICE-RUN-3.md"
 
-  - id: OPEN-T-LIGHTS
-    title: "Open Scablands: Lights on the Whites comes into the game (its sign, places, people and missions)"
+  - id: OPEN-SITE-LOOKS
+    title: "Open Scablands: Radio Hill and the Bus Ring drawn in play by their finished looks, not stand-ins"
     owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
+    model: "astra"
+    lane: "RENDER"
+    size: "S"
     status: "ready"
     needs: []
     locks: []
     flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-LIGHTS.md"
+    details: "docs/board/cards/OPEN-SITE-LOOKS.md"
+
+  - id: OPEN-TALK-CHOICES
+    title: "Open Scablands: a talk offers its choices from the start; asking stays optional, as the design says"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-TALK-CHOICES.md"
+
+  - id: QA-OPEN-DOORS-WASH
+    title: "test-open-doors: walking into Moss's wash shed after the ash sack leaves 'inside' empty, in the integration folder only"
+    owner: "codex"
+    model: "sol"
+    lane: "QA"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-OPEN-DOORS-WASH.md"
 
   - id: OPEN-T-DACE
     title: "Open Scablands: Dace Goes Looking comes into the game (its sign, places, people and missions)"
@@ -1300,23 +1310,10 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: [OPEN-T-LIGHTS]
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-DACE.md"
-
-  - id: OPEN-LOOK-RADIO-HILL-2
-    title: "Open Scablands: Radio Hill, round 2 from Claude's verdict (the red lamp and the hut read at night, the mast from far)"
-    owner: "codex"
-    model: "astra"
-    lane: "ART"
-    size: "S"
-    status: "building"
-    claimed_by: "Claude (Opus session), 26 November 2026"
     needs: []
     locks: []
     flag: "story-choices"
-    details: "docs/board/cards/OPEN-LOOK-RADIO-HILL-2.md"
+    details: "docs/board/cards/OPEN-T-DACE.md"
 
   - id: AGENTS-REWRITE
     title: "AGENTS.md rewritten around three lines: works and better merges, broken waits, the rest is the next card (Kyle, 26 November)"
