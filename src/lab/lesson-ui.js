@@ -46,10 +46,9 @@ export function createLessonUi({section, stage, host, app, onBack, onChallenge, 
     const word = event.target.closest?.('[data-word]'); if (word) { openMeaning(word.dataset.word); return; }
     const action = event.target.closest?.('[data-teach]')?.dataset.teach;
     if (!action) return;
-    const [kind] = action.split(':');
     onCue?.('lab.tick');
-    if (kind === 'meaning-close') { hover = null; paint(); return; }
-    if (kind === 'notebook-close') { notebook = false; paint(); return; }
+    if (action === 'meaning-close') { hover = null; paint(); return; }
+    if (action === 'notebook-close') { notebook = false; paint(); return; }
   }
   function close() {
     classroom?.dispose(); classroom = null; hover = null; notebook = false; last = ''; panel.hidden = true; section.classList.remove('lab-has-lesson');
