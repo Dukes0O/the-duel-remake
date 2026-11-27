@@ -19,26 +19,5 @@
     "since": "2026-11-25",
     "card": "QA-AUDIO-BASELINE-CONTROL",
     "cause": "Baseline control is not repeatable at the unchanged threshold."
-  },
-  {
-    "stage": "browser",
-    "name": "everburn-job2",
-    "since": "2026-11-22",
-    "card": "QA-NIGHT-22-NOV",
-    "cause": "Browser evaluation failed: Uncaught Error: The existing exit action did not create a fighter.\n    at <anonymous>:8:48\n    at <anonymous>:9:5\nThe review needs all five pictures."
-  },
-  {
-    "stage": "browser",
-    "name": "ships-decks",
-    "since": "2026-11-22",
-    "card": "QA-NIGHT-22-NOV",
-    "cause": "Browser evaluation failed: Uncaught Error: The fighter did not leave the car.\n    at <anonymous>:17:32\n    at <anonymous>:26:5"
-  },
-  {
-    "stage": "browser",
-    "name": "machine-borer",
-    "since": "2026-11-23",
-    "card": "QA-NIGHT-22-NOV",
-    "cause": "Scenario failures:\n- machine-borer-mouth-20m: Mabel is in the camera view\n- machine-borer-mouth-20m: tunnel lining or portal is in the camera view\n- machine-borer-mouth-20m: picture centre is not a flat colour\n- machine-borer-mouth: Mabel is in the camera view\n- machine-borer-mouth: tunnel lining or portal is in the camera view\n- machine-borer-mouth: picture centre is not a flat colour"
   }
 ]
