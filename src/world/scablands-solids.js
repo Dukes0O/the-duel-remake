@@ -21,7 +21,7 @@ import {everburnPropSolids} from './everburn-props.js';
 import {riverFor, stepsWayFor} from './scablands-regions.js';
 import {ROAD_NET, roadNet} from './scablands-road.js';
 import {BRAND_RULE} from './jobs/brand-rule.js';
-import {hasSiteServices, radioHillSolids} from './open/site-rule.js';
+import {busRingSolids, inSiteClearing, radioHillSolids, siteLookStage} from './open/site-rule.js';
 import {glasshouseSolids} from './open/looks/glasshouse-look.js';
 
 // A wheel's height: anything this tall or less is driven over, anything taller is solid.
@@ -207,9 +207,9 @@ export function brazierSolid(spot, index) {
 
 // Raw solid rows for the open-land request. The job grid adds their floor and collision data.
 export function siteSolidRows(id, at, stage) {
-  if (stage !== 'burned' && !hasSiteServices(stage)) return [];
+  if (!siteLookStage(id, stage)) return [];
   const local = id === 'glasshouse' ? glasshouseSolids(stage === 'burned' ? stage : 'camp')
-    : id === 'radio-hill' ? radioHillSolids() : [];
+    : id === 'radio-hill' ? radioHillSolids(stage) : id === 'bus-ring' ? busRingSolids() : [];
   return local.map(row => ({...row, x: at.x + row.x, z: at.z + row.z, placeId: id}));
 }
 
@@ -233,6 +233,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
     near(ax, az, bx, bz, pad, includeCars = true) {
       found.length = 0;
       for (const solid of baseGrid.near(ax, az, bx, bz, pad)) {
+        if (solid.kind === 'boulder' && inSiteClearing(this.siteClearings, solid.x, solid.z, solid.halfX)) continue;
         if (!roomShells?.has(solid.id)) found.push(solid);
       }
       for (const solid of this.braziers) found.push(solid);

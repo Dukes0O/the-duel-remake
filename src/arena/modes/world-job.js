@@ -2191,6 +2191,9 @@ export function stepWorldJob(duel, dt) {
       greyWithAsh: worldJob.open.parts.buildings?.ash === true,
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? []}, dt);
     worldJob.ashHit = false;
+    const clearings = openStep.open.parts.sites?.clearings;
+    if (clearings !== worldJob.open.parts.sites?.clearings)
+      (worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid)).siteClearings = clearings;
     worldJob.open = openStep.open;
     if (openStep.leave) worldJob.roamExit = openStep.leave;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave,

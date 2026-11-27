@@ -966,9 +966,10 @@ export function createScablandsScene(course,options={}){
       syncTunnels();
       if(tunnelLining?.userData.look&&locate(state))lightTunnel(state);
       // The detailed ground follows the player, and what stands in a place is drawn and updated only while the player is near it.
+      const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       if(things)things.setFallen(course.fallenFenceIds);
       if(locate(state)){
-        placeNearGround(here.x,here.z);things?.update(here.x,here.z);tracks?.update(here.x,here.z);
+        placeNearGround(here.x,here.z);things?.update(here.x,here.z,worldJob?.open?.parts.sites?.clearings);tracks?.update(here.x,here.z);
         nearTinTown=within(tinTownPlace);nearWell=within(everburnPlace);
         tinTownGate.visible=tinTownShacks.visible=chimneySmoke.group.visible=forge.group.visible=nearTinTown;
         forge.watch(here.x,here.z);
@@ -979,7 +980,6 @@ export function createScablandsScene(course,options={}){
         // Pieces past 1.2 km from the car are not drawn: the town is a speck there and the Scablands' own scenery stands beyond.
         townArt?.update({viewer:{x:here.x,y:scablandsSurfaceHeightAt(here.x,here.z)+2,z:here.z},fogFar:1200,hour:8+Math.floor(townLifeClock/1.875)%10,dt:presentationDt});
       }
-      const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       // OPEN-DOORS: the occupied sheds replace these two shells in roam.
       tinTownShacks.userData.occupied.visible = !worldJob?.serviceSheds;
       brandLamps.update(worldJob);

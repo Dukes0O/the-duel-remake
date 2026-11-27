@@ -8,13 +8,21 @@ import {CAMP_SITES, LAND_SITES, landSite} from '../src/world/open/content/sites.
 import {goodwillEffects} from '../src/world/open/goodwill-rule.js';
 import {canFindSite, distance, residentPose, sitePosition, siteSpot, visitNeed} from '../src/world/open/site-rule.js';
 import {SITES_PEOPLE} from '../src/world/open/content/people-sites.js';
-import {createSiteView, siteLook} from '../src/world/open/site-view.js';
+import {createSiteView} from '../src/world/open/site-view.js';
+import {RADIO_HILL_SPOTS, BUS_RING_SPOTS} from '../src/world/open/content/site-look-data.js';
+import {RADIO_HILL_BUDGET, RADIO_HILL_LAYOUT, radioHillSolids} from '../src/world/open/looks/radio-hill-look.js';
+import {BUS_RING_BUDGET, BUS_RING_LAYOUT, busRingSolids, busRingWeld} from '../src/world/open/looks/bus-ring-look.js';
+import {RATS_NEST_BUDGET, RATS_NEST_LAYOUT} from '../src/world/open/looks/rats-nest-look.js';
+import {installSiteGround} from '../src/world/open/site-ground.js';
+import {sitesPart} from '../src/world/open/parts/sites.js';
+import {createFixedThingsView, createSmallThingsView} from '../src/world/scablands-things-view.js';
+import {thingSolidGrid} from '../src/world/scablands-things.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET, distanceToNet} from '../src/world/scablands-road.js';
 import {roadWay, nearestOnLine, sampleLine} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt as heightAt} from '../src/world/scablands-ground.js';
 import {stepMover} from '../src/world/scablands-movers.js';
-import {solidsNear} from '../src/world/scablands-solids.js';
+import {createJobSolidGrid, solidsNear} from '../src/world/scablands-solids.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
 import {HILLS} from '../src/world/scablands-height.js';
@@ -266,7 +274,140 @@ for (const site of LAND_SITES) for (const {at} of site.where) {
   view.update({open}, at, 8);
   assert.equal(camp.userData.glint.visible, false);
   view.dispose();
-  assert.equal(siteLook('rats-nest', 'den'), null);
+}
+
+const seed = 12;
+const hill = sitePosition('radio-hill', seed), ring = sitePosition('bus-ring', seed), nest = sitePosition('rats-nest', seed);
+const stepSites = (open, point, phase = 'day', enabled = true) => stepOpenLand(open, {
+  player: {position: point}, partOfDay: phase, checkpointsEnabled: enabled,
+}, .5, [sitesPart]);
+
+function checkBudget(group, budget) {
+  let draws = 0, triangles = 0;
+  group.traverse(object => {
+    if (object.isMesh || object.isLine || object.isPoints) draws++;
+    if (object.isMesh) triangles += (object.geometry.index ?? object.geometry.attributes.position).count / 3;
+  });
+  assert.ok(draws > 0 && draws <= budget.draws, group.name + ' draws: ' + draws);
+  assert.equal(triangles, group.userData.triangles);
+  assert.ok(triangles <= budget.triangles, group.name + ' triangles: ' + triangles);
+}
+
+{
+  let step = stepSites(begin(seeded(seed)), hill);
+  const view = createSiteView({loadAsset: () => Promise.reject(Error('memory fixture'))});
+  const draw = (position, seconds) => view.update({open: step.open}, position, seconds);
+  const grid = createJobSolidGrid();
+  function checkSolids(id, position, reviewed) {
+    const rows = step.requests.find(request => request.type === 'solids' && request.id === id).solids;
+    assert.deepEqual(rows, reviewed.map(row => ({...row, x: position.x + row.x, z: position.z + row.z, placeId: id})));
+    grid.setOpenSolids(id, rows);
+  }
+  checkSolids('radio-hill', hill, radioHillSolids());
+  checkSolids('bus-ring', ring, busRingSolids());
+  for (const [id, layout, copy, origin] of [
+    ['radio-hill', RADIO_HILL_LAYOUT, RADIO_HILL_SPOTS, hill], ['bus-ring', BUS_RING_LAYOUT, BUS_RING_SPOTS, ring],
+  ]) {
+    assert.deepEqual(copy, layout.spots);
+    for (const [name, local] of Object.entries(layout.spots)) {
+      const x = origin.x + local.x, z = origin.z + local.z;
+      assert.deepEqual(siteSpot(id, seed, name), {x, z, y: heightAt(x, z)}, id + '/' + name);
+    }
+  }
+  const throughDoor = ['door', 'hut', 'set'].map(name => siteSpot('radio-hill', seed, name));
+  const path = sampleLine(throughDoor, .15);
+  for (let i = 1; i < path.length; i++) assert.equal(stepMover(path[i - 1], path[i], {grid}).blocked, false);
+  const wall = {...hill, x: hill.x - 9, z: hill.z + 6};
+  assert.equal(stepMover(wall, wall, {grid}).blocked, 'solid');
+  draw(hill, 3);
+  const camp = view.group.getObjectByName('Radio Hill');
+  checkBudget(camp, RADIO_HILL_BUDGET);
+  assert.equal(camp.userData.stage, 'camp');
+  assert.equal(camp.userData.lights.some(light => light.visible), false);
+  const before = camp.userData.rotor.rotation.z;
+  step = stepSites(step.open, hill, 'dusk');
+  draw(hill, 4);
+  assert.equal(view.group.getObjectByName('Radio Hill'), camp, 'dusk updates the existing mast');
+  assert.notEqual(camp.userData.rotor.rotation.z, before);
+  assert.ok(camp.userData.lights[0].visible);
+
+  step = stepSites({...step.open, world: changed(step.open.world, 'check/second-set', {type: 'made', id: 'radio-hill/second-set'})}, hill);
+  checkSolids('radio-hill', hill, radioHillSolids('second-set'));
+  draw(hill, 5);
+  assert.equal(camp.parent, null);
+  const second = view.group.getObjectByName('Radio Hill');
+  assert.equal(second.userData.stage, 'second-set');
+  checkBudget(second, RADIO_HILL_BUDGET);
+  draw(ring, 7.5);
+  const buses = view.group.getObjectByName('The Bus Ring');
+  assert.ok(buses.visible);
+  checkBudget(buses, BUS_RING_BUDGET);
+  assert.equal(buses.userData.weldLight.intensity, 75 * busRingWeld(7.5));
+  draw(ring, 10);
+  assert.equal(buses.userData.weldLight.intensity, 75 * busRingWeld(10));
+
+  const restore = installSiteGround(seed);
+  try {
+    step = stepSites(step.open, nest);
+    draw(nest, 11);
+    const den = view.group.getObjectByName("The Rats' Nest");
+    assert.equal(den.userData.stage, 'day');
+    assert.equal(den.userData.flames.uniforms.uTime.value, 11);
+    checkBudget(den, RATS_NEST_BUDGET);
+    step = stepSites(step.open, nest, 'dark');
+    draw(nest, 12);
+    const night = view.group.getObjectByName("The Rats' Nest");
+    assert.equal(den.parent, null);
+    assert.equal(night.userData.stage, 'night');
+    assert.equal(night.userData.flames.uniforms.uTime.value, 12);
+    checkBudget(night, RATS_NEST_BUDGET);
+  } finally { restore(); }
+
+  step = stepSites(step.open, ring, 'day', false);
+  draw(ring, 13);
+  assert.equal(buses.visible, false);
+  assert.equal(step.open.parts.sites.clearings, undefined);
+  assert.deepEqual(step.requests.find(r => r.type === 'solids' && r.id === 'bus-ring').solids, []);
+  view.dispose();
+}
+
+{
+  const clearings = stepSites(begin(seeded(seed)), ring).open.parts.sites.clearings;
+  const small = createSmallThingsView({seed: 1989, jobStarts: []});
+  const instances = () => small.group.children.flatMap(mesh => Array.from({length: mesh.count}, (_, i) => {
+    const m = mesh.instanceMatrix.array;
+    return [mesh.name, m[i * 16 + 12], m[i * 16 + 14]];
+  }));
+  let removed = 0;
+  for (const [point, layout] of [[ring, BUS_RING_LAYOUT], [hill, RADIO_HILL_LAYOUT], [nest, RATS_NEST_LAYOUT]]) {
+    const clearing = clearings.find(p => p.x === point.x && p.z === point.z);
+    assert.equal(clearing.radius, layout.radius);
+    small.update(point.x, point.z);
+    const before = instances();
+    const outside = before.filter(([, x, z]) => Math.hypot(x - point.x, z - point.z) > layout.radius);
+    small.update(point.x, point.z, clearings);
+    assert.deepEqual(instances(), outside);
+    removed += before.length - outside.length;
+    small.update(point.x, point.z);
+    assert.deepEqual(instances(), before);
+  }
+  assert.ok(removed > 0, 'real seeded scatter was cleared');
+  small.dispose();
+
+  const rocks = [0, BUS_RING_LAYOUT.radius + 4].map((offset, i) =>
+    ({id: 'rock-' + i, x: ring.x + offset, z: ring.z, size: 2, heading: 0}));
+  const fixed = {pylons: [], fences: [], telegraphs: [], boulders: rocks};
+  const large = createFixedThingsView(fixed);
+  const grid = createJobSolidGrid(thingSolidGrid(fixed));
+  for (const mask of [undefined, clearings, undefined]) {
+    grid.siteClearings = mask;
+    large.update(ring.x, ring.z, mask);
+    const drawn = large.group.getObjectByName('Scablands boulder');
+    assert.equal(drawn.count, mask ? 1 : 2);
+    const hits = grid.near(ring.x, ring.z, rocks[1].x, ring.z).map(row => row.id);
+    assert.deepEqual(hits.sort(), mask ? ['rock-1'] : ['rock-0', 'rock-1']);
+  }
+  large.dispose();
 }
 
 for (const camp of CAMP_SITES)

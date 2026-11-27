@@ -20,7 +20,7 @@ export const LAND_SITES = Object.freeze(requireSound([
   site('radio-hill', [['tin-town', -2245, -992], ['tin-town', -1400, 1100], ['ridge', -750, -550]],
     {foundWithin: 120, tell: 'mast', tellWithin: 1400, radioWithin: 800, leader: 'hetty', meeting: 'door', warns: true}),
   // OPEN-BURNED-SCOUT owns discovery and the look of the den.
-  site('rats-nest', [['boneyard', -150, -900]], {foundWithin: 120, tell: 'tyre-smoke'}),
+  site('rats-nest', [['boneyard', -150, -900]], {foundWithin: 120, tell: 'tyre-smoke', tellWithin: 1400}),
   site('grey-camp', [['boneyard', 185, -1520]], {foundWithin: 95, tell: 'tyre-smoke'}),
   site('sweet-seep', [['dead-mall', -1050, 300]], {foundWithin: 160, tell: 'green-patch', tellWithin: 700}),
   site('bus-ring', [['ridge', -665, -345]], {foundWithin: 135, tell: 'lamp', tellWithin: 850,

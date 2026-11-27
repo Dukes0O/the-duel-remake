@@ -2,6 +2,7 @@
 // measured from the named places in the site table.
 import voice from '../../../story/threads/content/radio-hill-voice.js';
 import {LAND} from '../../scablands-names.js';
+import {RADIO_HILL_SPOTS} from './site-look-data.js';
 import {HILLS} from '../../scablands-height.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {threadRule} from '../../../story/threads/thread-rule.js';
@@ -60,7 +61,10 @@ export function radioPlace(place, hill, pocket) {
   const [site, spot] = place;
   if (site === POCKET_ID && Object.hasOwn(SPOTS, spot)) return offset(pocket, ...SPOTS[spot]);
   if (site !== 'radio-hill') return null;
-  if (spot === 'hut') return offset(hill, -7, 7.8);
+  if (Object.hasOwn(RADIO_HILL_SPOTS, spot)) {
+    const {x, z} = RADIO_HILL_SPOTS[spot];
+    return offset(hill, x, z);
+  }
   return radioRamp(hill).find(row => row.name === spot)?.point ?? null;
 }
 

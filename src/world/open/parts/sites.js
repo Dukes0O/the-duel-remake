@@ -7,13 +7,12 @@ import {FEUD_GROUPS, nameOf} from '../register.js';
 import {isTrue} from '../facts.js';
 import {isHeld} from '../holds.js';
 import {isFound, stageOf} from '../open-record.js';
-import {BUS_RING} from '../content/market-day-places.js';
 import {CAMP_SITES, LAND_SITES} from '../content/sites.js';
 import {brokenMark} from '../content/needs.js';
 import {meetingMark, siteGreeting, siteScene} from '../content/talk-sites.js';
 import {RADIO_ID, RADIO_MARK, radioMarked} from '../content/radio-hill-voice-places.js';
 import {goodwillEffects} from '../goodwill-rule.js';
-import {bearing, canFindSite, distance, hasSiteServices, namedPick, residentPose, sitePosition, siteSpot, visitNeed} from '../site-rule.js';
+import {bearing, canFindSite, distance, hasSiteServices, namedPick, residentPose, siteClearings, siteLookStage, sitePosition, siteSpot, visitNeed} from '../site-rule.js';
 
 const VISIT_RADIUS = 42, REPAIR_RADIUS = 2.25, FAVOUR_RADIUS = 1500;
 const ASH_DUST = .6;
@@ -282,23 +281,30 @@ export const sitesPart = {
     let near = null;
     if (view.checkpointsEnabled) for (const site of LAND_SITES.filter(row => row.kind === 'well'))
       discover(site, world, view.onFoot, point, sitePosition(site.id, world.open.landSeed), choices, events, requests);
-    const layout = CAMP_SITES.map(site => stageOf(world, site.id));
+    const enabled = !!view.checkpointsEnabled;
+    const secondSet = world.ledger.made.includes('radio-hill/second-set');
+    const layout = CAMP_SITES.map(site => {
+      if (!enabled && (site.id === 'radio-hill' || site.storyChoices || site.storyOnly)) return null;
+      return siteLookStage(site.id, stageOf(world, site.id), secondSet);
+    });
     const lastLayout = previous.landSeed === world.open.landSeed ? previous.layout : null;
     for (const [index, site] of CAMP_SITES.entries()) {
-      if ((site.storyChoices || site.storyOnly) && !view.checkpointsEnabled) continue;
       const position = sitePosition(site.id, world.open.landSeed);
-      if (lastLayout?.[index] !== layout[index])
-        requests.push({type: 'solids', id: site.id, solids: site.id === 'bus-ring' && hasSiteServices(layout[index]) ?
-          BUS_RING.structures.map(row => ({...row, id: site.id + '/' + row.id, x: position.x + row.x, z: position.z + row.z})) :
-          siteSolidRows(site.id, position, layout[index])});
+      if (lastLayout?.[index] !== layout[index] && (lastLayout?.[index] || layout[index]))
+        requests.push({type: 'solids', id: site.id, solids: siteSolidRows(site.id, position, layout[index])});
+      if ((site.storyChoices || site.storyOnly) && !enabled) continue;
       const found = isFound(world, site.id);
       if (!found && discover(site, world, view.onFoot, point, position, choices, events, requests))
         state.nextLineAt = seconds + SPEECH_SECONDS;
       else listenAtRadio(site, world, state, position, view, holds, events, queue);
-      if (found && distance(position, point) <= VISIT_RADIUS && hasSiteServices(layout[index])) near = site;
+      if (found && distance(position, point) <= VISIT_RADIUS && hasSiteServices(stageOf(world, site.id))) near = site;
     }
     state.layout = layout;
-    state.marketSites = !!view.checkpointsEnabled;
+    state.marketSites = enabled;
+    state.denStage = stageOf(world, 'rats-nest');
+    if (enabled !== previous.marketSites || state.denStage !== previous.denStage ||
+        !lastLayout || layout.some((stage, index) => stage !== lastLayout[index]))
+      state.clearings = enabled ? siteClearings(world) : undefined;
     state.landSeed = world.open.landSeed;
     if (state.site !== near?.id || previous.night !== world.ledger.night) {
       if (state.repair || state.need) requests.push({type: 'marker', place: null});
