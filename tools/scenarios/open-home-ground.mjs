@@ -141,6 +141,7 @@ export async function run(context) {
   now = await home();
   if (!now.record || now.record.pieces.length) fail('Her talk did not give him a bare ground.', now.record);
   await wait('hudShows', '.story-talk', false);
+  if (!await evaluate('marker')) fail('His ground was not marked for him to find.');
   report.name = now.record.name;
 
   // ---- Out of Tin Town's gate: sprint, then the burst. ----------------------------------------------------------
@@ -163,7 +164,6 @@ export async function run(context) {
   await evaluate('advance', 6.2);
   await wait('hudShows', '.world-hud-burst', false);
   const first = point(10, .8);
-  if (!await evaluate('marker')) fail('His ground was not marked for him to find.');
   if (await walk(first, .2) > .4) fail('He could not walk onto his ground.');
   if (await evaluate('marker')) fail('The marker stayed after he reached his ground.');
   await evaluate('face', Math.PI);
