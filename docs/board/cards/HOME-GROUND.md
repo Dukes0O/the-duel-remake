@@ -32,3 +32,6 @@ the hens arriving to gathering a day's 13 eggs into the store. Seven things for 
 only near the board and update them after gathering; place a nest box a step ahead of him, not at his feet; draw Moss
 at the crate; fix the hen name box's sentence about the board; hide the weapon panel while the hammer is out; leave out
 "You were only away for a moment"; make the hens easier to find. Step 2 is ready for Kyle's and Gratian's try.
+
+**27 November 2026, after the drive:** the seven fixes are card HOME-GROUND-2-DRIVE (Codex Sol); the hen's art round 5
+is HOME-HEN-BODY (Claude). Step 3 (builders) is cut after Kyle's and Gratian's try of step 2.

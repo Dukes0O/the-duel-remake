@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-Claude's card, small. In the night of 26 November 2026, `p4-audio` (a native sample frame 128 frames out, segment 7)
+Codex's card (Sol), small; Claude's until 27 November 2026. In the night of 26 November 2026, `p4-audio` (a native sample frame 128 frames out, segment 7)
 and `skyline-audio` (integrated loudness -12.8 LUFS against an advisory -16) failed in the browser stage, which runs
 four jobs at once; both passed rerun alone on the same code. Find what the load changes (a dropped or doubled audio
 callback under four browsers, the loudness measure on a clipped capture) and make each check say plainly when its

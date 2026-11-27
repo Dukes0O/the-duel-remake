@@ -1186,20 +1186,36 @@ tasks:
 
   - id: QA-AUDIO-UNDER-LOAD
     title: "p4-audio and skyline-audio fail inside the night's four-job browser stage and pass alone"
-    owner: "claude"
+    owner: "codex"
+    model: "sol"
     lane: "QA"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex Sol, laptop lane, 27 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/QA-AUDIO-UNDER-LOAD.md"
+
+  - id: HOME-GROUND-2-DRIVE
+    title: "Home Ground step 2: the seven fixes from Claude's drive by hand"
+    owner: "codex"
+    model: "sol"
+    lane: "UI"
+    size: "S"
+    status: "building"
+    claimed_by: "Codex Sol, laptop lane, 27 November 2026"
+    needs: []
+    locks: []
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-GROUND-2-DRIVE.md"
 
   - id: HOME-HEN-BODY
     title: "Home Ground art, round 5: the brown hen's own round, low body (the coop, box and egg pass)"
     owner: "claude"
     lane: "ART"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude Fable session, 27 November 2026"
     needs: []
     locks: []
     flag: "home-ground"
