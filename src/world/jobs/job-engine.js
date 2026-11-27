@@ -19,13 +19,20 @@ import { stepHaul } from './steps/haul.js';
 import { stepDouse } from './steps/douse.js';
 import {stepDispatch} from './steps/dispatch.js';
 import {stepHeliceiling} from './steps/heliceiling.js';
+import {stepTow} from './steps/tow.js';
+import {stepRepair} from './steps/repair.js';
+import {stepFence} from './steps/fence.js';
+import {stepClear} from './steps/clear.js';
+import {stepHold} from './steps/hold.js';
 import { stepLines, stepLineTriggers } from './step-lines.js';
 import { stepRoam } from '../open/roam-step.js';
 
 const runners = { 'rider-fight': stepRiderJob, reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
   onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore,
   board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle, haul: stepHaul, douse: stepDouse, talk: stepTalk, 'night-2-action': stepNight2Action,
-  roam: stepRoam, dispatch:stepDispatch, heliceiling:stepHeliceiling };
+  roam: stepRoam, dispatch:stepDispatch, heliceiling:stepHeliceiling,
+  // TOWN-JOBS-2: the town's jobs that are not fights (docs/WASTELAND_TOWN.md section 11).
+  tow:stepTow, repair:stepRepair, fence:stepFence, clear:stepClear, hold:stepHold };
 
 function clone(value) {
   if (Array.isArray(value)) return value.map(clone);

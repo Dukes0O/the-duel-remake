@@ -322,6 +322,26 @@ function playHaulEvent(duel, worldJob, event, point) {
   duel.emit({arenaTell:{id:'town-haul', targetId:'player', seconds:0, cue, position:{...(event.position ?? point)}}});
 }
 
+// TOWN-JOBS-2: the tow, repair, fence, clear and hold steps (src/world/jobs/steps/). Each of their events names its own sound
+// cue and, where the player should read it, a sentence; a finished step's `result` is kept by the step's id for the town
+// (src/world/jobs/town-jobs.js). The weight a step puts on the truck (`loadKg`, `tankL`) is the truck's weight. The things a step
+// has on the ground (wrecks, a towed van, fence bundles) are shown as rings until a scene card draws them: view-only.
+const TOWN_STEP_KINDS = new Set(['tow', 'repair', 'fence', 'clear', 'hold']);
+const townStepHasRats = step => !!(step?.rats || step?.stops?.some(stop => stop.rats));
+function playTownStepEvent(duel, worldJob, step, event, point) {
+  if (event.callout) duel._storyCallout(event.callout, 2.6, true);
+  if (event.result) (worldJob.townResults ??= {})[step.id ?? step.kind] = event.result;
+  if (event.cue) duel.emit({arenaTell:{id:'town-job', targetId:'player', seconds:0, cue:event.cue,
+    position:event.position ? {x:event.position.x, y:scablandsSurfaceHeightAt(event.position.x, event.position.z), z:event.position.z} : {...point}}});
+}
+function markTownStepThings(duel, requests) {
+  const markers = duel.state.arena.markers ?? [];
+  const rings = requests.filter(request => request.type === 'things').flatMap(request => request.things.filter(thing => !thing.off && !thing.flat)
+    .map(thing => ({kind:'ring', id:`town-thing-${request.id}-${thing.id}`, color:'warn', radius:thing.radius ?? 3, x:thing.x, z:thing.z,
+      y:scablandsSurfaceHeightAt(thing.x, thing.z)})));
+  duel.state.arena.markers = [...markers.filter(marker => !String(marker.id).startsWith('town-thing-')), ...rings];
+}
+
 export function createWorldJob(definition) {
   if (!definition) throw new TypeError('World Job mode needs a job definition');
   return {job: createJob(definition, definition.seed ?? 0), definition,
@@ -2059,6 +2079,8 @@ export function stepWorldJob(duel, dt) {
     runDownRaiders(duel, worldJob, point);
     wearEscort(worldJob, currentStep, state.cpuDifficulty, dt);
   }
+  // TOWN-JOBS-2: a truck drives the Road Rats at a town job off by driving at them, as on an escort.
+  if (TOWN_STEP_KINDS.has(currentStep?.kind) && townStepHasRats(currentStep)) runDownRaiders(duel, worldJob, point);
   const thingsHit = [...(state.worldJobThingsHit || []),
     ...(state.onFoot && state.input?.interact &&
       worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'heist'
@@ -2251,6 +2273,19 @@ export function stepWorldJob(duel, dt) {
     syncDouseVehicle(worldJob);
     for (const event of next.events) playDouseEvent(duel, worldJob, event, point);
   }
+  if (TOWN_STEP_KINDS.has(currentStep?.kind)) {
+    syncHaulVehicle(worldJob);
+    syncDouseVehicle(worldJob);
+    for (const event of next.events) playTownStepEvent(duel, worldJob, currentStep, event, point);
+  }
+  // A town job of several steps keeps each step's result (the haul's and the fire call's are their own events).
+  if (worldJob.definition.kind === 'town-job') for (const event of next.events) {
+    if (event.type === 'haulDelivered') (worldJob.townResults ??= {})[currentStep.id ?? 'haul'] = {kind:'haul', good:event.good,
+      deliveredKg:event.deliveredKg, lostKg:event.lostKg, pieces:event.pieces, lostPieces:event.lostPieces};
+    if (event.type === 'douseDone') (worldJob.townResults ??= {})[currentStep.id ?? 'douse'] = {kind:'douse', savedIds:event.savedIds,
+      lostIds:event.lostIds, mainSaved:event.mainSaved, usedL:event.usedL};
+    if (event.result && !TOWN_STEP_KINDS.has(currentStep?.kind)) (worldJob.townResults ??= {})[currentStep.id ?? currentStep.kind] = event.result;
+  }
   if (next.events.some(event => event.type === 'burn') && (currentStep?.ember || currentStep?.gasLoad)) {
     const burnt = next.stepState.burntBarricades ?? [];
     worldJob.solidGrid.setBarricades((currentStep.barriers ?? []).filter(barrier => !burnt.includes(barrier.id)));
@@ -2440,6 +2475,7 @@ export function stepWorldJob(duel, dt) {
   }
   if (next.steps[next.stepIndex]?.kind === 'haul') markHaulWashouts(duel, next.steps[next.stepIndex]);
   if (next.steps[next.stepIndex]?.kind === 'douse') markDouseWater(duel, next.steps[next.stepIndex], next.stepState);
+  if (TOWN_STEP_KINDS.has(currentStep?.kind)) markTownStepThings(duel, next.requests);
   worldJob.controls=null;
   standOnDeck(duel, next, previousStepState);
   const train=worldJob.actors.find(actor=>actor.train);

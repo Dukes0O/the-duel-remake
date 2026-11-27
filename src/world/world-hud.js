@@ -8,6 +8,11 @@ import {scablandsDriveAt} from './scablands-regions.js';
 import {EMBER_SCOOP} from './jobs/ember-rule.js';
 import {groupKg, haulLine} from './jobs/steps/haul.js';
 import {douseLine, groupLitres} from './jobs/steps/douse.js';
+import {towLine} from './jobs/steps/tow.js';
+import {repairLine} from './jobs/steps/repair.js';
+import {fenceLine} from './jobs/steps/fence.js';
+import {clearLine} from './jobs/steps/clear.js';
+import {holdLine} from './jobs/steps/hold.js';
 import {BRAND_RULE, BRAND_LINES} from './jobs/brand-rule.js';
 import {BELLOWS_RULE, bellowsSentence} from './jobs/bellows-rule.js';
 import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
@@ -78,6 +83,29 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
       line = douseLine(step, stepState);
       break;
     }
+    // TOWN-JOBS-2: the town's jobs that are not fights. Each step says its own line for the part it is in.
+    case 'tow':
+      target = ['towing', 'unhooking'].includes(stepState.phase) ? step.destination ?? step.path?.at(-1) : stepState.towed ?? step.origin;
+      line = towLine(step, stepState);
+      break;
+    case 'repair':
+      target = stepState.phase === 'drive' || stepState.phase === undefined && step.carPlace ? step.carPlace : step.joints?.[stepState.index ?? 0] ?? step.carPlace;
+      line = repairLine(step, stepState);
+      break;
+    case 'fence':
+      target = step.stops?.[stepState.index ?? 0] ?? step.stops?.at(-1);
+      line = fenceLine(step, stepState);
+      break;
+    case 'clear': {
+      const left = (stepState.wrecks ?? []).find(wreck => !wreck.cleared);
+      target = left ? {x:left.x, z:left.z} : step.place;
+      line = clearLine(step, stepState);
+      break;
+    }
+    case 'hold':
+      target = step.place;
+      line = holdLine(step, stepState);
+      break;
     case 'carry':
       target = step.pickup && !stepState.loaded ? step.pickup.place : step.destination ?? step.origin;
       line = step.pickup && !stepState.loaded ? 'Drive to Cinder and stop.' : step.what ?? `Carry ${labelOf({id: step.load}, places)} to ${labelOf(target, places)}`;
