@@ -1256,18 +1256,6 @@ tasks:
     details: "docs/board/cards/TOWN-DEFEND.md"
 
   # The open Scablands (docs/story/open-scablands.md, section 22), cut by STORY-OPEN-WORLD on 21 November 2026. Listed after Show Night, which comes first (Kyle, 20 November 2026).
-  - id: OPEN-T-DACE
-    title: "Open Scablands: Dace Goes Looking comes into the game (its sign, places, people and missions)"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-T-DACE.md"
-
   - id: AGENTS-REWRITE
     title: "AGENTS.md rewritten around three lines: works and better merges, broken waits, the rest is the next card (Kyle, 26 November)"
     owner: "claude"
@@ -1292,6 +1280,17 @@ tasks:
     locks: []
     flag: "story-choices"
     details: "docs/board/cards/OPEN-BURNED-RESCUE.md"
+
+  - id: OPEN-LOOK-DACE
+    title: "Open Scablands: Dace's pickup, the stones, the Deep Sign, the Hangar and the Crow's Step look real"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-choices"
+    details: "docs/board/cards/OPEN-LOOK-DACE.md"
 
   - id: OPEN-SOUND
     title: "Open Scablands: every new cue chosen, registered and listened to"

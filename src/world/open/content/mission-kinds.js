@@ -927,6 +927,36 @@ const squeeze = {
   },
 };
 
+// An ordered drive ends at the last stop. Each stop can play authored lines, thoughts and a cue.
+const drive = {
+  prepare({by, rule = {}}, place) {
+    if (by !== 'car' || !rule.success || !rule.moments?.length) return null;
+    const moments = rule.moments.map(row => ({...row, point: place(row.at)}));
+    if (moments.some(row => !row.id || !row.point || !(row.within > 0)) ||
+        new Set(moments.map(row => row.id)).size !== moments.length) return null;
+    return {moments, posts: []};
+  },
+  begin(mission, route, view) {
+    const {point, within} = route.moments[0];
+    return {state: {route, index: 0}, requests: [marker(view, point, within)]};
+  },
+  step(mission, state, view) {
+    const {rule, id} = mission;
+    if (view.combatWrecking && rule.wrecked) return {state, outcome: rule.wrecked};
+    const {moments} = state.route;
+    const stop = moments[state.index];
+    if (view.onFoot || !isNear(view.carPosition, stop.point, stop.within)) return {state};
+    const requests = [], events = [{type: 'threadMissionMoment', id, moment: stop.id, position: stop.point}];
+    missionMoment(mission, stop.id, requests, events, stop.cue);
+    const next = moments[state.index + 1];
+    if (next) requests.push(marker(view, next.point, next.within));
+    return {state: {...state, index: state.index + 1}, requests, events, outcome: next ? null : rule.success};
+  },
+  end() {
+    return [{type: 'marker', place: null}];
+  },
+};
+
 export const MISSION_KINDS = Object.freeze({
   reach: Object.freeze(reach),
   onfoot: Object.freeze(search),
@@ -941,4 +971,5 @@ export const MISSION_KINDS = Object.freeze({
   squeeze: Object.freeze(squeeze),
   rescue: Object.freeze(rescueByCar),
   'party-rescue': Object.freeze(partyRescue({escortPoint, missionMoment, height})),
+  drive: Object.freeze(drive),
 });

@@ -23,6 +23,8 @@ import {LAND} from '../../scablands-names.js';
 import {lightsCrew} from '../content/lights-on-the-whites-places.js';
 import {POCKET_ID, radioPeople, PARROT_TALK, PARROT_SCENE} from '../content/radio-hill-voice-places.js';
 import {sitePosition} from '../site-rule.js';
+import {dacePeople} from '../content/dace-goes-looking-places.js';
+import {daceSignIsOut} from '../content/dace-goes-looking-rule.js';
 import {flagPeople} from '../content/somebody-elses-flag-places.js';
 
 export const TALK_RANGE = 2.5;
@@ -101,7 +103,9 @@ export const peoplePart = {
         isTrue({fact: 'word', of: 'walkers', atLeast: 'Friendly'}, world);
       return true;
     }) : [];
-    const storyPeople = view.checkpointsEnabled ? [...flagPeople(world), ...tollPeople] : [];
+    const dace = view.checkpointsEnabled ? dacePeople(world, daceSignIsOut(context), view.threadMission) : [];
+    const storyPeople = view.checkpointsEnabled ? [...flagPeople(world), ...tollPeople].filter(row =>
+      !dace.some(person => person.id === row.id)).concat(dace) : [];
     const convoy = view.checkpointsEnabled && view.threadConvoy;
     const burnt = world.open.threads['burned-camp'];
     const remaining = convoy && !convoy.truck ? (convoy.allFreed ? GROWERS : heldGrowers(world)) : [];
@@ -142,11 +146,11 @@ export const peoplePart = {
     const rows = [...residents.filter(row => (standsHere(row, world) || row.id === learner) && !stageAt(row) &&
       !storyPeople.some(person => person.id === row.id)), ...[...extras, ...mallPeople, ...lightsRows].filter(row => !stageAt(row)), ...market, ...runaways];
     let cast = rows.flatMap(row => {
-      if (!Object.hasOwn(STORY_FIGURES, row.figure)) return [];
+      if (row.absent || !Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       if (row.position) {
         const at = row.position;
         const {height, width} = STORY_FIGURES[row.figure];
-        return [{id: row.id, figure: row.figure, position: {...at, y: at.y ?? scablandsActorHeightAt(at.x, at.z)},
+        return [{id: row.id, figure: row.figure, position: {...at, y: (at.y ?? scablandsActorHeightAt(at.x, at.z)) + (row.elevation ?? 0)},
           yaw: row.yaw ?? 0, task: row.task ?? 'stand', radius: .4 * width * height / 1.7, height, distance: 0}];
       }
       // A parallel card can supply a resolver for building or site spots.

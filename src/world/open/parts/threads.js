@@ -47,7 +47,11 @@ import {TOLL_GATE, TOLL_ID, TOLL_SITE, stagedToll, tollPlace, tollTalk, tollOffe
 import {lightsLater} from '../content/talk-lights.js';
 import {LIGHTS_ID, lightsStory, lightsPlace, lightsRoad, lightsGo, lightsMission} from '../content/lights-on-the-whites-places.js';
 
-export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway, mallRoadToll, radioHillVoice, lightsStory], checkThread, 'Open Scablands storylines');
+import daceStory from '../../../story/threads/content/dace-goes-looking.js';
+import {DACE_ID, DACE_PLACES} from '../content/dace-goes-looking-places.js';
+import {daceCanCast, daceSignIsOut, daceStep} from '../content/dace-goes-looking-rule.js';
+
+export const OPEN_THREADS = requireSound([burnedCamp, strandedHauler, flagStory, dryPump, marketDay, runaway, mallRoadToll, radioHillVoice, lightsStory, daceStory], checkThread, 'Open Scablands storylines');
 const regionId = view => view.regionId ?? view.groundRegion;
 const playerPoint = view => view.player?.position ?? view.player;
 const trackId = (thread, record) => `thread:${thread.id}/${record.beat}`;
@@ -59,6 +63,7 @@ function withPlaces(context) {
     range: thread.notes.sign.onRoadWithin,
     anywhere: world.open.found.includes('radio-hill') && ['Friendly', 'Sworn'].includes(world.ledger.words['radio-hill']),
   } : undefined, placeAt: (place, cast) => {
+      if (Array.isArray(place) && place[0] === 'tin-town' && place[1] === 'forge-yard') return DACE_PLACES.pickup;
       const hauler = haulerPlaces(world);
       if (Array.isArray(place) && place[0] === 'rats-nest' && place[1] === 'rescue-gully') return [...scoutGullyRoute].reverse();
       if (Array.isArray(place) && place[0] === 'grey-camp' && place[1]?.startsWith('rescue-')) {
@@ -79,13 +84,14 @@ function withPlaces(context) {
       return spot ? {...point, heading: spot.heading, halfAngle: spot.halfAngle, eye: spot.eye,
         range: spot.range, heap: spot.heap} : point;
     },
-    allowsStart: thread => (thread.id !== LIGHTS_ID || (view.checkpointsEnabled && view.openRoam && !view.missionActive && view.outingAvailable !== false &&
+    allowsStart: thread => (thread.id !== DACE_ID || (view.checkpointsEnabled === true || context.bankedHearth && view.checkpointsEnabled !== false) && daceSignIsOut({...context, view})) &&
+      (thread.id !== LIGHTS_ID || (view.checkpointsEnabled && view.openRoam && !view.missionActive && view.outingAvailable !== false &&
       view.partOfDay === 'dark' && !view.onFoot && lightsRoad(playerPoint(view)) && !context.holds?.some(hold => hold.holder.startsWith('thread:')))) &&
       (thread.id !== RADIO_ID || view.checkpointsEnabled && view.openRoam && view.partOfDay === 'dark' &&
       !view.onFoot && view.onRoad && witnessSign({sign: thread.sign, at: position('radio-hill'), call: {range: thread.notes.sign.onRoadWithin}}, view, 0, 0).witnessed),
     dormant: (thread, record) => thread.id === LIGHTS_ID && record?.beat === 'shelved',
     signFor: thread => thread === runaway ? RUNAWAY_SIGN : thread.sign,
-    allowsCast: (thread, role, id, cast) => thread === marketDay ? allowsMarketCast(role, id, cast, world) :
+    allowsCast: (thread, role, id, cast) => thread.id === DACE_ID ? daceCanCast(id, world) : thread === marketDay ? allowsMarketCast(role, id, cast, world) :
       role === 'camp' && thread === dryPump ?
       dryPumpAllowsCamp(world, id, playerPoint(view), placeForThread(id, {}, view)) : thread !== burnedCamp || role !== 'camp' ||
       (!world.ledger.marks.includes(visitId(id, world.ledger.night)) &&
@@ -100,7 +106,7 @@ function withPlaces(context) {
 export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
   const available = threads.filter(thread => thread !== runaway ||
     runawayCanStart({...context, view: {...context.view, checkpointsEnabled: true}}));
-  const banked = applyThreadDirector(available, withPlaces(context), 'hearth');
+  const banked = applyThreadDirector(available, withPlaces({...context, bankedHearth: true}), 'hearth');
   if (!available.includes(burnedCamp) || !banked.ledger.marks.includes('burned-camp/stayed-inside') ||
       banked.ledger.marks.includes('burned-camp/bean-bed-ready')) return banked;
   const moved = banked.ledger.history.findLast(row => row.type === 'mark' && row.key === 'burned-camp/stayed-inside');
@@ -112,6 +118,7 @@ export function threadsAtBankedHearth(context, threads = OPEN_THREADS) {
 
 export function openThreadSigns(context) {
   const threads = OPEN_THREADS.filter(thread => (thread !== runaway || context.view?.runawayVisible) &&
+    (thread.id !== DACE_ID || context.view?.checkpointsEnabled === true && daceSignIsOut(context)) &&
     (thread.id !== LIGHTS_ID || context.view?.checkpointsEnabled === true) &&
     (thread.id !== RADIO_ID || context.view?.checkpointsEnabled === true) &&
     (thread.id !== HAULER_ID || context.view?.checkpointsEnabled !== false) &&
@@ -841,10 +848,10 @@ export function createThreadsPart(threads) {
       const {world, view, holds} = context, night = world.ledger.night;
       const state = {interact: !!view.interact, regions: previous.night === night ? [...(previous.regions ?? [])] : [],
         night, seen: {}, beatSeconds: {...previous.beatSeconds}, places: {partOfDay: view.partOfDay,
-          sitePositions: view.sitePositions, checkpointsEnabled: view.checkpointsEnabled === true}};
+          sitePositions: view.sitePositions, dayClock: view.dayClock, checkpointsEnabled: view.checkpointsEnabled === true}};
       const enabled = view.checkpointsEnabled === true;
       const availableThreads = enabled ? threads : threads.filter(thread => thread !== dryPump && thread.id !== FLAG_ID &&
-        thread.id !== HAULER_ID && thread.id !== LIGHTS_ID && thread.id !== RADIO_ID && thread.id !== TOLL_ID && thread !== marketDay && thread !== runaway);
+        thread.id !== DACE_ID && thread.id !== HAULER_ID && thread.id !== LIGHTS_ID && thread.id !== RADIO_ID && thread.id !== TOLL_ID && thread !== marketDay && thread !== runaway);
       if (enabled) state.places.dryPumpEnabled = true;
       const canStartRunaway = runawayCanStart(context);
       const region = canStartRunaway ? 'runaway-tin-town' : regionId(view);
@@ -929,6 +936,18 @@ export function createThreadsPart(threads) {
         const record = world.open.threads[source.id];
         if (!record) continue;
         const thread = source.id === FLAG_ID ? stagedFlag(world) : source.id === TOLL_ID ? stagedToll(world) : source;
+        if (thread.id === DACE_ID) {
+          const out = daceStep(context, record, previous.dace, decision, dt);
+          state.dace = out.state;
+          choices.push(...out.choices);
+          events.push(...out.events);
+          requests.push(...out.requests);
+          if (out.mission !== undefined) state.mission = out.mission;
+          hold ??= out.hold;
+          release ??= out.release;
+          dusk ||= out.dusk === true;
+          continue;
+        }
         if (thread === marketDay) {
           if (!view.openRoam) continue;
           const out = marketDayStep(context, record, previous.market, decision.interact, state.mission);

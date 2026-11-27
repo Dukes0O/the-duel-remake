@@ -20,6 +20,7 @@ The cues named so far, by card:
 | OPEN-BURNED-SCOUT | `open.scout.seen`, `open.lookout.flare` |
 | OPEN-BURNED-PEN | `open.taken`, `open.ransom.paid`, `open.pen.chain`, `open.guard.shout` |
 | OPEN-BURNED-RESCUE | `open.party.ride`, `open.rescue.home` |
+| OPEN-T-DACE | `open.pickup.started`, `open.pickup.radio`, `open.pickup.call`, `open.pickup.gone`, `open.pickup.home` (and the shared `open.clue.found`, `open.scout.seen`, `open.site.found`) |
 
 Checks: the suite that names the sound bank, and each cue heard in Claude's batch drive. Voice lines ship without Kyle
 listening first (`memory/voice-ships-without-listening`).
