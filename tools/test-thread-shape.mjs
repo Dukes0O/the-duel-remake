@@ -42,8 +42,10 @@ function tally(thread) {
 const COUNTS = {
   // OPEN-BURNED-SCOUT adds three observations, two rim thoughts, two choice thoughts and three choices. OPEN-ASH-FOLD
   // (26 November 2026) folds in the Ash Men's turn (OPEN-WRITE-4: 69 lines, 34 thoughts, 13 questions, 16 choices),
-  // so the counts are the two files' sums; the shared choices were only ever in the Ash Men's file.
-  'burned-camp': {lines: 76, thoughts: 54, questions: 18, choices: 22},
+  // so the counts are the two files' sums; the shared choices were only ever in the Ash Men's file. OPEN-BURNED-PEN
+  // (26 November 2026) adds the Road Rats' Scene 4 as section 21 writes it: 19 lines and Sump's rider's tie-back,
+  // the pen's two thoughts and its choices' three, its three questions, and the pen's and the offer's five choices.
+  'burned-camp': {lines: 96, thoughts: 59, questions: 21, choices: 27},
   'dace-goes-looking': {lines: 100, thoughts: 31, questions: 11, choices: 16},
   'dry-pump': {lines: 65, thoughts: 31, questions: 11, choices: 18},
   'lights-on-the-whites': {lines: 66, thoughts: 20, questions: 15, choices: 13},

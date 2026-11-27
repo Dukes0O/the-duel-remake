@@ -143,7 +143,15 @@ export const THREAD_SHAPE = Object.freeze({
   role: ['from', 'where', 'weightBy', 'apartFrom', 'except', 'among', 'nearest', 'optional', 'late', 'draw', 'chance', 'otherwise'],
   sign: ['kind', 'at', 'by', 'seenWithin', 'part', 'lastsNights', 'nightsNeeded', 'again', 'cue'],
   again: ['afterNights', 'when', 'at'],
-  beat: ['when', 'cue', 'cues', 'lines', 'thoughts', 'explore', 'mend', 'mends', 'questions', 'choices', 'mission', 'effects', 'next', 'notes'],
+  // `takes` holds the player (foot) and the car (car) while the storyline stands at the beat; `frees` lets go, true where
+  // they are or putting the player beside the car at a spot; `leaves: 'hearth-bank'` ends the roam with the hearth banked
+  // without the player; `ransom` is paid on entry (ransom-rule.js); `oneTalk` puts the questions and choices in one talk.
+  beat: ['when', 'cue', 'cues', 'lines', 'thoughts', 'explore', 'mend', 'mends', 'questions', 'choices', 'mission', 'effects', 'next', 'notes',
+    'takes', 'frees', 'leaves', 'ransom', 'oneTalk'],
+  takes: ['foot', 'car'],
+  ransom: ['price', 'asked'],
+  ransomPrice: ['when', 'scrap', 'embers'],
+  ransomAsked: ['roadWord', 'embers'],
   line: ['speaker', 'words', 'when', 'radio', 'low', 'shouted', 'as', 'cue', 'moment', 'slot'],
   thought: ['thought', 'when', 'moment', 'slot'],
   question: ['id', 'to', 'words', 'lines', 'when', 'shows', 'effects', 'cue'],
@@ -481,6 +489,27 @@ function checkShape(thread, say) {
     questions(body.questions, at + '.questions'); choices(body.choices, at + '.choices');
     if (body.mission !== undefined) mission(body.mission, at + '.mission');
     effects(body.effects, at + '.effects'); next(body.next, at + '.next');
+    if (body.takes !== undefined && keys(body.takes, 'takes', at + '.takes', 'what a beat takes')) {
+      place(body.takes.foot, at + '.takes.foot'); place(body.takes.car, at + '.takes.car');
+    }
+    if (body.frees !== undefined && body.frees !== true) {
+      if (typeof body.frees !== 'string') say(at + '.frees is true, or the spot of the held car to put the player beside it.');
+    }
+    if (body.leaves !== undefined && body.leaves !== 'hearth-bank') say(at + '.leaves is "hearth-bank", the only way a beat ends a roam.');
+    if (body.oneTalk !== undefined && body.oneTalk !== true) say(at + '.oneTalk is true or left out.');
+    if (body.ransom !== undefined && keys(body.ransom, 'ransom', at + '.ransom', 'a ransom')) {
+      const whole = value => Number.isSafeInteger(value) && value >= 0;
+      if (!Array.isArray(body.ransom.price) || !body.ransom.price.length) say(at + '.ransom.price needs a list of prices.');
+      list(body.ransom.price, at + '.ransom.price', (row, here) => {
+        if (!keys(row, 'ransomPrice', here, 'a price')) return;
+        when(row, here);
+        if (!whole(row.scrap) || (row.embers !== undefined && !whole(row.embers))) say(here + ' needs whole numbers of scrap and embers.');
+      });
+      list(body.ransom.asked, at + '.ransom.asked', (row, here) => {
+        if (keys(row, 'ransomAsked', here, 'embers asked') && (!whole(row.roadWord) || !whole(row.embers)))
+          say(here + ' needs a whole Word on the road and a whole number of embers.');
+      });
+    }
   }
   list(thread.later, 'later', (row, at) => {
     if (!keys(row, 'later', at, 'a "later" row')) return;

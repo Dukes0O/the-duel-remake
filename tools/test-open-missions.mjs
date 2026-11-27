@@ -256,10 +256,8 @@ for (const branch of ['alone', 'drain', 'home']) {
 }
 
 // `home` has had ways out since OPEN-ASH-FOLD put the Ash Men's choices there; OPEN-BURNED-RESCUE builds the Road Rats'.
-assert.deepEqual(walkThread(burned).faults, [
-  'The beat "alone" has no way out and is not an end. OPEN-BURNED-PEN builds the fight alone in Scene 4.',
-  'The beat "drain" has no way out and is not an end. OPEN-BURNED-PEN builds the drain in Scene 4.',
-]);
+// OPEN-BURNED-PEN gave `alone` and `drain` theirs (26 November 2026), so the walk finds no beat without a way out.
+assert.deepEqual(walkThread(burned).faults, []);
 
 for (const name of Object.keys(pageFunctions)) new Function('return ' + pageSource(name, {}, [], 'test'));
 console.log('test-open-missions: passed');
