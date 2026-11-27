@@ -1154,7 +1154,8 @@ tasks:
     owner: "claude"
     lane: "DOCS"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude Opus session (local), 27 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/AGENTS-REWRITE.md"
@@ -1243,10 +1244,12 @@ tasks:
   # Claude's drive of the merged batch, 27 November 2026 (docs/board/looks/drive-2026-11-27.md).
   - id: OPEN-PEN-DRAIN-BANK
     title: "Rats' Nest: a 9 m bank of earth fills the drain, so the way in on foot cannot be walked"
-    owner: "claude"
+    owner: "codex"
+    model: "sol"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex laptop lane, 27 November 2026"
     needs: []
     locks: []
     flag: "story-choices"
