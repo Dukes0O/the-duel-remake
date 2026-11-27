@@ -1268,18 +1268,6 @@ tasks:
     flag: "story-choices"
     details: "docs/board/cards/OPEN-SITE-LOOKS.md"
 
-  - id: OPEN-TALK-CHOICES
-    title: "Open Scablands: a talk offers its choices from the start; asking stays optional, as the design says"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/OPEN-TALK-CHOICES.md"
-
   - id: QA-OPEN-DOORS-WASH
     title: "test-open-doors: walking into Moss's wash shed after the ash sack leaves 'inside' empty, in the integration folder only"
     owner: "codex"

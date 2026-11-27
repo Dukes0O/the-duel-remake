@@ -611,18 +611,22 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
       beat.questions?.find(row => row.id === event.id);
     if (question) once('asked', question.id, rule.effects(question.effects));
   }
+  const radioChoice = completed.find(event => event.id === `${thread.id}/radio-done` || radio && event.scene === radio.id);
   const asked = new Set([
-    ...(completed.find(event => event.id === `${thread.id}/radio-done`)?.asked ?? []),
-    ...(view.jobEvents ?? []).filter(event => event.type === 'openTalkQuestion' && event.scene === (lights ? `${thread.id}/radio` : radio?.id)).map(event => event.id),
+    ...(radioChoice?.asked ?? []),
+    ...(view.jobEvents ?? []).filter(event => event.type === 'openTalkQuestion' && event.scene === radio?.id).map(event => event.id),
   ]);
   for (const question of radio?.questions ?? []) if (asked.has(question.id)) {
     const authored = beat.questions.find(row => row.id === question.id);
     once('asked', question.id, rule.effects(authored.effects));
   }
-  if (!asked.size && radio && atTalk && rule.ask(beat.when) && (view.onFoot || byCar || hauling && beatId.endsWith('-road')) && decision.interact && !lights) {
+  let questionTalk;
+  if (!asked.size && radio && atTalk && rule.ask(beat.when) && (view.onFoot || hauling && beatId.endsWith('-road')) && decision.interact && !lights) {
     decision.interact = false;
-    if (view.openRoam) out.requests.push({type: 'talk', id: radio.id, scene: radio, speaker: radio.questions[0].lines[0]?.speaker, radio: true});
-    else {
+    if (view.openRoam) {
+      questionTalk = {type: 'talk', id: radio.id, scene: radio, speaker: radio.questions[0].lines[0]?.speaker, radio: true};
+      out.requests.push(questionTalk);
+    } else {
       // OPEN-SHARED can carry the words to the caption queue before the roam talk adapter lands.
       const [question] = radio.questions;
       text(`radio/${question.id}/ask`, question.words);
@@ -665,14 +669,17 @@ function outputFor(thread, context, record, state, observed, decision, dt) {
   const spoken = available.filter(row => row.by === 'say' || !hauling && row.by === 'do' || !row.by);
   const lightsTalk = lights && (byCar || atDeck && rule.ask({reach: ['ships-in-sand', 'whites-bridge-wing'], within: 4})) && (beatId !== 'ships' || rule.ask(beat.when)) &&
     (beatId !== 'crew' && beatId !== 'crew-after-sounding' || rule.ask({reach: ['ships-in-sand', 'whites-crew'], within: 100}));
-  if ((spoken.length || lightsTalk && radio) && atTalk && (lights ? lightsTalk : view.onFoot) && view.openRoam && view.checkpointsEnabled && decision.interact) {
+  if ((spoken.length || lightsTalk && radio) && atTalk && (lights ? lightsTalk : view.onFoot) && view.openRoam &&
+      view.checkpointsEnabled && (decision.interact || questionTalk)) {
     decision.interact = false;
     const id = decisionId;
     const choices = spoken.map(row => ({id: `${id}/${row.id}`, words: lights ? rule.line(row.words) : rule.line(row.words).replace(/([^.!?])$/, '$1.'),
       ...(row.plain ? {detail: rule.line(row.plain)} : {})}));
-    if (lights && radio) {
+    if (questionTalk || lights && radio) {
       choices.push(...radio.choices);
-      out.requests.push({type: 'talk', id: radio.id, scene: {...radio, choices},
+      const scene = {...radio, choices};
+      if (questionTalk) questionTalk.scene = scene;
+      else out.requests.push({type: 'talk', id: radio.id, scene,
         speaker: 'you', radio: true, threadPriority: true});
     } else {
       const lines = lights && beatId === 'aboard' ? beat.notes.watch : undefined;
