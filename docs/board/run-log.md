@@ -1815,3 +1815,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - FAR-JOBS-1 lane janitor: no unrelated removals; generated build output recycled, no evidence kept; no asset growth or size-target change proposed.
 - Merge FAR-JOBS-1 (Codex, laptop lane): the goat, Too High, the Long Shaft as pure rules behind far-jobs; rule 23 set and touched-file suites passed
 - Merge OPEN-BURNED-RESCUE (Codex cloud): the rescue party, the road home and where the growers live; card suites, laptop-only suites and burned-camp scenarios passed
+- Merge TOWN-RESERVED-OUTPOSTS (Claude cloud): planning refuses the neighbours' outposts; rule 23 set and town suites 9/9 passed

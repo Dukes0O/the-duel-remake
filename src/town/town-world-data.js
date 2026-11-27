@@ -1,4 +1,5 @@
 import {scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
+import {outpostReservedGround} from './town-outpost-world.js';
 
 export const TOWN_CELL_METRES = 8;
 export const TOWN_CHUNK_CELLS = 16;
@@ -26,7 +27,8 @@ const oldRoads = Object.freeze([
 export const SCABLANDS_TOWN_REGION = Object.freeze({
   id:'scablands', cellMetres:TOWN_CELL_METRES, chunkCells:TOWN_CHUNK_CELLS,
   groundHeightAt:scablandsSurfaceHeightAt,
-  reservedShapes:Object.freeze([oval, gate,...oldRoads]),
+  // The neighbours' outposts, each with its fenced ground and a margin, turned as it stands (TOWN-RESERVED-OUTPOSTS).
+  reservedShapes:Object.freeze([oval, gate,...oldRoads,...outpostReservedGround()]),
 });
 export const TOWN_REGIONS = Object.freeze(new Map([[SCABLANDS_TOWN_REGION.id, SCABLANDS_TOWN_REGION]]));
 
@@ -48,6 +50,17 @@ function insideRectangle(cellX, cellZ, width, depth, shape) {
     const gap=Math.hypot(px-(shape.ax+t*dx),pz-(shape.az+t*dz));
     return gap<=shape.halfWidth+Math.hypot(right-left,bottom-top)/2;
   }
+  if (shape.type === 'footprint') {
+    // A rectangle turned by `heading` ([west, north, east, south] in its own metres, as src/town/town-world-things.js turns a thing).
+    // Two rectangles overlap when they overlap along each one's own two axes.
+    const cos=Math.cos(shape.heading), sin=Math.sin(shape.heading);
+    const own=[[shape.west,shape.north],[shape.east,shape.north],[shape.east,shape.south],[shape.west,shape.south]]
+      .map(([lx,lz])=>[shape.x+lx*cos+lz*sin, shape.z-lx*sin+lz*cos]);
+    const cell=[[left,top],[right,top],[right,bottom],[left,bottom]]
+      .map(([x,z])=>[(x-shape.x)*cos-(z-shape.z)*sin, (x-shape.x)*sin+(z-shape.z)*cos]);
+    const apart=(points,axis,low,high)=>Math.max(...points.map(point=>point[axis]))<=low||Math.min(...points.map(point=>point[axis]))>=high;
+    return !(apart(own,0,left,right)||apart(own,1,top,bottom)||apart(cell,0,shape.west,shape.east)||apart(cell,1,shape.north,shape.south));
+  }
   throw new TypeError(`Unknown reserved shape: ${shape.type}.`);
 }
 
@@ -55,6 +68,16 @@ export function cellIsReserved(regionId, cellX, cellZ, width=1, depth=1) {
   const region = TOWN_REGIONS.get(regionId);
   if (!region) return true;
   return region.reservedShapes.some(shape => insideRectangle(cellX, cellZ, width, depth, shape));
+}
+
+// Why that ground is kept: the sentence of the first reserved shape it touches (a neighbour's outpost says whose place it is), the
+// plain one for the Dome and the old roads, or null when it is free.
+export const RESERVED_GROUND_SENTENCE = 'That ground is kept clear.';
+export function reservedGroundSentence(regionId, cellX, cellZ, width=1, depth=1) {
+  const region = TOWN_REGIONS.get(regionId);
+  if (!region) return RESERVED_GROUND_SENTENCE;
+  const shape = region.reservedShapes.find(row => insideRectangle(cellX, cellZ, width, depth, row));
+  return shape ? shape.sentence || RESERVED_GROUND_SENTENCE : null;
 }
 
 function floorDiv(value, divisor) { return Math.floor(value / divisor); }

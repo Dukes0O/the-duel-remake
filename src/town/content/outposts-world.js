@@ -12,6 +12,9 @@
 // People are drawn from the town's story cast (src/world/jobs/story-people.js) and stand on the ground or, with `lift`, on the outpost's
 // own floor (Deck Town's walkways, the halt's platform). `aside` is where they step to when a car comes close. Animals come from the
 // wildlife models (src/wildlife-models.js) once their species has a row there; until then they are placed but not drawn.
+//
+// `ground` is the sentence town planning answers with when a building or a home plot is asked for on the outpost's ground
+// (TOWN-RESERVED-OUTPOSTS). That ground is the fenced ground and OUTPOST_GROUND_MARGIN past it (src/town/town-outpost-world.js).
 
 const row = value => Object.freeze(value);
 
@@ -22,10 +25,13 @@ export const OUTPOST_FENCE = row({model: '/assets/models/wasteland/town/safety.g
 export const OUTPOST_ANIMAL_SPECIES = row({dog: Object.freeze(['camp-dog', 'dog']), goat: Object.freeze(['goat'])});
 // Outposts are drawn and solid only this near the car (metres); people and animals are drawn nearer still (the story cast's own 95 m).
 export const OUTPOST_DRAW_RANGE = 1400;
+// How far past an outpost's fence the town's planning keeps the ground clear (metres): one town cell.
+export const OUTPOST_GROUND_MARGIN = 8;
 
 export const OUTPOSTS_WORLD = Object.freeze([
   row({
     id: 'dot-diner', neighbourId: 'dot', name: 'Dot’s Diner', node: 'dot-diner',
+    ground: 'Dot’s Diner stands there. That ground is Dot’s, so the town builds somewhere else.',
     // On the Boneyard Road, 38 m off its middle, 820 m short of the Boneyard.
     at: Object.freeze(['boneyard', -809, -152]), faces: 'road', front: '-x',
     bounds: Object.freeze([-5.47, -8.17, 2.53, 8.2]), lift: 0, reach: 16,
@@ -42,6 +48,7 @@ export const OUTPOSTS_WORLD = Object.freeze([
   }),
   row({
     id: 'plane-school', neighbourId: 'quill', name: 'Miss Quill’s school', node: 'plane-school',
+    ground: 'Miss Quill’s school stands there. That ground is Miss Quill’s, so the town builds somewhere else.',
     // At the Boneyard's south edge, past its three wrecks.
     at: Object.freeze(['boneyard', 20, 130]), faces: 'road', front: '-x',
     bounds: Object.freeze([-3.39, -5.32, 1.21, 5.68]), lift: 1.6, reach: 16,
@@ -57,6 +64,7 @@ export const OUTPOSTS_WORLD = Object.freeze([
   }),
   row({
     id: 'hermit-camp', neighbourId: 'tam', name: 'Old Tam’s hut', node: 'hermit-camp',
+    ground: 'Old Tam’s hut stands there. That ground is Old Tam’s, so the town builds somewhere else.',
     // Up on the Ridge, on its flat top 100 m from the Ridge's camp.
     at: Object.freeze(['ridge', 60, 85]), faces: 'road', front: '-x',
     bounds: Object.freeze([-4.51, -2.48, 4.54, 5.55]), lift: 0, reach: 18,
@@ -74,6 +82,7 @@ export const OUTPOSTS_WORLD = Object.freeze([
   }),
   row({
     id: 'deck-town', neighbourId: 'imre', name: 'Deck Town', node: 'deck-town',
+    ground: 'Deck Town stands there. That ground is Captain Imre’s, so the town builds somewhere else.',
     // Off the Ships in the Sand, on the open sand 130 m from where the ships lie.
     at: Object.freeze(['ships-in-sand', -100, -84]), faces: 'road', front: '-x',
     bounds: Object.freeze([-4.07, -7.4, 4.07, 7.4]), lift: 0, reach: 16,
@@ -90,6 +99,7 @@ export const OUTPOSTS_WORLD = Object.freeze([
   }),
   row({
     id: 'rail-halt', neighbourId: 'pim', name: 'Rail Halt', node: 'rail-halt',
+    ground: 'The Rail Halt stands there. That ground is Pim’s, so the town builds somewhere else.',
     // Beside the Iron Line 170 m north of the Iron Line's station, its platform to the rail and its signal over it.
     at: Object.freeze(['iron-line', 42, -169]), faces: 'rail', front: '-x',
     bounds: Object.freeze([-5.87, -5.15, 3.4, 5.15]), lift: 0, reach: 15,

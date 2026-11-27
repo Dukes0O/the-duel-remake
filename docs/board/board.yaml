@@ -845,18 +845,6 @@ tasks:
     flag: "wasteland-town"
     details: "docs/board/cards/TOWN-STORE-RESTORE.md"
 
-  - id: TOWN-RESERVED-OUTPOSTS
-    title: "The town's planning refuses ground under the neighbours' outposts"
-    owner: "claude"
-    lane: "SIM"
-    size: "S"
-    status: "ready"
-    waiting_on: "kyle"
-    needs: []
-    locks: []
-    flag: "wasteland-town"
-    details: "docs/board/cards/TOWN-RESERVED-OUTPOSTS.md"
-
   - id: TOWN-FIRE-STREAM-LOOK
     title: "The fire truck's water drawn as a jet and spray, not a white blob"
     owner: "claude"
