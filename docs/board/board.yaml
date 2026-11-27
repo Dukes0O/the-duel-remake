@@ -850,8 +850,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "ready"
-    waiting_on: "kyle"
+    status: "building"
+    claimed_by: "Claude cloud, 27 November 2026"
     needs: []
     locks: []
     flag: "wasteland-town"
