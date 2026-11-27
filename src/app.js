@@ -1041,7 +1041,7 @@ export class App {
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(stage,mode))
       this._lapChoices.set(this._lapChoiceKey(stageIndex,mode),laps);
     let rival=isSummitAttack(stage)?null:Object.hasOwn(options,'rival')?options.rival:this._raceSettings.rival;
-    if(CARS[rival?.car]?.workshop&&!this._switches().enabled('wasteland-cars'))rival=null;
+    if(CARS[rival?.car]?.workshop)rival=null;
     const cupState=normalizeCups(this.profile.cups),cupRun=cupState.version===1?cupState.active:null;
     const cupRound=this.cupsAvailable()&&cupRun?.ownerId===this.player.id&&mode==='grandprix'&&
       CUPS.find(cup=>cup.id===cupRun.cupId)?.events[cupRun.results.length]===stage.id&&
@@ -1113,7 +1113,7 @@ export class App {
   }
   _applyRaceSettings(settings,customSeed=this._customMenuSeed){
     if(CARS[settings.car]?.workshop&&!this._switches().enabled('wasteland-cars'))settings={...settings,car:'falcone_f42'};
-    if(CARS[settings.rival?.car]?.workshop&&!this._switches().enabled('wasteland-cars'))settings={...settings,rival:null};
+    if(CARS[settings.rival?.car]?.workshop)settings={...settings,rival:null};
     this._footCameraMode=settings.footCamera;
     this._raceSettings=settings;this.menuStage=raceSettingsStage(settings);this.menuCar=settings.car;this.menuRouteId=settings.routeVariant;this._customMenuSeed=customSeed;
     this.cpuDifficulty=settings.cpuDifficulty;this.ghostEnabled=settings.ghostEnabled;this.lightingMood=settings.lightingMood;

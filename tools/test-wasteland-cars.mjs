@@ -24,6 +24,13 @@ for (const id of ids) {
   assert.ok(!shownCarIds(true).includes(id) && !shownCarIds(false).includes(id), 'no unbuilt car on a sale list');
   assert.ok(!JOB_CARS.includes(id), 'the existing helicopter job draw stays unchanged');
   assert.ok(CAR_VOICES[id]);
+  for (const rival of [null, {car: id}]) {
+    const duel = new Duel({seed: 1989, featureFlags: flags(true)});
+    duel.startCampaign({car: id, rival, startStage: COURSE.findIndex(stage => stage.hasRival && !stage.practice), mode: 'duel'});
+    assert.equal(duel.state.rival.car, CARS[id].rivalCar, `${id}: default and explicit rivals use the established field`);
+    assert.equal(duel.rivalSpec.name, CARS[CARS[id].rivalCar].name);
+    assert.ok(!duel.rivalSpec.workshop);
+  }
   let profile = owner;
   for (const mode of ['duel', 'grandprix']) for (const cpuDifficulty of ['easy', 'medium', 'hard']) {
     const result = {runId: `${id}-${mode}-${cpuDifficulty}`, stageIndex: 0, car: id, mode,

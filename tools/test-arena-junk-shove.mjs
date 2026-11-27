@@ -122,8 +122,8 @@ for (const car of Object.keys(CARS)) for (const mph of [20, 40, 60]) {
     assert.ok(r.motion && Math.hypot(r.motion.vx, r.motion.vz) > 0,
       'movement must start with actual released crash-body velocity');
     assert.equal(r.escaped, false, 'rammed hulk stays on the floor');
-    assert.equal(r.duel.state.crushedProps.includes(r.prop.id), car === 'titan_monster',
-      'only Titan keeps the native persistent crush');
+    assert.equal(r.duel.state.crushedProps.includes(r.prop.id), ['titan_monster','longhaul','bully'].includes(car),
+      'Titan and the two heavy Workshop trucks keep the native mass-based crush');
   });
 }
 check('Titan retains the released crush, score, cue and visible flattening', () => {

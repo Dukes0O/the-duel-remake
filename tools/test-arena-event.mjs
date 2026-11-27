@@ -201,9 +201,12 @@ test('outside an arena the teams are exactly the player against the computer car
 test('the floor squeezes top speeds toward 70 mph and keeps their order', async () => {
   const {arenaFloorSpeed, SCRAPDOME_LAYOUT} = await import('../src/arena/venues.js');
   const {CARS} = await import('../src/config.js');
-  const speeds = Object.values(CARS).map(car => [car.topSpeed, arenaFloorSpeed(SCRAPDOME_LAYOUT, car.topSpeed)])
+  const speeds = Object.values(CARS).map(car => [car.topSpeed, arenaFloorSpeed(SCRAPDOME_LAYOUT, car.topSpeed), car.workshop])
     .sort((a, b) => a[0] - b[0]);
-  for (const [top, floor] of speeds) assert.ok(floor <= top && floor > 50 && floor < 85, `${top} mph -> ${floor}`);
+  for (const [top, floor, workshop] of speeds) {
+    assert.ok(floor > 0 && floor <= top && floor < 85, `${top} mph -> ${floor}`);
+    if (!workshop) assert.ok(floor > 50, 'the released fleet keeps its existing speed floor');
+  }
   for (let i = 1; i < speeds.length; i++) assert.ok(speeds[i][1] >= speeds[i - 1][1], 'faster cars stay faster');
   assert.equal(arenaFloorSpeed(null, 150), 150, 'no venue, no limit');
 });

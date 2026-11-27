@@ -291,6 +291,23 @@ No more of The Deep than finishing what is there.
 
 ---
 
+### Workshop cars
+
+The `wasteland-cars` switch is `dev`. The plans open from the town toolbar. Each finished Workshop has one assembly bay. A ruined Workshop pauses its order. Work advances only with the town simulation; it does not advance while the game is closed.
+
+| Car | Parts / steel, kg | Assembly at normal town speed | Character |
+| --- | --- | --- | --- |
+| Rattler | 400 / 700 | 6 minutes | Light hot rod, loud engine |
+| Longhaul | 2,500 / 6,500 | 15 minutes | Heavy six-wheel recovery truck |
+| Scarab | 350 / 500 | 8 minutes | Light buggy for rough ground |
+| Bully | 2,000 / 4,500 | 12 minutes | Slow bus with a plough |
+
+These costs, times and handling values are fictional game tuning. `src/town/content/workshop-cars.js` owns them. An order stores its recipe and remaining work so later tuning cannot change a build already started. Missing ingredients pause assembly; the Workshop can use the existing `sort-salvage` recipe on hauled salvage to recover parts and steel.
+
+The optional `town.workshop` version 1 stores orders and completion receipts. Old towns gain no field until an order starts. Unreadable orders and future versions stay intact and do not run. Taking a completed car first saves the town, then grants the car to a mayor through the existing `profile.unlockedCars` list. Failed profile writes can be retried without spending the parts again. Visitors cannot collect cars.
+
+The four IDs remain known when the switch is off, preserving ownership, upgrades and six-box medal sheets. They appear only for owners with the switch on. They have no garage price and add nothing to the Jesko requirements or existing computer and helicopter job pools. They are player cars: a matching rival uses Banshee for Rattler, Dusthawk for Scarab, and Titan for either truck. Longhaul needs the centre of narrow passages such as the Summit Gallery. The shipped GLBs supply their bodies and moving wheels; the normal damage, paint, weapon sockets and fitted armour kits apply. The Scarab has a weapon bridge on its open cage. Starting an order uses `interface.go`; collection uses `interface.bonus`.
+
 ## 10. Builders: no ceilings
 
 This game will be added to for years. Every rule here protects that. A card that needs to break one stops and

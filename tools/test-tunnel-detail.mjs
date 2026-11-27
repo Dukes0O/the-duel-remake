@@ -2,20 +2,28 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { Course } from '../src/course.js';
 import { CARS, COURSE, DRIVE } from '../src/config.js';
-import { CAR_HALF_WIDTH } from '../src/collision.js';
+import { CAR_HALF_WIDTH, sweepObstacle } from '../src/collision.js';
 import { SUMMIT_RUN } from '../src/circuits/summit-run.js';
 import { disposeTree } from '../src/world.js';
 import { addRaceStructures } from '../src/race-structures.js';
 import { buildTunnelWallDetails,createTunnelConcrete,TUNNEL_CONCRETE_TILE_METRES } from '../src/tunnel-detail.js';
 
 let checks=0,maximumGap=0,triangles=0,minimumGalleryOffset=Infinity;
-// Every garage car can enter Summit. Preserve its actual ordinary lane centres
-// and use the widest admitted hull, including the Titan, without extra margin.
-const galleryLaneReach=DRIVE.laneOffset+Math.max(...Object.values(CARS).map(car=>car.collision?.halfWidth??CAR_HALF_WIDTH));
+// The computer field uses its established cars and lane centres. Player-only
+// Workshop trucks can be wider; below, check their hulls through the centre.
+const galleryLaneReach=DRIVE.laneOffset+Math.max(...Object.values(CARS).filter(car=>!car.workshop).map(car=>car.collision?.halfWidth??CAR_HALF_WIDTH));
 const check=(ok,message)=>{assert.ok(ok,message);checks++;};
 const ray=new THREE.Raycaster();
 for(const seed of[1989,42])for(const def of COURSE.filter(def=>def.sections.some(section=>section.theme==='alpine'))){
   const course=new Course(def,seed),structures=addRaceStructures(new THREE.Group(),course);structures.updateMatrixWorld(true);
+  for (const tunnel of course.features.tunnels.filter(item=>item.clearance)) {
+    const walls=course.features.obstacles.filter(item=>item.tunnelWall);
+    for (const [id,car] of Object.entries(CARS).filter(([,item])=>item.workshop))
+      for (let s=tunnel.start+8;s<tunnel.end-8;s+=2) {
+        const at=course.groundAt(s,0);
+        check(!walls.some(wall=>sweepObstacle(at,at,wall,course.at(s).heading,{...car.collision,height:car.height})),`${def.id}: player ${id} fits through the Gallery centre`);
+      }
+  }
   const lining=structures.children.filter(mesh=>mesh.name==='Circuit lining surface');
   const physicalBefore=JSON.stringify(course.features);
   const liningBefore=lining.map(mesh=>Array.from(mesh.geometry.attributes.position.array));

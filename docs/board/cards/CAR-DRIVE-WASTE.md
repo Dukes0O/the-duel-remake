@@ -17,9 +17,9 @@ Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-lo
 | Car | mph | Accel | Grip | Brake | Gears, mph | Mass, kg | Dirt grip / mph / scrub |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Rattler | 145 | 8.8 | .82 | .98 | 40,70,100,125,145 | 1100 | .88 / 105 / .25 |
-| Longhaul | 82 | 4.6 | .75 | .72 | 20,34,48,62,74,82 | 9000 | .90 / 70 / .18 |
+| Longhaul | 82 | 4.6 | .91 | .72 | 20,34,48,62,74,82 | 9000 | .90 / 70 / .18 |
 | Scarab | 118 | 8.5 | .96 | 1.10 | 32,55,78,100,118 | 850 | 1.08 / 115 / .10 |
-| Bully | 65 | 3.8 | .72 | .80 | 18,32,46,58,65 | 6500 | .88 / 55 / .18 |
+| Bully | 65 | 3.8 | .91 | .80 | 18,32,46,58,65 | 6500 | .88 / 55 / .18 |
 
 - The Workshop has one assembly bay per finished building. Parts/steel costs are 400/700, 2500/6500, 350/500 and 2000/4500 kg respectively, summing to each fictional vehicle's mass. Assembly takes 6, 15, 8 and 12 minutes at normal town speed. These are pacing choices, not real build times. Existing salvage can be stripped using the existing `sort-salvage` recipe to supply missing parts; shortages stop work until another load arrives. No money buys a car and no button completes one.
 - Optional `town.workshop` version 1 stores orders and completed cars, created only by the first Workshop command. Old towns gain no field on load; unknown versions and content are preserved. Ownership is granted through existing `profile.unlockedCars`, once, after the completed town has saved. A retry recovers an interrupted grant. Cars retain normal upgrades and six medal boxes. Visiting a town cannot grant its cars.
@@ -27,3 +27,6 @@ Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-lo
 - Checks before handover: the three suites above prove Workshop completion/save compatibility, actual driving and field isolation, and real GLB loading/moving wheels/damage. Then the requested lane tier with two jobs, `test-feature-flags`, and build, one heavy job at a time. Claude runs browser checks and judges handling, sound and the four models in game.
 
 - Roster expansion updates every older roster assertion and the existing headless model fixtures. The unchanged roster retains its exact pins. The four cars also need fitted armour kits, so this card includes `tools/blender/armor-kits.py`, its existing fit/model audits, and four generated runtime kit GLBs. Claude checks the fit in game before promotion.
+- The existing Preview launcher requests `wasteland-cars`. Durable Workshop/save rules live in `docs/WASTELAND_TOWN.md`; imported-paint and open-cage mount findings live in `docs/ART_LINE.md`.
+- The player picker in `screen-menu.js` must include owned Workshop cars. The `game.js` rival-choice hook keeps every computer car in the existing roster, including "Match my car": Rattler matches Banshee, Scarab matches Dusthawk, and the two trucks match Titan. No existing car or course changes. Longhaul clears the Gallery centre but overlaps its ordinary lane envelope by about 23 mm; a pure hull sweep now checks the player route, while the existing lane check covers the unchanged computer roster.
+- The two heavy trucks use Titan's .91 road grip: the first arena check exposed a steering-assist jump at 45 mph with their lower initial grip. Existing yaw assertions stay exact. Arena fixtures now cover six Longhaul tyres, slow Workshop floor speeds and the existing mass-based crush for the two trucks. Scarab stacks are seated inboard on its chassis; Longhaul's cage and turret sit on its cab. These assertion and number changes require Claude's written review.

@@ -70,6 +70,10 @@ the game.
 
 ## What to watch for
 
+- **An open cage is not a roof.** The Scarab's roof weapon probe found the floor through its cage. Give an open vehicle a supported weapon bridge and check all four mount feet against its real geometry; do not raise the socket until the weapon appears to fit.
+- **Generic kit dimensions do not prove a fit.** Probe each stack against the tyre rubber and each cage foot against the body below it. Scarab needed inboard stacks seated on its chassis; Longhaul needed the whole cage and turret moved onto its cab. A single roof-centre height cannot place feet over a truck bed.
+- **Imported paint needs the full finish contract.** A standard GLB material has no clearcoat value. Convert painted surfaces to physical materials with an explicit factory clearcoat before preparing damage, so switching paint back to Factory restores the original finish exactly.
+
 - **A family export can omit special-stage geometry.** When a recipe conditionally adds shared ground or drift meshes, include the family/export stage as well as the review stages; the GLB check caught missing standalone ship drifts in `scablands-ships.py`.
 - **A branch-level `continue` can omit every later building.** Keep it inside the matching building branch, then confirm each registered child is actually emitted; the helipad's top-level `continue` skipped the notice board in `town-services-2.py`.
 - **Something left on the ground, parented to a moving machine, is drawn twice as far out** (MACHINE-YARD-NEXT, 20 November). The yard's dust puffs were children of the machine's own moved and turned root but were given map places, so a puff stood as far from the machine as the machine stood from the map's centre: 47 m for the roller at its start. Put dust, marks and anything else a machine leaves behind in a world group, at the ground's own height, and check one puff's world place against the machine's.
