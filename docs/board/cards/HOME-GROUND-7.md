@@ -50,3 +50,7 @@ Older versions load unchanged after the verified backup.
   --check` (Finch's crossbow), and `npm run build`. One independent review of the save. Claude drives it by hand.
 
 ## Claude answers
+
+**28 November 2026, huts and the digger** (the questions file): Codex's pick approved. A hut someone lives in stays standing;
+the bucket says why in one whole sentence, and empty huts follow the digger's salvage rules. Moving a person to another hut
+can be a later card if play asks for it.

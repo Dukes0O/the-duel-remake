@@ -381,17 +381,19 @@ export async function run(context) {
   await tap('KeyB');
   for (let n = 0; n < 3 && (await home()).kind !== 'box'; n++) await tap('KeyG');
   now = await home();
-  if (now.kind !== 'box' || JSON.stringify(now.outline?.piece) !== JSON.stringify({kind: 'box', i: 4, j: 5})) fail('G did not give him the old crate.', now);
+  // HOME-GROUND-3B: the box is placed about 3 m ahead of him, where he looks; he faces north (smaller j) here.
+  const boxCell = now.outline?.piece?.kind === 'box' ? {i: now.outline.piece.i, j: now.outline.piece.j} : null;
+  if (now.kind !== 'box' || !boxCell || boxCell.i !== 4 || !(boxCell.j < 6)) fail('G did not give him the old crate in front of him.', now);
   await hold('KeyB', 2.7);
   now = await home();
-  if (JSON.stringify(now.record.boxes) !== JSON.stringify([{i: 4, j: 5, eggs: 0}])) fail('Holding B did not make the nest box.', now.record.boxes);
+  if (JSON.stringify(now.record.boxes) !== JSON.stringify([{...boxCell, eggs: 0}])) fail('Holding B did not make the nest box.', now.record.boxes);
   // The first egg, before he leaves.
   if (await walk(point(8, 9), .3) > .6) fail('He could not step back from the box.');
   await evaluate('advance', 130);
   now = await home();
   if (!(now.record.boxes[0].eggs >= 1)) fail('No egg was laid in the first few minutes.', now.record);
   report.firstEggs = now.record.boxes[0].eggs;
-  const nest = boxInLand({i: 4, j: 5});
+  const nest = boxInLand(boxCell);
   // Pictures for the look: the box with its first egg, looked down into, and a hen close to.
   if (await walk({x: nest.x, z: nest.z + 1.4}, .15) > .4) fail('He could not walk back to look at the box.');
   await evaluate('face', Math.PI);
