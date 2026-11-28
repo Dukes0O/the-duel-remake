@@ -310,14 +310,14 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const footHealth = document.createElement('div');
   footHealth.className = 'combat-foot-health';
   footHealth.hidden = true;
-  footHealth.innerHTML = `<span><b>FIGHTER HEALTH</b><strong></strong></span><div class="combat-armor-track"><i></i></div>`;
+  footHealth.innerHTML = `<span><b>FIGHTER HEALTH</b><strong></strong></span><div class="combat-armor-track"><i></i></div>
+    <div class="combat-home-powers" hidden><span class="combat-home-leaf" data-home-power="firePeppers" hidden><i></i></span>
+    <span class="combat-home-leaf" data-home-power="jumpingBeans" hidden><i></i></span></div>`;
   root.querySelector('.race-health').append(footHealth);
-  const powerLeaves = document.createElement('div'); powerLeaves.className = 'combat-home-powers';
-  powerLeaves.hidden = true; footHealth.append(powerLeaves);
+  const powerLeaves = footHealth.querySelector('.combat-home-powers');
   const leaves = ['firePeppers', 'jumpingBeans'].map(id => {
-    const leaf = document.createElement('span'); leaf.className = 'combat-home-leaf'; leaf.hidden = true;
-    const fill = document.createElement('i'); leaf.append(fill); powerLeaves.append(leaf);
-    return {id, leaf, fill};
+    const leaf = powerLeaves.querySelector(`[data-home-power="${id}"]`);
+    return {id, leaf, fill: leaf.querySelector('i')};
   });
 
   const layer = host.querySelector('.combat-opponent-layer');

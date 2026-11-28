@@ -1337,6 +1337,12 @@ const memory = values => {
   const course = {def: {}, groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0}),
     nearest: (x, z) => ({s: z, lateral: x}), obstaclesNear: () => []};
   const car = {s: 0, lateral: 0};
+  const deckCar = {s: -415, lateral: -45}, sailor = createFighter(course, deckCar, deckCar);
+  Object.assign(sailor, {y: 4, groundY: 4, deckPlate: 'good-hope-deck'});
+  for (let n = 0; n < 30; n++) stepFighter(course, deckCar, sailor, {homePlatforms: []});
+  equal(sailor.y, 4, 'home floor support leaves a stationary fighter on the existing ship deck');
+  for (let n = 0; n < 30; n++) stepFighter(course, deckCar, sailor, {forward: true, homePlatforms: []});
+  equal(sailor.y, 4, 'home floor support leaves the existing deck walking rules in charge');
   for (const height of [1.8, 2.5, 4.4]) {
     const fighter = createFighter(course, car, {s: 0, lateral: 0});
     const platforms = [{x: 0, z: 5, halfX: 2, halfZ: height === 1.8 ? .12 : 2, heading: 0, y: height}];

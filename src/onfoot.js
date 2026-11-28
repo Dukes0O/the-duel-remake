@@ -167,7 +167,7 @@ function attemptMovement(course, car, fighter, dx, dz, feetY, airborne, platform
   // ground, which the job turns into a fall beside the ship. Without `deckPlate` nothing here changes.
   const deckY = fighter.deckPlate ? deckFloorHeightAt(fighter.deckPlate, x, z) : null;
   if (deckY !== null) ground.y = deckY;
-  const platformY = homeFloorAt(platforms, x, z, Math.max(fighter.y, feetY));
+  const platformY = deckY === null ? homeFloorAt(platforms, x, z, Math.max(fighter.y, feetY)) : null;
   if (platformY !== null) ground.y = Math.max(ground.y, platformY);
   const offDeck = !!fighter.deckPlate && deckY === null ||
     homeFloorAt(platforms, fighter.x, fighter.z, fighter.y) !== null && platformY === null;
@@ -245,10 +245,10 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
     fighter.verticalSpeed = input.homeJumpMeters > T.jumpMeters ? Math.sqrt(2 * T.gravity * input.homeJumpMeters) : JUMP_SPEED;
   fighter.jumpHeld = !!input.jump;
 
-  if (input.homePlatforms) {
+  const homeFloor = !fighter.deckPlate ? homeFloorAt(input.homePlatforms, fighter.x, fighter.z, fighter.y) : null;
+  if (homeFloor !== null) {
     const surface = course.groundAt(fighter.s, fighter.lateral, fighter.y).y;
-    const platform = homeFloorAt(input.homePlatforms, fighter.x, fighter.z, fighter.y);
-    fighter.groundY = Math.max(surface, platform ?? -Infinity);
+    fighter.groundY = Math.max(surface, homeFloor);
     fighter.airHeight = Math.max(0, fighter.y - fighter.groundY);
   }
   let airborne = fighter.verticalSpeed !== 0 || fighter.airHeight > 0;
