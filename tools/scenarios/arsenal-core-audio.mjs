@@ -3,7 +3,7 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {ffmpeg} from '../audio/codec.mjs';
 import {measureLoudness} from '../audio/measurements.mjs';
-import {createCaptureWitness, inspectCaptureWitness, recorderWorkletSource}
+import {createCaptureWitness, inspectCaptureWitness, inspectWitnessedChunks, recorderWorkletSource}
   from '../audio/capture-witness.mjs';
 
 async function capture(quality, side, recorder) {
@@ -84,7 +84,8 @@ async function capture(quality, side, recorder) {
   const tracks = {mix: meter(audio.output),
     engine: meter(audio.buses.engine), weapons: meter(audio.buses.weapons)};
   // This native source feeds only the diagnostic input; the worklet emits silence.
-  witnessSource.start();
+  const sourceStartFrame = Math.ceil((ctx.currentTime + .05) * ctx.sampleRate / 128) * 128;
+  witnessSource.start(sourceStartFrame / ctx.sampleRate);
   const native = [], cues = [], frames = [];
   const original = {event: audio.event, play: audio._playCue, buffer: audio._cueBuffer,
     space: audio._spatialOutput, frame: app.onFrame};
@@ -178,9 +179,12 @@ async function capture(quality, side, recorder) {
       if (epochFrame === null) {
         const warmedFrame = Math.ceil(ctx.currentTime * ctx.sampleRate), recorderDeadline = performance.now() + 5000;
         const settled = track => {
-          const tail = track.chunks.slice(-3);
-          return tail.length === 3 && tail[0].frame >= warmedFrame &&
-            tail.every((chunk, i) => !i || chunk.frame === tail[i - 1].frame + 2048);
+          const capture = recorder.inspectChunks(track.chunks, sourceStartFrame, witnessValues, recorder.inspectWitness);
+          if (capture.reasons.some(reason => reason !== 'no witnessed source samples'))
+            throw Error('capture disturbed, rerun alone: Arsenal startup ' + capture.reasons.join('; '));
+          const tail = capture.chunks.slice(-3);
+          return capture.complete && tail.length === 3 && tail[0].sampleFrame >= warmedFrame &&
+            tail.every((chunk, i) => !i || chunk.sampleFrame === tail[i - 1].sampleFrame + 2048);
         };
         // Establish one common epoch only after all real meters have delivered
         // three consecutive post-input chunks. Later cycles keep recording.
@@ -238,8 +242,11 @@ async function capture(quality, side, recorder) {
       ? [describeGap(allChunks[i - 1].frame, chunk.frame)] : []);
     // Retain every sample at/after the common native frame epoch. Only setup
     // samples are sliced; a gap crossing the epoch remains a strict failure.
-    const chunks = allChunks.filter(chunk => chunk.frame + chunk.pcm.length / 2 > epochFrame);
-    const first = chunks[0], beforeFirst = first ? allChunks[allChunks.indexOf(first) - 1] : null;
+    const capture = recorder.inspectChunks(allChunks, sourceStartFrame, witnessValues, recorder.inspectWitness);
+    const chunks = capture.chunks.filter(chunk => chunk.sampleFrame !== null &&
+      chunk.sampleFrame + chunk.pcm.length / 2 > epochFrame)
+      .map(chunk => ({...chunk, labelFrame: chunk.frame, frame: chunk.sampleFrame}));
+    const first = chunks[0], beforeFirst = first ? allChunks[allChunks.findIndex(chunk => chunk.pcm === first.pcm) - 1] : null;
     const leadingGap = first && first.frame > epochFrame
       ? describeGap(beforeFirst?.frame ?? epochFrame, first.frame, epochFrame) : null;
     const measuredGaps = chunks.flatMap((chunk, i) => i && chunk.frame !== chunks[i - 1].frame + 2048
@@ -272,14 +279,14 @@ async function capture(quality, side, recorder) {
       missingOrShortWitness: measuredCallbacks.filter(item => item.witnessFrames !== 128).length};
     const firstFrame = first ? Math.max(epochFrame, first.frame) : null;
     return {pcmBase64: btoa(binary), witnessBase64: btoa(witnessBinary),
-      witnessDiagnostic, callbackHeaders, measuredFirstChunkSkip: skip, frames: pcm.length / 2, chunkCount: chunks.length,
+      witnessDiagnostic, callbackHeaders, clockNotes: capture.clockNotes, captureReasons: capture.reasons, measuredFirstChunkSkip: skip, frames: pcm.length / 2, chunkCount: chunks.length,
       epochFrame, firstFrame, lastFrame: chunks.at(-1)?.frame ?? null,
       setupSamplesDiscarded: (allChunks.reduce((sum, chunk) => sum + chunk.pcm.length, 0) - pcm.length) / 2,
       totalGapCount: allGaps.length, measuredGapCount: measuredGaps.length,
       firstSetupGap: allGaps.find(gap => gap.actualFrame <= epochFrame) || null,
       firstGap: measuredGaps[0] || null,
       audioStartSec: firstFrame == null ? null : firstFrame / ctx.sampleRate - began,
-      contiguous: !leadingGap && chunks.every((chunk, i) => !i || chunk.frame === chunks[i - 1].frame + 2048)};
+      contiguous: capture.complete && !leadingGap && chunks.every((chunk, i) => !i || chunk.frame === chunks[i - 1].frame + 2048)};
   }
   return {quality, side, sampleRate: ctx.sampleRate, channels: 2, nativeContext: ctx instanceof AudioContext,
     native, cues, frames, cleanup, contextStateAtStop: ctx.state,
@@ -304,7 +311,7 @@ export async function run(context) {
       select.value=${JSON.stringify(quality)};select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
     const recorder = '{createWitness:(' + createCaptureWitness.toString() +
       '),inspectWitness:(' + inspectCaptureWitness.toString() +
-      '),worklet:' + JSON.stringify(recorderWorkletSource) + '}';
+      '),inspectChunks:(' + inspectWitnessedChunks.toString() + '),worklet:' + JSON.stringify(recorderWorkletSource) + '}';
     const row = await context.evaluate('(' + capture.toString() + ')(' +
       JSON.stringify(quality) + ',' + side + ',' + recorder + ')');
     row.validationStatus = 'partial'; rows.push(row);
@@ -328,7 +335,8 @@ export async function run(context) {
         row.validationStatus = 'failed'; row.failure = diagnostic;
         await persist('failed', quality);
         console.error('Native recording diagnostic: ' + JSON.stringify(diagnostic));
-        throw Error('Incomplete native ' + kind + ' recording. ' + JSON.stringify(diagnostic));
+        throw Error('capture disturbed, rerun alone: Incomplete native ' + kind + ' recording. ' +
+          JSON.stringify({...diagnostic, reasons: track.captureReasons, witness: track.witnessDiagnostic}));
       }
       const raw = Buffer.from(track.pcmBase64, 'base64');
       const wav = ffmpeg(['-f', 'f32le', '-ar', String(row.sampleRate), '-ac', '2', '-i', 'pipe:0',

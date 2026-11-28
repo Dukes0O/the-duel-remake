@@ -1,5 +1,7 @@
 # Wasteland run log
 
+28 November (QA-AUDIO-SWEEP lane sweep): repo audit reviewed; candidates remain advisory, with no runtime asset or branch removal; sizes and idle branches recorded in STATUS; this card's evidence, QA scratch and production build output recycled after the verdicts.
+
 27 November (HOME-GROUND-3B lane sweep): repo audit reviewed; no asset or branch removals in this card; sizes and idle branches recorded in STATUS; lane scratch and build output recycled after checks.
 
 27 November (OPEN-PEN-DRAIN-BANK lane sweep): repo audit reviewed; candidates advisory, no asset removals; generated build and scratch recycled; sizes and idle branches in STATUS.
@@ -1847,3 +1849,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge HOME-GROUND-3-DRIVE (Codex Sol, laptop lane): the eight fixes from Claude's drive of step 3; Claude updated test-open-roam-start's taps to press and release at the merge
 - Janitor HOME-GROUND-4 (28 November): no unused module candidates; uncertain asset candidates left intact. Generated builds and QA scratch recycled; the comparison sheet is 206 KB. Existing size overruns and idle branches remain on STATUS; unfinished lane retained for Claude review.
 - Merge HOME-GROUND-4 (Codex Astra, laptop lane): the watchtower, play-time raids, the unlosable first bike and raids on his fence; the bike's look goes to a second round (HOME-RAID-BIKE-LOOK)
+- Merge QA-AUDIO-SWEEP (Codex, laptop lane): the Arsenal and crash audio meters trust the sample witness; closed QA-AUDIO-CLOCK, QA-P4-AUDIO-FRAME-GAP, GATE-CALLBACK-DIAGNOSTICS, QA-ARSENAL-AUDIO-READINESS and QA-AUDIO-CRASH-PEAK-3; QA-AUDIO-BASELINE-CONTROL stays open

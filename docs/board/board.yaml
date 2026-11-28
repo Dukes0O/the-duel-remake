@@ -36,17 +36,6 @@ tasks:
     flag: "driving-lessons"
     details: "docs/board/cards/LESSONS-V2-FINISH.md"
 
-  - id: QA-ARSENAL-AUDIO-READINESS
-    title: "Locate the native Arsenal audio readiness and evaluation timeouts"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "blocked"
-    priority: "low"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-ARSENAL-AUDIO-READINESS.md"
-
   - id: QA-AUDIO-BASELINE-CONTROL
     title: "Legacy native audio repeat control is unreliable"
     owner: "claude"
@@ -65,17 +54,6 @@ tasks:
     status: "backlog"
     needs: []
     details: "docs/board/cards/GATE-FRAME-DELIVERY.md"
-
-  - id: GATE-CALLBACK-DIAGNOSTICS
-    title: "Prove audio capture delivery independently of callback clocks"
-    owner: "claude"
-    lane: "TOOL"
-    size: "S"
-    status: "backlog"
-    needs: []
-    claimed_by: "codex-director-2026-10-04"
-    branch: "codex/tools/callback-diagnostics"
-    details: "docs/board/cards/GATE-CALLBACK-DIAGNOSTICS.md"
 
   - id: JANITOR-DIAGNOSTIC-NOTES
     title: "Resolve remaining unindexed diagnostic notes"
@@ -160,15 +138,6 @@ tasks:
     needs: [CLEAN-06]
     flag: "none"
     details: "docs/board/cards/CLEAN-11.md"
-
-  - id: QA-AUDIO-CLOCK
-    title: "Native audio recorder clock diagnosis"
-    owner: "claude"
-    lane: "AUDIO"
-    size: "S"
-    status: "backlog"
-    needs: []
-    details: "docs/board/cards/QA-AUDIO-CLOCK.md"
 
   - id: P4-AZURE-GP-COMPARISON
     title: "Azure Grand Prix comparison in the Team Room"
@@ -261,16 +230,6 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-REVIEW-RUNUP-START.md"
 
-  - id: QA-P4-AUDIO-FRAME-GAP
-    title: "p4-audio capture sometimes repeats a slice of sound"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "backlog"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-P4-AUDIO-FRAME-GAP.md"
-
   - id: CAREER-RESTORE-REMOVE
     title: "Remove the one-time career restore once Kyle confirms"
     owner: "claude"
@@ -330,16 +289,6 @@ tasks:
     needs: []
     locks: [release]
     details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V7.md"
-
-  - id: QA-AUDIO-CRASH-PEAK-3
-    title: "test-audio-crash-peak fails once in a full tier, passes on rerun (third time)"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "backlog"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-AUDIO-CRASH-PEAK-3.md"
 
   - id: EASY-YOUNG-DRIVER
     title: "Easy that a young driver can win in arena games and warlord fights"
@@ -1202,18 +1151,6 @@ tasks:
     locks: ["home-ground"]
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-5B.md"
-
-  - id: QA-AUDIO-SWEEP
-    title: "Six older audio cards: cured by the sample witness, given it, or still open"
-    owner: "codex"
-    model: "sol"
-    lane: "QA"
-    size: "S"
-    status: "building"
-    claimed_by: "Codex Sol, laptop lane, 27 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-AUDIO-SWEEP.md"
 
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"

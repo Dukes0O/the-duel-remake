@@ -52,6 +52,50 @@ export function inspectCaptureStartup(chunks, reference, inspect = inspectCaptur
   return {complete: started && !reasons.length, started, startupFrames, sourceFrames, reasons, blocks};
 }
 
+// Shared check-tool adaptation of P4's witnessed coordinates. Retain raw labels
+// and PCM; only independent sample identity can establish their position.
+export function inspectWitnessedChunks(chunks, sourceStartFrame, reference, inspect = inspectCaptureWitness) {
+  const reasons = [], clockNotes = [], positioned = [];
+  let started = false, covered = 0;
+  for (const [index, chunk] of chunks.entries()) {
+    let startupFrames = 0;
+    if (!started) while (startupFrames < chunk.witness.length && chunk.witness[startupFrames] === 0) startupFrames++;
+    const samples = chunk.witness.subarray(startupFrames), identity = inspect(samples, reference);
+    const callbacks = chunk.callbacks ?? [];
+    const badCallback = callbacks.some((row, i) => {
+      if ((row.chunkOffset ?? row.offset) !== i * 128) return true;
+      if ((i + 1) * 128 <= startupFrames) return false;
+      if ((row.witnessFrames ?? row.lengths?.at(-1)?.[0]) !== 128) return true;
+      return row.lengths
+        ? row.lengths.slice(0, -1).some(channels => channels.some(length => length !== 128))
+        : ![0, 128].includes(row.leftFrames) || ![0, 128].includes(row.rightFrames);
+    });
+    if (chunk.pcm.length !== 4096 || chunk.witness.length !== 2048 || callbacks.length !== 16 ||
+        badCallback)
+      reasons.push('short PCM, witness or callback input at block ' + index);
+    if (!samples.length && !started) {
+      positioned.push({...chunk, sampleFrame: null, startupFrames, identity});
+      continue;
+    }
+    started = true;
+    if (!identity.complete || identity.sourceStartFrame !== covered)
+      reasons.push('witness gap/repeat at block ' + index + ': expected source frame ' + covered + ', ' + JSON.stringify(identity));
+    const sampleFrame = identity.complete ? sourceStartFrame + identity.sourceStartFrame - startupFrames : null;
+    if (sampleFrame !== null) {
+      if (chunk.frame !== sampleFrame) clockNotes.push({block: index, actualFrame: chunk.frame, expectedFrame: sampleFrame});
+      for (const row of callbacks) {
+        const offset = row.chunkOffset ?? row.offset;
+        if (row.frame !== sampleFrame + offset)
+          clockNotes.push({block: index, chunkOffset: offset, actualFrame: row.frame, expectedFrame: sampleFrame + offset});
+      }
+    }
+    positioned.push({...chunk, sampleFrame, startupFrames, identity});
+    covered += samples.length;
+  }
+  if (!started) reasons.push('no witnessed source samples');
+  return {complete: started && !reasons.length, reasons, clockNotes, chunks: positioned};
+}
+
 export const recorderWorkletSource = `class Meter extends AudioWorkletProcessor {
   constructor(){super();this.pcm=new Float32Array(4096);this.at=0;this.first=0;
     this.witness=new Float32Array(2048);this.callbacks=[];}

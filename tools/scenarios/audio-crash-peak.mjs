@@ -1,10 +1,39 @@
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {contactFixture} from './warlord-reward.mjs';
+import {createCaptureWitness, inspectCaptureWitness, inspectWitnessedChunks}
+  from '../audio/capture-witness.mjs';
+
+export const crashRecorderWorkletSource = `class PeakMeter extends AudioWorkletProcessor {
+    constructor(options){super();this.count=options?.processorOptions?.streams||1;
+      this.data=Array.from({length:this.count},()=>new Float32Array(4096));
+      this.at=0;this.first=0;this.callbacks=[];this.witness=new Float32Array(2048);}
+    process(inputs){
+      const witness=inputs[this.count]?.[0];
+      this.callbacks.push({frame:currentFrame,offset:this.at/2,
+        lengths:inputs.map(channels=>channels.map(channel=>channel.length))});
+      for(let i=0;i<128;i++){
+        if(this.at===0)this.first=currentFrame+i;
+        this.witness[this.at/2]=witness?.[i]||0;
+        for(let stream=0;stream<this.count;stream++){
+          const channels=inputs[stream]||[],left=channels[0],right=channels[1]||left;
+          this.data[stream][this.at]=left?.[i]??0;
+          this.data[stream][this.at+1]=right?.[i]??0;
+        }
+        this.at+=2;
+        if(this.at===4096){
+          this.port.postMessage({frame:this.first,pcm:this.data[0],streams:this.data,
+            callbacks:this.callbacks,witness:this.witness},[...this.data.map(data=>data.buffer),this.witness.buffer]);
+          this.data=Array.from({length:this.count},()=>new Float32Array(4096));
+          this.at=0;this.callbacks=[];this.witness=new Float32Array(2048);
+        }
+      }return true;
+    }
+  } registerProcessor('duel-crash-peak-meter',PeakMeter);`;
 
 // QA only: native AudioWorklet meters read the final runtime output. Float32
 // samples are transferred unchanged; values outside [-1,1] are never clipped.
-async function captureNative(contactSource) {
+async function captureNative(contactSource, recorder) {
   const sleep = ms => new Promise(done => setTimeout(done, ms));
   // Capture lengths are counted in audio time. A busy laptop can let the audio
   // clock fall behind the wall clock, so each capture window waits on the audio
@@ -46,65 +75,80 @@ async function captureNative(contactSource) {
     noUnmeteredMasterBypass: !reach(audio.master, context.destination, audio.output),
     nativeContext: context instanceof AudioContext,
   };
-  const worklet = `class PeakMeter extends AudioWorkletProcessor {
-    constructor(options){super();this.count=options?.processorOptions?.streams||1;
-      this.data=Array.from({length:this.count},()=>new Float32Array(4096));
-      this.at=0;this.first=0;this.callbacks=[];}
-    process(inputs){
-      this.callbacks.push({frame:currentFrame,offset:this.at/2,
-        lengths:inputs.map(channels=>channels.map(channel=>channel.length))});
-      for(let i=0;i<128;i++){
-        if(this.at===0)this.first=currentFrame+i;
-        for(let stream=0;stream<this.count;stream++){
-          const channels=inputs[stream]||[],left=channels[0],right=channels[1]||left;
-          this.data[stream][this.at]=left?.[i]||0;
-          this.data[stream][this.at+1]=right?.[i]||0;
-        }
-        this.at+=2;
-        if(this.at===4096){
-          this.port.postMessage({frame:this.first,pcm:this.data[0],streams:this.data,
-            callbacks:this.callbacks},this.data.map(data=>data.buffer));
-          this.data=Array.from({length:this.count},()=>new Float32Array(4096));
-          this.at=0;this.callbacks=[];
-        }
-      }return true;
-    }
-  } registerProcessor('duel-crash-peak-meter',PeakMeter);`;
+  const worklet = recorder.worklet;
   const url = URL.createObjectURL(new Blob([worklet], {type:'text/javascript'}));
   try {await context.audioWorklet.addModule(url);} finally {URL.revokeObjectURL(url);}
-  function meters(nodes) {
-    const entries=Object.entries(nodes),tracks=Object.fromEntries(entries.map(([name])=>[name,{chunks:[]}]));
-    const tap=new AudioWorkletNode(context,'duel-crash-peak-meter',
-      {numberOfInputs:entries.length,numberOfOutputs:1,outputChannelCount:[2],
-        processorOptions:{streams:entries.length}});
-    // One silent render path keeps every input live and all stems in one
-    // native callback. The processor never adds a signal to game output.
-    tap.connect(context.destination);
-    tap.port.onmessage=event=>{
-      const packet=event.data;
-      for(let i=0;i<entries.length;i++)tracks[entries[i][0]].chunks.push({
-        frame:packet.frame,pcm:packet.streams[i],callbacks:packet.callbacks});
+  async function meters(nodes, ctx = context) {
+    const reference = recorder.createWitness(ctx.sampleRate);
+    const witnessBuffer = ctx.createBuffer(1, reference.length, ctx.sampleRate);
+    witnessBuffer.copyToChannel(reference, 0);
+    const source = ctx.createBufferSource(); source.buffer = witnessBuffer;
+    const entries = Object.entries(nodes);
+    const tracks = Object.fromEntries(entries.map(([name]) => [name, {chunks: [], reference, sampleRate: ctx.sampleRate}]));
+    const tap = new AudioWorkletNode(ctx, 'duel-crash-peak-meter',
+      {numberOfInputs: entries.length + 1, numberOfOutputs: 1, outputChannelCount: [2],
+        processorOptions: {streams: entries.length}});
+    tap.connect(ctx.destination);
+    tap.port.onmessage = event => {
+      const packet = event.data;
+      for (let i = 0; i < entries.length; i++) tracks[entries[i][0]].chunks.push({
+        frame: packet.frame, pcm: packet.streams[i], witness: packet.witness, callbacks: packet.callbacks});
     };
-    entries.forEach(([,node],index)=>node.connect(tap,0,index));
-    let stopped=false;
-    const stop=()=>{if(stopped)return;stopped=true;
-      for(const [,node]of entries)node.disconnect(tap);
-      tap.disconnect();tap.port.close();};
-    for(const track of Object.values(tracks))track.stop=stop;
-    return tracks;
+    entries.forEach(([, node], index) => node.connect(tap, 0, index));
+    source.connect(tap, 0, entries.length);
+    let stopped = false;
+    const stop = () => {
+      if (stopped) return; stopped = true;
+      source.stop(); source.disconnect();
+      for (const [, node] of entries) node.disconnect(tap);
+      tap.disconnect(); tap.port.close();
+    };
+    for (const track of Object.values(tracks)) track.stop = stop;
+    const deadline = Date.now() + 5000;
+    try {
+      while (!Object.values(tracks).every(track => track.chunks.length)) {
+        if (Date.now() >= deadline) throw Error('capture disturbed, rerun alone: crash worklet did not run');
+        await sleep(10);
+      }
+      const sourceStartFrame = Math.ceil((ctx.currentTime + .05) * ctx.sampleRate / 128) * 128;
+      for (const track of Object.values(tracks)) track.sourceStartFrame = sourceStartFrame;
+      source.start(sourceStartFrame / ctx.sampleRate);
+      while (!Object.values(tracks).every(track => {
+        const capture = recorder.inspectChunks(track.chunks, sourceStartFrame, reference, recorder.inspectWitness);
+        if (capture.reasons.some(reason => reason !== 'no witnessed source samples'))
+          throw Error('capture disturbed, rerun alone: crash startup ' + capture.reasons.join('; '));
+        return capture.complete;
+      })) {
+        if (Date.now() >= deadline) throw Error('capture disturbed, rerun alone: crash witness source frame 0 not captured');
+        await sleep(10);
+      }
+      return tracks;
+    } catch (error) { stop(); throw error; }
   }
-  function meter(node) {return meters({single:node}).single;}
-  function encode(chunks, began) {
-    const first=chunks[0]?.frame ?? 0;
-    const length=chunks.reduce((sum,c)=>sum+c.pcm.length,0),pcm=new Float32Array(length);
-    let at=0;
-    for(const chunk of chunks){pcm.set(chunk.pcm,at);at+=chunk.pcm.length;}
-    const bytes=new Uint8Array(pcm.buffer);let binary='';
-    for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
-    return {pcmBase64:btoa(binary),frames:length/2,audioStartSec:first/context.sampleRate-began,
-      firstFrame:first,chunkFrames:chunks.map(c=>c.frame),
-      chunkCallbacks:chunks.map(c=>c.callbacks),
-      contiguous:chunks.every((c,i)=>!i||c.frame===chunks[i-1].frame+2048)};
+  async function meter(node, ctx = context) { return (await meters({single: node}, ctx)).single; }
+  function encode(track, began) {
+    const {chunks, reference, sourceStartFrame, sampleRate} = track;
+    const capture = recorder.inspectChunks(chunks, sourceStartFrame, reference, recorder.inspectWitness);
+    if (!capture.complete) throw Error('capture disturbed, rerun alone: crash ' + capture.reasons.join('; '));
+    const kept = capture.chunks.filter(chunk => chunk.sampleFrame !== null);
+    const first = kept[0].sampleFrame + kept[0].startupFrames;
+    const length = kept.reduce((sum, chunk) => sum + chunk.pcm.length - chunk.startupFrames * 2, 0);
+    const pcm = new Float32Array(length), witness = new Float32Array(length / 2);
+    let at = 0;
+    for (const chunk of kept) {
+      pcm.set(chunk.pcm.subarray(chunk.startupFrames * 2), at);
+      witness.set(chunk.witness.subarray(chunk.startupFrames), at / 2);
+      at += chunk.pcm.length - chunk.startupFrames * 2;
+    }
+    const base64 = values => {
+      const bytes = new Uint8Array(values.buffer); let binary = '';
+      for (let i = 0; i < bytes.length; i += 32768) binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
+      return btoa(binary);
+    };
+    return {pcmBase64: base64(pcm), witnessBase64: base64(witness), frames: length / 2,
+      audioStartSec: first / sampleRate - began, firstFrame: first,
+      chunkFrames: chunks.map(chunk => chunk.frame), chunkCallbacks: chunks.map(chunk => chunk.callbacks),
+      clockNotes: capture.clockNotes, witnessDiagnostic: recorder.inspectWitness(witness, reference), contiguous: capture.complete};
   }
   const events=[],cues=[];
   const originalPlay=audio._playCue;
@@ -141,8 +185,9 @@ async function captureNative(contactSource) {
       airborne:false,airHeight:0,groundHeight:null,armor:1000,maxArmor:1000,invulnerableSec:0});
     app.keys.KeyW=true;app.autopilot=false;app._scriptedCrashDone=true;
     app.start();await sleep(700);app.stop();await sleep(250);
-    const began=context.currentTime,tracks=meters({mix:audio.output,engine:audio.buses.engine,
+    const tracks=await meters({mix:audio.output,engine:audio.buses.engine,
       impacts:audio.buses.impacts});
+    const began=context.currentTime;
     let struck=false,contactAt=null,physical=null,stressAt=null;
     const frames=[];
     app.onFrame=()=>{
@@ -166,7 +211,7 @@ async function captureNative(contactSource) {
     rows.push({name,began,contactAt:contactAt-began,stressAt:stressAt==null?null:stressAt-began,
       physical,frames,events:events.filter(e=>e.time>=began).map(e=>({...e,time:e.time-began})),
       cues:cues.filter(e=>e.time>=began).map(e=>({...e,time:e.time-began})),
-      tracks:Object.fromEntries(Object.entries(tracks).map(([key,t])=>[key,encode(t.chunks,began)]))});
+      tracks:Object.fromEntries(Object.entries(tracks).map(([key,t])=>[key,encode(t,began)]))});
     app.returnToMenu();
   }
   // Native safe-signal reference: quiet, known audio goes through the complete
@@ -176,10 +221,6 @@ async function captureNative(contactSource) {
   await quiet.context.resume();await Promise.all([quiet._samplesPromise,quiet._ambiencePromise]);
   const qctx=quiet.context,qurl=URL.createObjectURL(new Blob([worklet],{type:'text/javascript'}));
   try{await qctx.audioWorklet.addModule(qurl);}finally{URL.revokeObjectURL(qurl);}
-  const qchunks=[],referenceChunks=[],tap=new AudioWorkletNode(qctx,'duel-crash-peak-meter',
-    {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
-  tap.connect(qctx.destination);
-  tap.port.onmessage=e=>qchunks.push(e.data);quiet.output.connect(tap);
   const tone=qctx.createOscillator(),level=qctx.createGain();
   tone.frequency.value=997;level.gain.value=.01;tone.connect(level);level.connect(quiet.master);
   // Released a6523ea output reference, rendered by the same native context.
@@ -188,20 +229,17 @@ async function captureNative(contactSource) {
   referenceMaster.gain.value=.42;referenceOutput.threshold.value=-18;
   referenceOutput.knee.value=16;referenceOutput.ratio.value=4;
   level.connect(referenceMaster);referenceMaster.connect(referenceOutput);
-  const referenceTap=new AudioWorkletNode(qctx,'duel-crash-peak-meter',
-    {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
-  referenceOutput.connect(referenceTap);referenceTap.connect(qctx.destination);
-  referenceTap.port.onmessage=e=>referenceChunks.push(e.data);
+  const quietMeter = await meter(quiet.output, qctx), referenceMeter = await meter(referenceOutput, qctx);
   const qbegan=qctx.currentTime;tone.start();await untilAudioTime(qctx,qbegan+1.1);tone.stop();
-  quiet.output.disconnect(tap);tap.disconnect();tap.port.close();await sleep(40);
-  referenceOutput.disconnect();referenceTap.disconnect();referenceTap.port.close();
-  const quietTrack=encode(qchunks,qbegan),referenceTrack=encode(referenceChunks,qbegan);await qctx.close();
+  quietMeter.stop();referenceMeter.stop();await sleep(40);
+  referenceOutput.disconnect();
+  const quietTrack=encode(quietMeter,qbegan),referenceTrack=encode(referenceMeter,qbegan);await qctx.close();
   // The actual pause API fades the complete output and clears owned voices.
-  const pausedStart=context.currentTime,paused=meter(audio.output);
+  const paused=await meter(audio.output),pausedStart=context.currentTime;
   audio.setPaused(true);await untilAudioTime(context,pausedStart+.35);paused.stop();await sleep(40);
   const cleanup={paused:audio.paused,projectileVoices:audio.projectileVoices.size,
     mixerVoices:[...audio.mixer.voices.values()].reduce((n,set)=>n+set.size,0),hiddenRoadVoices:audio.hiddenRoadVoices.size,
-    track:encode(paused.chunks,pausedStart)};
+    track:encode(paused,pausedStart)};
   detach();audio._playCue=originalPlay;app.dispose();await sleep(50);
   cleanup.contextClosed=context.state==='closed';
   return {schema:1,sampleRate:context.sampleRate,channels:2,memoryOnlySaves:
@@ -217,7 +255,10 @@ export async function run(context) {
   await context.navigate('/tools/menu-check.html?flags=fuel-run');
   await context.waitFor("!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,'localStorage')?.value",
     'memory-only native audio entry',30000);
-  const result=await context.evaluate('('+captureNative.toString()+')('+JSON.stringify(contactFixture)+')');
+  const recorder = '{createWitness:(' + createCaptureWitness.toString() + '),inspectWitness:(' +
+    inspectCaptureWitness.toString() + '),inspectChunks:(' + inspectWitnessedChunks.toString() +
+    '),worklet:' + JSON.stringify(crashRecorderWorkletSource) + '}';
+  const result=await context.evaluate('('+captureNative.toString()+')('+JSON.stringify(contactFixture)+','+recorder+')');
   result.actualRecorder = await actualRecorderProbe(context);
   await writeFile(join(context.outputDir,'capture.json'),JSON.stringify(result)+'\n');
   console.log('Native final-output Float32 capture: '+result.rows.length+' cases, '+result.sampleRate+' Hz.');
