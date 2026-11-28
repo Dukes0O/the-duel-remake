@@ -1,3 +1,4 @@
+import {waterEasy} from '../story/water-easy.js';
 import {arenaActor, outOfPlay} from '../combat-teams.js';
 import {worldPose} from '../arena/arena-floor.js';
 import {arenaCarSpec} from '../arena/arena-pilot.js';
@@ -6,6 +7,7 @@ import {arenaFloorSpeed} from '../arena/venues.js';
 // Sawtooth Sal's intentions, not extra car physics (SCRAPDOME section 5).
 // The pilot drives every goal with the existing car, boost and steering limits.
 export const SAL_RULES = Object.freeze({
+  waterEasyArmor: 22,
   sidewaysMetres: 12, alongMetres: 6, cooldownSec: Object.freeze({easy: 9, medium: 7, hard: 5}),
   windowSec: 2, windowSpeedShare: .6, windowSteeringScale: .5, phaseTwoTellShare: .8,
   // A sweep is one committed swerve; a charge that makes no ground gives up.
@@ -23,6 +25,7 @@ export function isSalFight(duel, actor) {
 
 export function resetSalFight(duel, actor) {
   if (!isSalFight(duel, actor)) return;
+  if (waterEasy(duel, 'sal')) actor.armor = actor.maxArmor = SAL_RULES.waterEasyArmor;
   resetSawSweep(duel, actor);
   // This is the existing renderer's tier alias. It adds no armor or mass.
   actor.armorKit = 'warlord';

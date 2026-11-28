@@ -1,3 +1,4 @@
+import {waterEasy} from '../story/water-easy.js';
 import {arenaActor, outOfPlay, combatOwnerId} from '../combat-teams.js';
 import {worldPose} from '../arena/arena-floor.js';
 import {applyArmorDamage} from '../combat-armor.js';
@@ -10,6 +11,7 @@ import {addCarSidewaysPush} from '../arsenal/car-effects.js';
 // pulled car reaches his magnet, the red-hot window and the phase-two double
 // pull. Everything is read from the fight's own state, no randomness.
 export const MAGNUS_RULES = Object.freeze({
+  waterEasyRamShare: 1.3,
   minMetres: 10, maxMetres: 30, reachMetres: 30, tellScale: 1.5,
   cooldownSec: Object.freeze({easy: 14, medium: 11, hard: 8}),
   // The pull adds this much push a second; the car's own push decay (2.4 a
@@ -203,7 +205,7 @@ export const MAGNUS_FIGHT = Object.freeze({
   think: thinkMagnus,
   motion: moveMagnus,
   attack: (duel, attacker, victim) => victim === duel.state
-    ? {multiplier: byDifficulty(duel, MAGNUS_RULES.ramShare), move: false} : null,
+    ? {multiplier: waterEasy(duel, 'magnus') ? MAGNUS_RULES.waterEasyRamShare : byDifficulty(duel, MAGNUS_RULES.ramShare), move: false} : null,
   // Any hit hurts him more while his magnet cools.
   defense: (duel, victim) => victim.magnusPull?.stage === 'hot' ? MAGNUS_RULES.hotDefense : 1,
   // No shots while the magnet is on: he is holding the crane. On Easy he never

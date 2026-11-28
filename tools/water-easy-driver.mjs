@@ -19,6 +19,7 @@
 // the computer pilot does (src/arena/arena-pilot.js), because a child who keeps driving into a wall is a broken
 // test, not a child.
 globalThis.cancelAnimationFrame ??= () => {};
+import {sweepObstacle} from '../src/collision.js';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {DRIVE, COURSE} from '../src/config.js';
@@ -281,6 +282,29 @@ function holdFort(duel, child, hands, view) {
   if (weapons.selected !== 'rpg') { duel.selectFootGear(1); duel.setFighterInput({fire: false}); hands.fired = false; }
   if (hands.aimError == null) hands.aimError = child.aimError();
   const dx = target.at.x - fighter.x, dz = target.at.z - fighter.z, flat = Math.hypot(dx, dz);
+  // A target beyond firing range (or behind the native pile) needs a walk,
+  // not an infinite wait with ammo. Same keys and turn speed as every foot move.
+  const from = {x: fighter.x, y: fighter.y + COMBAT_TUNING.foot.rpgEyeHeight, z: fighter.z};
+  const to = {...target.at, y: (target.at.y ?? fighter.y) + .9};
+  const blocked = duel.course.features.obstacles.some(obstacle =>
+    sweepObstacle(from, to, obstacle, fighter.yaw, {halfWidth: 0, halfLength: 0, height: 0}));
+  if (!blocked) hands.fortAround = null;
+  if (flat >= 35 || blocked) {
+    let goal = target.at;
+    if (blocked && duel.course.def.pit) {
+      const course = duel.course, at = course.nearest(fighter.x, fighter.z, fighter.s);
+      const there = course.nearest(target.at.x, target.at.z, at.s);
+      // Keep walking around this obstruction until the view clears. Reversing
+      // at the target's bearing would leave the child pacing behind one cover.
+      hands.fortAround ??= Math.sign(ringDistance(course, at.s, there.s)) || 1;
+      goal = course.worldAt(at.s + hands.fortAround * 12,
+        Math.max(course.def.pit.pileRadius + 14, Math.hypot(fighter.x, fighter.z)) - course.def.pit.radius);
+    }
+    walk(duel, goal, 2);
+    duel.setFighterInput({fire: false, aim: car});
+    hands.fired = false;
+    return;
+  }
   const yawWanted = Math.atan2(dx, dz) + hands.aimError;
   const pitchWanted = Math.atan2((target.at.y ?? fighter.y) + .9 - (fighter.y + COMBAT_TUNING.foot.rpgEyeHeight), flat);
   const turn = wrap(yawWanted - fighter.yaw), tilt = pitchWanted - (fighter.pitch || 0);
@@ -297,13 +321,13 @@ function holdFort(duel, child, hands, view) {
 
 // One arena game. job: {mode, venueId} or fight: {warlordId}. Returns what happened.
 export function playArena({mode = 'last-car-rolling', venueId = 'scrapdome', warlordId = null, seed = 1989,
-  car = STARTER_CAR, arsenalRank = 12, maxSec = 420, rules = {}, opponents = 3, featureFlags = {}}) {
+  car = STARTER_CAR, arsenalRank = 12, maxSec = 420, rules = {}, opponents = 3, featureFlags = {}, waterRoad = null}) {
   const duel = new Duel({seed, featureFlags: {'hidden-road': true, ...featureFlags}});
   duel.state.wastelandGateDiscovered = true;
   const count = mode === 'ambush-alley' ? 0 : opponents;
   const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: 0,
     ...(mode === 'fuel-run' ? {brain: ['collector', 'rammer', 'hunter'][index]} : {})}));
-  const options = {mode, venueId, car, cpuDifficulty: 'easy', difficulty: 'casual', seed, opponents: field, arsenalRank};
+  const options = {mode, venueId, car, cpuDifficulty: 'easy', difficulty: 'casual', seed, opponents: field, arsenalRank, waterRoad};
   const started = warlordId ? startWarlordEvent(duel, {...options, warlordId}) : duel.startArenaEvent(options);
   if (!started) throw Error(`could not start ${warlordId ?? mode}`);
   if (warlordId) beginWarlordEvent(duel);
@@ -367,7 +391,7 @@ export function playArena({mode = 'last-car-rolling', venueId = 'scrapdome', war
 // ---- Mad Max Duel races -----------------------------------------------------------------------------------------------
 // The App's autopilot holds the line; the child drives it at 85 to 90% of the autopilot's corner speed and attacks on
 // the Easy clock with the Easy aim error.
-export async function playRace({courseId, seed = 1989, car = STARTER_CAR, rules = {}}) {
+export async function playRace({courseId, seed = 1989, car = STARTER_CAR, rules = {}, waterRoad = null}) {
   const memory = new Map();
   globalThis.localStorage = {getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, String(v)),
     removeItem: k => memory.delete(k), key: i => [...memory.keys()][i] ?? null, get length() { return memory.size; }};
@@ -377,7 +401,7 @@ export async function playRace({courseId, seed = 1989, car = STARTER_CAR, rules 
   const startStage = COURSE.findIndex(course => course.id === courseId);
   if (startStage < 0) throw Error('no course ' + courseId);
   app.duel.startCampaign({startStage, seed, mode: 'wasteland', discoveredGate: true, car, difficulty: 'casual',
-    cpuDifficulty: 'easy', playerId: app.player.id, upgrades: {}});
+    cpuDifficulty: 'easy', playerId: app.player.id, upgrades: {}, waterRoad});
   if (app.duel.state.mode !== 'wasteland' || app.duel.course.def.id !== courseId) throw Error('could not start ' + courseId);
   const duel = app.duel, state = duel.state, child = childFor(seed, rules);
   app.autopilot = true; app._scriptedCrashDone = true;

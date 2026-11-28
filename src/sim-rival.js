@@ -1,4 +1,5 @@
 // RFX-02: extracted from Duel without changing fixed-step race rules.
+import {waterEasy} from './story/water-easy.js';
 import { CARS, CPU_DIFFICULTY, COURSE, DRIVE, TRAFFIC, BOOST, steeringYawAuthority } from './config.js';
 import {arsenalEnabled} from './combat-weapons.js';
 import {carEffect,carGrip,carTopSpeed,carAcceleration,setCarSteering,carAlongPush,dampCarAlongPush,setCarMortarHop} from './arsenal/car-effects.js';
@@ -177,8 +178,9 @@ export function _rival(dt, opponent = this.state.rival) {
   // On Wasteland's long circuit, Easy needs enough road speed to stay in
   // combat range. It remains below Medium's cruise and corner pace.
   const easyWasteland = s.mode === 'wasteland' && s.cpuDifficulty === 'easy';
-  const cruiseSkill = easyWasteland ? .875 : skill.skill;
-  const cornerSkill = easyWasteland ? .895 : skill.cornerSkill;
+  const storyPace = waterEasy(this) ? this.waterRoadPace ?? 1 : 1;
+  const cruiseSkill = (easyWasteland ? .875 : skill.skill) * storyPace;
+  const cornerSkill = (easyWasteland ? .895 : skill.cornerSkill) * storyPace;
   const summitChoice=observeSummitRoute(this,r,summitAggression);
   if (!bowlDrive && (s.cpuDifficulty !== 'easy' || summitChoice!==undefined) &&
       (this._npcRoutePlanner?.course !== this.course || this._npcRoutePlanner?.car !== car)) {

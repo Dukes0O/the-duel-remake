@@ -1,3 +1,4 @@
+import {waterRacePace} from './story/water-easy.js';
 import {createDriveLesson,stepDriveLesson,DRIVE_LESSON_CORNERS,DRIVE_LINE_ROWS,DRIVE_GEAR_ROWS,DRIVE_SNOW_ROWS} from './lessons/drive-lessons.js';
 // DRIVE-LESSONS-VIEW-2: each lesson's course rows, the box the gearbox lesson forces, and the winter-tyre run's tyre.
 const DRIVE_LESSON_ROWS=Object.freeze({corner:DRIVE_LESSON_CORNERS,line:DRIVE_LINE_ROWS,gears:DRIVE_GEAR_ROWS,snow:DRIVE_SNOW_ROWS});
@@ -206,7 +207,8 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatCarbonPlates = false, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], deepSave = null, _hiddenRoadVisit = false, lesson = null, tune = null } = {}) {
+  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatCarbonPlates = false, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], deepSave = null, _hiddenRoadVisit = false, lesson = null, tune = null, waterRoad = null } = {}) {
+    this.waterRoadJob = waterRoad;
     const resolvedStage=Number.isFinite(startStage)?clamp(Math.floor(startStage),0,COURSE.length-1):0;
     // A lesson is a private Time Trial with the actual instructor plan. Its
     // state is outside the ordinary race snapshot: flag-off hashes stay exact.
@@ -300,6 +302,7 @@ export class Duel {
     this.state.damageZones = { front: 0, rear: 0, left: 0, right: 0 };
     this.state.boundaryResets = 0;
     this._loadStage(this.state.stageIndex);
+    this.waterRoadPace = waterRacePace(this);
     if(this.drivingLesson)this.resetDriveLessonAttempt();
   }
 
@@ -546,7 +549,7 @@ export class Duel {
   startArenaEvent({ venueId = 'scrapdome', mode = 'last-car-rolling', car, difficulty,
     cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
     seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatCarbonPlates = false, combatRoofLook = null, crewId = 'rook',
-    warlordId = null, job = null } = {}) {
+    warlordId = null, job = null, waterRoad = null } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const ambush = mode === 'ambush-alley';
     const warlord = warlordId === null ? null : WARLORDS[warlordId];
@@ -614,6 +617,7 @@ export class Duel {
     s.lives = LIVES.start; s.totalTimeSec = 0; s.penaltySec = 0; s.score = 0; s.nearMisses = 0;
     s.majorCrashes = 0; s.catastrophic = false; s.boundaryResets = 0;
     s.damageZones = { front: 0, rear: 0, left: 0, right: 0 };
+    this.waterRoadJob = waterRoad;
     this._loadArena(venue, mode, opponents, job);
     return true;
   }

@@ -1,7 +1,9 @@
+import {waterEasy} from '../../story/water-easy.js';
 import {arenaActor} from '../../combat-teams.js';
 import {carAlongPush, dampCarAlongPush} from '../../arsenal/car-effects.js';
 
 export const CONVOY_RULES = Object.freeze({
+  waterEasy: Object.freeze({valveArmor: 40}),
   timeLimitSec: 300, cruiseKph: 55, boardingSeconds: 60,
   valveArmor: 150, valveCount: 3, ramReach: 3, loopOffset: -9,
   winScrap: 700, valveScrap: 40, bodyHintSeconds: 6,
@@ -19,7 +21,7 @@ export const CONVOY_BODY = Object.freeze({
 // How much valve armor the tanker has left. The body itself cannot be
 // wrecked, so this is the only damage a player can watch go down.
 export function convoyValveArmor(convoy) {
-  const max = CONVOY_RULES.valveArmor * convoy.valves.length;
+  const max = (convoy.valveArmor ?? CONVOY_RULES.valveArmor) * convoy.valves.length;
   const left = convoy.valves.reduce((sum, armor) => sum + armor, 0);
   return {left, max, fraction: max ? left / max : 0};
 }
@@ -39,8 +41,10 @@ export function initializeConvoyRaid(duel) {
   if (arena?.mode !== 'convoy-raid' && arena?.format !== 'convoy-raid') return;
   const computers = arena.participants.filter(p => p.kind === 'cpu');
   const rig = arenaActor(duel, computers[0].id);
+  const valveArmor = waterEasy(duel) ? CONVOY_RULES.waterEasy.valveArmor : CONVOY_RULES.valveArmor;
   arena.convoy = {rigId: computers[0].id,
-    valves: Array(CONVOY_RULES.valveCount).fill(CONVOY_RULES.valveArmor),
+    ...(waterEasy(duel) ? {valveArmor} : {}),
+    valves: Array(CONVOY_RULES.valveCount).fill(valveArmor),
     playerValvesBroken: 0, playerBroken: Array(CONVOY_RULES.valveCount).fill(false),
     boardingLeftSec: 0, resuming: false, chargePlanted: false, finished: false, attackerId: null,
     bodyHintAfterSec: 0};
@@ -146,7 +150,7 @@ export function stepConvoyRaid(duel, dt) {
     convoy.boardingLeftSec = Math.max(0, convoy.boardingLeftSec - dt);
     if (convoy.boardingLeftSec < 1e-9) {
       convoy.boardingLeftSec = 0;
-      convoy.valves.fill(CONVOY_RULES.valveArmor / 2);
+      convoy.valves.fill((convoy.valveArmor ?? CONVOY_RULES.valveArmor) / 2);
       convoy.resuming = true;
       duel.emit({convoyWindow: {open: false, soundCue: 'interface.lose'}});
       duel._callout('TANKER VALVES RESET', 2);

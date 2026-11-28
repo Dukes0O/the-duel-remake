@@ -1,3 +1,4 @@
+import {waterEasy} from '../story/water-easy.js';
 import {CONVOY_VALVE_CENTRES} from '../arena/convoy.js';
 import {isConvoyRig, stepConvoyRig} from '../arena/modes/convoy-raid.js';
 import {brainDifficulty} from '../arena/arena-brains.js';
@@ -7,6 +8,7 @@ import {makeRng} from '../rng.js';
 
 const EPSILON = 1e-9;
 export const TOLLKEEPER_RULES = Object.freeze({
+  waterEasyValveArmor: 65,
   stripMetres: 12, gapMetres: 4, gapMinimum: 3, gapMaximum: 9,
   get coreValve() { return CONVOY_VALVE_CENTRES.reduce((best, at, index, list) =>
     at[2] < list[best][2] ? index : best, 0); },
@@ -21,6 +23,11 @@ function clearMarkers(duel, actor) {
 
 export function resetTollkeeper(duel, actor) {
   if (!isConvoyRig(duel, actor)) return;
+  if (waterEasy(duel, 'tollkeeper') && !actor.tollGate) {
+    const convoy = duel.state.arena.convoy;
+    convoy.valveArmor = TOLLKEEPER_RULES.waterEasyValveArmor;
+    convoy.valves.fill(convoy.valveArmor);
+  }
   actor.tollGate = {stage: 'idle', nextGateSec: actor.tollGate?.nextGateSec ?? 0,
     sequence: actor.tollGate?.sequence ?? 0};
   actor.convoyLampSignal = null;
