@@ -654,7 +654,10 @@ export function createHomeGroundView({course, loadAsset} = {}) {
         drawnKey = ''; boxesKey = '';
       }
       // The pieces, the stack and the board, when the record changes.
-      const key = JSON.stringify([record?.pieces ?? [], record?.marks ?? [], shiftKey]);
+      const bundleAt = state.fenceBundle && state.standing ? {
+        x: state.standing.x + Math.sin(state.standing.yaw) * .85,
+        z: state.standing.z + Math.cos(state.standing.yaw) * .85} : state.bundleAt ?? stackAt;
+      const key = JSON.stringify([record?.pieces ?? [], record?.marks ?? [], shiftKey, bundleAt, state.fenceBundle]);
       if (key !== drawnKey) {
         drawnKey = key;
         let panelCount = 0, postCount = 0;
@@ -681,8 +684,10 @@ export function createHomeGroundView({course, loadAsset} = {}) {
         // Four stacks side by side, each sheet laid a little askew.
         for (let n = 0; n < left; n++) {
           const pile = n % 4, level = Math.floor(n / 4);
-          const x = stackAt.x + pile * 1.15 + ((n * 37) % 7 - 3) * .012, z = stackAt.z + ((n * 23) % 5 - 2) * .015;
-          place(stack, n, x, ground(x, z, drawnShift) + .05 + level * .045, z, Math.PI / 2 + ((n * 13) % 9 - 4) * .01);
+          const x = bundleAt.x + (state.fenceBundle ? 0 : pile * 1.15) + ((n * 37) % 7 - 3) * .012,
+            z = bundleAt.z + ((n * 23) % 5 - 2) * .015;
+          place(stack, n, x, ground(x, z, drawnShift) + (state.fenceBundle ? .9 + n * .014 : .05 + level * .045),
+            z, Math.PI / 2 + ((n * 13) % 9 - 4) * .01);
         }
         stack.count = left; stack.instanceMatrix.needsUpdate = true; stack.computeBoundingSphere();
         const standing = gateOf(record);

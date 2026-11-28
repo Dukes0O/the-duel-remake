@@ -310,12 +310,13 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const footHealth = document.createElement('div');
   footHealth.className = 'combat-foot-health';
   footHealth.hidden = true;
+  const homePowerIds = Object.keys(HOME_CROPS).filter(id => HOME_CROPS[id].power);
   footHealth.innerHTML = `<span><b>FIGHTER HEALTH</b><strong></strong></span><div class="combat-armor-track"><i></i></div>
-    <div class="combat-home-powers" hidden><span class="combat-home-leaf" data-home-power="firePeppers" hidden><i></i></span>
-    <span class="combat-home-leaf" data-home-power="jumpingBeans" hidden><i></i></span></div>`;
+    <div class="combat-home-powers" hidden>${homePowerIds.map(id =>
+      `<span class="combat-home-leaf" data-home-power="${id}" hidden><i></i></span>`).join('')}</div>`;
   root.querySelector('.race-health').append(footHealth);
   const powerLeaves = footHealth.querySelector('.combat-home-powers');
-  const leaves = ['firePeppers', 'jumpingBeans'].map(id => {
+  const leaves = homePowerIds.map(id => {
     const leaf = powerLeaves.querySelector(`[data-home-power="${id}"]`);
     return {id, leaf, fill: leaf.querySelector('i')};
   });
@@ -440,13 +441,15 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const health = Math.max(0, Math.min(maxHealth, Number(state.fighter.health) || 0));
       setText(footHealthValue, `${Math.round(health)} / ${Math.round(maxHealth)}`);
       setFraction(footHealthFill, health / maxHealth);
-      const powers = worldJob?.open?.parts.home?.on ? worldJob.open.parts.home.powers : null;
+      const home = worldJob?.open?.parts.home;
+      const powers = home?.on ? home.powers : null;
       powerLeaves.hidden = !leaves.some(({id}) => powers?.[id] > 0);
       for (const {id, leaf, fill} of leaves) {
         const left = powers?.[id] ?? 0; leaf.hidden = left <= 0;
         leaf.title = `${HOME_CROPS[id].name}: ${Math.ceil(left)} seconds left.`;
         leaf.setAttribute('aria-label', leaf.title);
-        fill.style.height = `${Math.max(0, Math.min(1, left / HOME_CROPS[id].lasts)) * 100}%`;
+        const protein = home?.meals?.[id]?.protein;
+        fill.style.height = `${Math.max(0, Math.min(1, left / (HOME_CROPS[id].lasts * (protein ? 1.5 : 1)))) * 100}%`;
         leaf.classList.toggle('is-ending', left > 0 && left <= 20);
       }
       footHealth.classList.toggle('is-critical', health <= maxHealth*.25);

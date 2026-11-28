@@ -84,8 +84,11 @@ function stepFighterInFixedTime(duel, dt) {
   const carryingValve = activeMission?.mission.kind === 'heist' && activeMission.state.carrying;
   // HOME-GROUND-1: while he looks down on his ground from above he stands still, and a burst runs at the third speed.
   const home = state.arena?.worldJob?.open?.parts.home;
+  if (home?.on) state.fighter.homeIronStrength = powerStrength(home.powers?.ironBeets);
+  else delete state.fighter.homeIronStrength;
   const footInput = home?.on ? {...state.fighterInput,
     homeJumpMeters: 1.1 + 4.9 * powerStrength(home.powers?.jumpingBeans),
+    homeLeapStrength: powerStrength(home.pairs?.leap),
     homePlatforms: homeFootPlatforms(state.arena.worldJob.open.world.open?.home, scablandsSurfaceHeightAt)} : state.fighterInput;
   const input = carryingValve ? {...state.fighterInput, sprint: false, walkScale: .5}
     : home?.tower ? {lookX: state.fighterInput.lookX, lookY: state.fighterInput.lookY,

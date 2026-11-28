@@ -393,7 +393,7 @@ const memory = values => {
   const on = run(beginOpenLand({id: 'roam-on', steps: [{kind: 'roam'}], open: {world}}), viewOf({...groundPoint(10, 10), yaw: 0}, {}, {homeClock: 1_800_000_000}), DT);
   const upgraded = homeOf(on.open);
   equal({version: upgraded.version, pieces: upgraded.pieces, marks: upgraded.marks, name: upgraded.name},
-    {version: 8, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
+    {version: 9, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
   equal([upgraded.hens, upgraded.boxes, upgraded.eggs, upgraded.lastSeen], [[], [], 0, 1_800_000_000 + DT], 'and gains no hens yet, and the last visit');
   equal(upgradeHome(stepOne), {...newHome('G-Town'), pieces: stepOne.pieces}, 'the upgrade adds the step 2 and 3 fields and keeps every old field');
 

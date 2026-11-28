@@ -122,6 +122,7 @@ export function knockdownFighter(fighter) {
 
 export function damageFighter(fighter, amount) {
   if (fighter.knockedDown || !Number.isFinite(amount) || amount <= 0) return false;
+  amount *= 1 - .5 * clamp(fighter.homeIronStrength || 0, 0, 1);
   fighter.health = Math.max(0, fighter.health - amount);
   if (fighter.health === 0) knockdownFighter(fighter);
   return true;
@@ -129,7 +130,7 @@ export function damageFighter(fighter, amount) {
 
 export function strikeFighterWithCar(fighter, speedKph) {
   return Number.isFinite(speedKph) && Math.abs(speedKph) > T.carKnockdownKph
-    ? knockdownFighter(fighter) : false;
+    ? fighter.homeIronStrength > 0 ? damageFighter(fighter, fighter.maxHealth || T.maximumHealth) : knockdownFighter(fighter) : false;
 }
 
 export function respawnFighter(course, car, fighter) {
@@ -241,8 +242,11 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   // Keyboard turn: right lowers yaw, the same way as mouse right.
   fighter.yaw += ((input.turnLeft ? 1 : 0) - (input.turnRight ? 1 : 0)) *
     T.turnRadiansPerSecond * dt;
-  if (input.jump && !fighter.jumpHeld && fighter.airHeight === 0)
+  if (input.jump && !fighter.jumpHeld && fighter.airHeight === 0) {
     fighter.verticalSpeed = input.homeJumpMeters > T.jumpMeters ? Math.sqrt(2 * T.gravity * input.homeJumpMeters) : JUMP_SPEED;
+    if (input.homeLeapStrength > 0 && input.forward) fighter.homeLeap = input.homeLeapStrength;
+    else delete fighter.homeLeap;
+  }
   fighter.jumpHeld = !!input.jump;
 
   const homeFloor = !fighter.deckPlate ? homeFloorAt(input.homePlatforms, fighter.x, fighter.z, fighter.y) : null;
@@ -265,7 +269,8 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
 
   const move = footMoveDirection(fighter.yaw, input);
   if (move.x || move.z) {
-    const distance = (input.burst ? T.sprintMetersPerSecond + (T.burstMetersPerSecond - T.sprintMetersPerSecond) * (input.burstStrength ?? 1) : input.sprint ? T.sprintMetersPerSecond *
+    const longLeap = airborne && input.homeLeapStrength > 0 ? Math.min(fighter.homeLeap || 0, input.homeLeapStrength) : 0;
+    const distance = (longLeap ? T.burstMetersPerSecond + 5 * longLeap : input.burst ? T.sprintMetersPerSecond + (T.burstMetersPerSecond - T.sprintMetersPerSecond) * (input.burstStrength ?? 1) : input.sprint ? T.sprintMetersPerSecond *
       (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond * (input.walkScale ?? 1)) *
       (car.arena?.mode === 'fuel-run' && car.arena.participants.find(p => p.id === 'player')?.fuelCanisterId ? .7 : 1) * dt;
     const dx = move.x * distance, dz = move.z * distance;

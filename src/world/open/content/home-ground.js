@@ -38,7 +38,14 @@ export const HOME_CROPS = Object.freeze({
   beans: Object.freeze({name: 'beans', seconds: 28800, power: false, seeds: 6}),
   firePeppers: Object.freeze({name: 'fire peppers', seconds: 43200, power: true, seeds: 3, lasts: 90}),
   jumpingBeans: Object.freeze({name: 'jumping beans', seconds: 43200, power: true, seeds: 3, lasts: 120}),
+  superSpinach: Object.freeze({name: 'super spinach', seconds: 10800, power: true, seeds: 3, lasts: 120, cue: 'home.power.spinach'}),
+  nightCarrots: Object.freeze({name: 'night carrots', seconds: 28800, power: true, seeds: 3, lasts: 180, cue: 'home.power.sight'}),
+  ironBeets: Object.freeze({name: 'iron beets', seconds: 57600, power: true, seeds: 3, lasts: 120, cue: 'home.power.iron'}),
+  stinkGarlic: Object.freeze({name: 'stink garlic', seconds: 57600, power: true, seeds: 3, lasts: 120, cue: 'home.power.stink'}),
 });
+export const HOME_EXTRA_FOODS = Object.freeze(['superSpinach', 'nightCarrots', 'ironBeets', 'stinkGarlic']);
+export const HOME_PAIRS = Object.freeze({ram: ['superSpinach', 'firePeppers'], leap: ['firePeppers', 'jumpingBeans'],
+  thump: ['superSpinach', 'jumpingBeans']});
 export const HOME_LOAD_STACK = Object.freeze({x: 5975, z: 76});
 export const HOME_STAGES = Object.freeze(['floor', 'frame', 'walls', 'roof']);
 export const HOME_TOWER_STAGES = Object.freeze(['legs', 'platform', 'ladder', 'rail and roof']);
@@ -119,6 +126,7 @@ export const FOOT_BURST = Object.freeze({seconds: 3, refillSeconds: 6});
 export const HOME_CUES = Object.freeze({
   plant: 'home.bed.plant', harvest: 'home.bed.harvest', glassStage: 'home.glass.stage',
   potGlow: 'home.pot.glow', eat: 'home.eat', powerEnd: 'home.power.end',
+  pair: 'home.power.pair', protein: 'home.power.protein',
   hammer: 'home.fence.hammer', up: 'home.fence.up', lift: 'home.piece.lift', gate: 'home.gate.hang',
   refused: 'home.place.refused', sprint: 'foot.sprint', burst: 'foot.burst', spent: 'foot.burst.spent',
   viewUp: 'home.view.up', viewDown: 'home.view.down', mark: 'home.mark.set', unmark: 'home.mark.clear',
@@ -140,6 +148,14 @@ export const HOME_CUES = Object.freeze({
 export const HOME_WORDS = Object.freeze({
   bedTimber: "Auntie Solder left old timber with the tank for six garden beds. Press G to choose a bed.",
   seedsGift: "Marigold's growers sent you seeds: fire peppers and jumping beans. They only grow under glass.",
+  moreSeeds: "Marigold's growers have sent more seeds: super spinach, night carrots, iron beets and stink garlic.",
+  protein: 'You ate an egg from your store. Your last power food will last half as long again.',
+  noProtein: 'Eat a power food first, then press T within five seconds while you have an egg in your store.',
+  ram: 'You can run through a fence. You will have to stand your own panels up again.',
+  leap: 'Your running jump can clear a ditch or a wall.',
+  thump: 'Your landing will tip over bikes within six metres.',
+  spinachUse: 'Press F beside a bike or buggy to throw it over. Press F at your panel stack to carry the whole bundle.',
+  fenceCarry: 'You are carrying your bundle of fence. Press F to set it down.',
   glassReady: 'Walk inside to plant your power food seeds in the pots.',
   glassLoad: "Auntie Solder left glass and frame at Tin Town's gate. Bring them home on the flatbed for your greenhouse.",
   bedHold: 'Hold B to hammer up this garden bed.',
@@ -151,7 +167,7 @@ export const HOME_WORDS = Object.freeze({
   noSeeds: 'You have no seeds left for this space.',
   cropPlanted: 'You planted {crop}.',
   cropGathered: 'You put {crop} in your store and kept its seed for planting again.',
-  tinPacked: 'Your lunch tin holds {foods}. Press 4, 5 or 6 on foot to eat from that slot.',
+  tinPacked: 'Your lunch tin holds {foods}. Press 4, 5 or 6 on foot to eat from that slot. Press T within five seconds to eat an egg and make it last half as long again.',
   tinEmpty: 'Your lunch tin is empty. Harvest power food and press F at the shed to pack it.',
   tinEat: 'You ate {crop}.',
   tinSlotEmpty: 'That slot in your lunch tin is empty.',

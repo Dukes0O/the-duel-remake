@@ -45,6 +45,7 @@ export const INPUT_CONTEXTS = Object.freeze({
       // X is the burst of speed. The ground reads them only while its switch is on.
       homeBuild: Object.freeze(['KeyB']), homeTurn: Object.freeze(['KeyR']), homePiece: Object.freeze(['KeyG']),
       homeEat1: Object.freeze(['Digit4']), homeEat2: Object.freeze(['Digit5']), homeEat3: Object.freeze(['Digit6']),
+      homeProtein: Object.freeze(['KeyT']),
       homeView: Object.freeze(['KeyV']), homeBurst: Object.freeze(['KeyX']) }) }),
   // Kestrel One (docs/HELICOPTER.md section 4). W/S collective, arrows
   // cyclic, A/D pedals; H hook, P autopilot, C camera, Esc pause. The race
@@ -158,6 +159,7 @@ export function footControlInput(keys, pad, pointer = {}) {
     homeBurst: heldInput('foot', 'homeBurst', keys),
     homeEat1: heldInput('foot', 'homeEat1', keys), homeEat2: heldInput('foot', 'homeEat2', keys),
     homeEat3: heldInput('foot', 'homeEat3', keys),
+    homeProtein: heldInput('foot', 'homeProtein', keys),
     lookX: (pointer.lookX || 0) + (pad.lookX || 0),
     lookY: (pointer.lookY || 0) + (pad.lookY || 0),
     fire: !!pointer.fire || !!pad.fire,

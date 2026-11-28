@@ -346,7 +346,7 @@ function markTownStepThings(duel, requests) {
 // HOME-GROUND-1: the keys the ground reads, from the walker's own input (src/input-contexts.js, footControlInput).
 const homeKeysOf = state => {
   const input = state.onFoot ? state.fighterInput ?? {} : {};
-  return {eat1: !!input.homeEat1, eat2: !!input.homeEat2, eat3: !!input.homeEat3, build: !!input.homeBuild, turn: !!input.homeTurn, piece: !!input.homePiece, view: !!input.homeView,
+  return {eat1: !!input.homeEat1, eat2: !!input.homeEat2, eat3: !!input.homeEat3, protein: !!input.homeProtein, build: !!input.homeBuild, turn: !!input.homeTurn, piece: !!input.homePiece, view: !!input.homeView,
     burst: !!input.homeBurst, sprint: !!input.sprint, fire: !!input.fire, forward: !!input.forward, back: !!input.back, left: !!input.left,
     right: !!input.right, turnLeft: !!input.turnLeft, turnRight: !!input.turnRight};
 };
@@ -2280,6 +2280,7 @@ export function stepWorldJob(duel, dt) {
       ...(openRoam && duel.featureFlags?.enabled('home-ground') === true ? {homeGround: true, homeKeys: homeKeysOf(state), homeTalking: currentStep?.kind === 'talk',
         homeName: worldJob.homeNameInput ?? null, homeClock: worldJob.definition.open?.homeClock ?? null,
         homeVehicle: worldJob.vehicle?.id ?? null, homeCarHeading: worldPose(duel, state).heading,
+        homePowers: worldJob.open.parts.home?.powers,
         homeDrillKeys: worldJob.homeDrillKeys ?? null} : {})}, dt);
     worldJob.homeDrillKeys = null;
     if (worldJob.homeNameInput) worldJob.homeNameInput = null;
@@ -2288,7 +2289,7 @@ export function stepWorldJob(duel, dt) {
     if (clearings !== worldJob.open.parts.sites?.clearings)
       (worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid)).siteClearings = clearings;
     worldJob.open = openStep.open;
-    syncHomeGround(duel, worldJob);
+    syncHomeGround(duel, worldJob, dt);
     if (openStep.leave) worldJob.roamExit = openStep.leave;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave,
       ...(checkpointsEnabled && openRoam && {lightsLadder: worldJob.open.world.ledger.made.includes('way/patience-ladder')})};

@@ -26,6 +26,7 @@ import {sitePosition} from '../site-rule.js';
 import {dacePeople} from '../content/dace-goes-looking-places.js';
 import {daceSignIsOut} from '../content/dace-goes-looking-rule.js';
 import {flagPeople} from '../content/somebody-elses-flag-places.js';
+import {outsideGarlic, powerStrength} from '../home-rule.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -167,6 +168,14 @@ export const peoplePart = {
         pace: STORY_FIGURES[row.figure].pace * 1.15, radius: person.radius, car: carPosition, grid: peopleGrid,
         returnBounds: plan.kind === 'post' && !stageAt(row) ? townEdges : null,
       })];
+    });
+    const garlic = view.homeGround && onFoot ? powerStrength(view.homePowers?.stinkGarlic) : 0;
+    if (garlic > 0) cast = cast.map(person => {
+      const aim = outsideGarlic(person.position, person.position, driver, garlic, 3, dt);
+      if (aim === person.position) return person;
+      const moved = stepMover(person.position, aim, {radius: person.radius, grade: FOOT_GRADE, grid: peopleGrid});
+      return {...person, position: {x: moved.x, y: moved.y, z: moved.z}, task: 'walk',
+        yaw: Math.atan2(moved.x - driver.x, moved.z - driver.z)};
     });
     const requests = [];
     if (!active && !view.threadSearchCast?.target && onFoot && interact && !state.useHeld &&

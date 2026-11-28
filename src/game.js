@@ -969,7 +969,8 @@ export class Duel {
     if (!this.state.onFoot || !this.state.fighter) return false;
     const input = this.state.fighterInput;
     for (const key of ['forward', 'back', 'left', 'right', 'turnLeft', 'turnRight', 'sprint', 'jump',
-      'fire', 'aim', 'homeBuild', 'homeTurn', 'homePiece', 'homeView', 'homeBurst'])
+      'fire', 'aim', 'homeBuild', 'homeTurn', 'homePiece', 'homeView', 'homeBurst',
+      'homeEat1', 'homeEat2', 'homeEat3', 'homeProtein'])
       if (partial[key] != null) input[key] = !!partial[key];
     for (const key of ['lookX', 'lookY'])
       if (Number.isFinite(partial[key])) input[key] = partial[key];
