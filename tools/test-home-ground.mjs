@@ -19,7 +19,7 @@ import {FOOT_BURST, HOME_CELLS, HOME_CORNER, HOME_CUES, HOME_OFFER_ID, HOME_PANE
   defaultHomeName} from '../src/world/open/content/home-ground.js';
 import {boardSpot, build, cleanHomeName, groundPoint, homeSolids, lift, newHome, outlineFor, panelsLeft, pieceInLand,
   readableHome, refusal, slotInFront, toggleMark, markBuild, buildRefusal, liftBuild, raiseBuild, buildInLand,
-  homeLoadKg, transferHomeLoad, buildBox, giveHens, buildingDoor, boardLines, crewOffer, handToCrew, advanceCrew, upgradeHome, newsBoardSpot, boxSlotInFront, boxInLand, facedThing} from '../src/world/open/home-rule.js';
+  homeLoadKg, transferHomeLoad, buildBox, giveHens, buildingDoor, boardLines, crewOffer, handToCrew, advanceCrew, upgradeHome, newsBoardSpot, boxSlotInFront, boxInLand, facedThing, ripenHome} from '../src/world/open/home-rule.js';
 import {HOME_LOAD_STACK, HOME_BUILDS} from '../src/world/open/content/home-ground.js';
 import {createHomeGroundView} from '../src/world/open/looks/home-ground-look.js';
 import {PerspectiveCamera, Vector3} from 'three';
@@ -548,6 +548,11 @@ const memory = values => {
   view.update({open: {parts: {home: {on: true}}, world: {open: {home: complete.home}}}}, {}, 0);
   equal(view.group.children.filter(node => node.name === 'home-coop' && node.visible).length, 2, 'both coops are drawn');
   equal(JSON.stringify(complete.home), before, 'drawing the next coop changes no record'); view.dispose();
+  const full = {...home, hens: [{name: 'Clover', breed: 'tin-town-brown', due: 0}],
+    boxes: home.boxes.map(box => ({...box, eggs: 18}))};
+  const afterAway = ripenHome(full, 1800 + 14400);
+  check(afterAway.laid.length > 0 && afterAway.home.boxes.slice(3).some(box => box.eggs > 0),
+    'hens use the new nests for the time remaining after the crew finishes while away');
   const world = newWorld({seed: 5, night: 2});
   const land = record => openLand({...world, open: {...world.open, home: record}});
   const me = {...groundPoint(16, 14), yaw: 0};
@@ -568,8 +573,17 @@ const memory = values => {
   const saved = JSON.parse(JSON.stringify(homeOf(out.open)));
   out = run(out.open, viewOf(at, {}, {homeClock: 1000}), 600);
   const active = homeOf(out.open);
-  const offline = run(land(saved), viewOf(at, {}, {homeClock: saved.lastSeen + 600}), DT);
+  const offline = run(land(saved), viewOf(at, {}, {homeClock: saved.lastSeen + 600 - DT}), DT);
   check(Math.abs(active.crew.done - homeOf(offline.open).crew.done) < 1e-6, 'outing seconds and closed-game seconds count the same work');
+  const delayed = {...land(newHome('Late ground')), seconds: 600};
+  const late = run(delayed, viewOf(me, {}, {homeClock: 1000}), DT);
+  equal(homeOf(late.open).lastSeen, 1600 + DT, 'ground acquired later uses the current outing moment');
+  const delayedJob = {...land(ready), seconds: 600};
+  let lateJob = run(delayedJob, viewOf(me, {}, {homeClock: 1000}), DT);
+  const assignedLate = handToCrew(homeOf(lateJob.open), second, homeOf(lateJob.open).lastSeen);
+  lateJob = {...lateJob.open, world: {...lateJob.open.world, open: {...lateJob.open.world.open, home: assignedLate}}};
+  const immediate = run(land(assignedLate), viewOf(me, {}, {homeClock: assignedLate.lastSeen - DT}), DT);
+  equal(homeOf(immediate.open).crew.done, 0, 'reopening immediately cannot credit play before a delayed handoff');
   const oldOff = run(land(legacy), {...viewOf(me), homeGround: false}, 30);
   equal(JSON.stringify(homeOf(oldOff.open)), original, 'the switch off preserves version 3 byte for byte');
   let shed = markBuild(complete.home, {kind: 'shed', i: 13, j: 8, turn: 0, stage: 0});

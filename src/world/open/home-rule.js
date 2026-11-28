@@ -181,6 +181,15 @@ export function crewFinishedWords(home, row) {
   const ordinal = ['first', 'second', 'third', 'fourth', 'fifth'][number - 1] ?? `number ${number}`;
   return `Rook and Wren finished your ${ordinal} ${row.kind}.`;
 }
+
+// A finished coop makes room for eggs for the remaining time away, just as it does during an outing.
+export function ripenHome(home, seconds) {
+  const elapsed = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  const untilRoof = home.crew?.job ? HOME_CREW_SECONDS[home.crew.job.kind] - home.crew.done : elapsed;
+  const first = Math.min(elapsed, untilRoof), ripe = ripen(home, first);
+  const worked = advanceCrew(ripe.home, first), rest = ripen(worked.home, elapsed - first);
+  return {home: rest.home, laid: [...ripe.laid, ...rest.laid], finished: worked.finished};
+}
 // Built-in nests use the existing egg record and laying rules. Their cells cannot be lifted as crates.
 export function coopBoxes(home) {
   if (!home || home.version < 3 || !Array.isArray(home.builds)) return [];

@@ -33,7 +33,7 @@ import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoo
   groundPoint, hensWaiting, homeSolids, lift, liftBox, markAt, nameHen, newHome, newsBoardSpot, outlineFor, outsideBy,
   panelsLeft, pieceInLand, readableHome, ripen, slotAt, slotInFront, toGrid, toggleMark, upgradeHome,
   buildBounds, buildInLand, buildingDoor, buildSlot, buildRefusal, markBuild, liftBuild, buildHasLoad, raiseBuild, gatherCoop, shedWords, roostAt,
-  homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, advanceCrew} from '../home-rule.js';
+  homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome} from '../home-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {makeRng} from '../../../rng.js';
 
@@ -218,21 +218,25 @@ export const homePart = {
     // when the outing opened, ripens the hens' laying, and the record is brought up to step 2's.
     if (!state.opened) {
       const kept = upgradeHome(record);
-      const counted = awayFor(kept.lastSeen, clock);
-      const ripe = ripen(kept, counted);
-      const worked = advanceCrew(ripe.home, counted);
-      const opened = {...worked.home, lastSeen: clock === null ? ripe.home.lastSeen : Math.max(clock, ripe.home.lastSeen ?? 0)};
+      const moment = clock === null ? null : clock + now;
+      const counted = awayFor(kept.lastSeen, moment);
+      const ripe = ripenHome(kept, counted);
+      const opened = {...ripe.home, lastSeen: moment === null ? ripe.home.lastSeen : Math.max(moment, ripe.home.lastSeen ?? 0)};
       next.clockBase = opened.lastSeen;
       next.openedAt = now;
-      next.opened = {away: counted, long: Number.isFinite(kept.lastSeen) && clock !== null && clock - kept.lastSeen > AWAY_LONGEST,
-        finished: worked.finished, laid: ripe.laid.length, hadHens: kept.hens.length > 0};
+      next.opened = {away: counted, long: Number.isFinite(kept.lastSeen) && moment !== null && moment - kept.lastSeen > AWAY_LONGEST,
+        finished: ripe.finished, laid: ripe.laid.length, hadHens: kept.hens.length > 0};
       next.ripenedAt = now;
       if (JSON.stringify(opened) !== JSON.stringify(record)) { record = opened; choices.push(choice('opened', record)); }
     }
     // The hens lay over the outing's own seconds. The record is brought up to the moment before any change he makes to
     // the hens or boxes, and whenever an egg is due; `lastSeen` is then the clock's reading plus those seconds.
     const catchUp = () => {
-      const ripe = ripen(record, now - next.ripenedAt);
+      const job = record.crew.job;
+      const before = job && record.builds.find(row => matchesBuild(row, job));
+      const ripe = ripenHome(record, now - next.ripenedAt);
+      if (before && ripe.home.builds.find(row => matchesBuild(row, job)).stage > before.stage) events.push(cue(HOME_CUES.crewHammer));
+      if (ripe.finished) { next.opened = {...next.opened, finished: ripe.finished}; events.push(cue(HOME_CUES.crewDone)); }
       next.ripenedAt = now;
       record = {...ripe.home, lastSeen: next.clockBase === null ? ripe.home.lastSeen : next.clockBase + now - next.openedAt};
       return ripe.laid;
@@ -251,18 +255,10 @@ export const homePart = {
       choices.push(choice('laid', record));
     }
 
-    if (record.crew.job) {
-      const elapsed = Math.max(0, now - (state.crewAt ?? now));
+    if (record.crew.job && now > next.ripenedAt) {
       catchUp();
-      const before = record.builds.find(row => matchesBuild(row, record.crew.job));
-      const worked = advanceCrew(record, elapsed);
-      record = worked.home;
-      const after = record.builds.find(row => matchesBuild(row, before));
-      if (after.stage > before.stage) events.push(cue(HOME_CUES.crewHammer));
-      if (worked.finished) { next.opened = {...next.opened, finished: worked.finished}; events.push(cue(HOME_CUES.crewDone)); }
       choices.push(choice('crew-clock', record));
     }
-    next.crewAt = now;
 
     // A tap of F transfers one bundle. Holding F still uses the existing enter/exit controls.
     let loadPrompt = '';

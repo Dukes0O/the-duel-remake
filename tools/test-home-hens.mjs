@@ -298,7 +298,7 @@ const partOf = open => open.parts.home;
   let out = run(landWith(home), viewOf(far, {}, {homeClock: seen + 1.5 * DAY_SECONDS}), DT);
   const opened = homeOf(out.open);
   equal(opened.boxes[0].eggs, 18, 'a day and a half away fills the one box');
-  equal(opened.lastSeen, seen + 1.5 * DAY_SECONDS, 'the last visit is now');
+  equal(opened.lastSeen, seen + 1.5 * DAY_SECONDS + DT, 'the last visit includes the outing clock at its first tick');
   equal(partOf(out.open).opened.laid, 18, 'the outing knows what was laid while he was away');
   // The board shows itself as he comes to the gate, in three or four plain sentences.
   out = run(out.open, viewOf({x: news.x, z: news.z + 6, yaw: 0}, {}, {homeClock: seen + 1.5 * DAY_SECONDS}), DT);
@@ -394,7 +394,7 @@ const memory = values => {
   const upgraded = homeOf(on.open);
   equal({version: upgraded.version, pieces: upgraded.pieces, marks: upgraded.marks, name: upgraded.name},
     {version: 4, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
-  equal([upgraded.hens, upgraded.boxes, upgraded.eggs, upgraded.lastSeen], [[], [], 0, 1_800_000_000], 'and gains no hens yet, and the last visit');
+  equal([upgraded.hens, upgraded.boxes, upgraded.eggs, upgraded.lastSeen], [[], [], 0, 1_800_000_000 + DT], 'and gains no hens yet, and the last visit');
   equal(upgradeHome(stepOne), {...newHome('G-Town'), pieces: stepOne.pieces}, 'the upgrade adds the step 2 and 3 fields and keeps every old field');
 
   // A step 2 ground, through a real outing's opening, saved and read back from memory storage.
