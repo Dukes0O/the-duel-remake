@@ -31,9 +31,17 @@ export function createHomeRaidersLook(loadAsset) {
         spoke.rotation.x = n * Math.PI / 3; spin.add(spoke);
       }
       wheels.push({spin, radius});
+      const blocks = [];
+      for (let n = 0; n < 22; n++) {
+        const angle = n * Math.PI / 11;
+        blocks.push(new THREE.BoxGeometry(width * 1.08, .055, .09)
+          .rotateX(angle).translate(0, Math.cos(angle) * radius, Math.sin(angle) * radius));
+      }
+      spin.add(new THREE.Mesh(keep(mergeGeometries(blocks, false)), rubber));
+      blocks.forEach(block => block.dispose());
     };
     if (kind === 'bike') {
-      for (const z of [-.92, .92]) wheel(0, z, .4, .19);
+      wheel(0, -.92, .39, .22); wheel(0, .92, .43, .17);
       for (const side of [-1, 1]) {
         const x = side * .12;
         tube([x, .4, -.92], [x, .8, -.27]); tube([x, .8, -.27], [x, .48, .18]);
@@ -43,8 +51,16 @@ export function createHomeRaidersLook(loadAsset) {
         tube([side * .2, .48, -.6], [side * .22, .48, .25], .08, 0x9a8b75);
         tube([0, 1.12, .55], [side * .4, 1.12, .4], .045);
       }
-      f.box(.4, .22, .58, 0, .83, .15, 0x87372d, {ribs: true});
+      // A pinched tank side, with a dull bare-metal patch where the paint has rubbed off.
+      for (const side of [-1, 1]) {
+        f.skin([[side * .18, .73, -.16], [side * .22, .81, .39], [side * .14, .99, .29],
+          [side * .13, .95, -.12]], 0x87372d);
+        f.skin([[side * .221, .79, .2], [side * .23, .82, .29], [side * .19, .87, .22],
+          [side * .2, .84, .18]], 0x765942);
+      }
+      f.box(.28, .08, .42, 0, .94, .08, 0x794137, {lean: -.08});
       f.box(.35, .11, .65, 0, .83, -.4, 0x292722);
+      f.box(.36, .015, .075, 0, .893, -.46, 0x988e72); // tape over the split seat
       f.box(.36, .32, .38, 0, .49, -.08, 0x403b33, {ribs: true});
       f.box(.25, .1, .65, 0, .86, -.88, 0x67543e);
       f.box(.22, .22, .12, 0, 1.03, .77, 0xc3b887);
@@ -102,6 +118,12 @@ export function createHomeRaidersLook(loadAsset) {
         person.position = {x, z, y: scablandsSurfaceHeightAt(x, z) + .15}; person.yaw = row.yaw;
       });
       figures.update({open: world.open, storyPeople: cast}, here, seconds, shift);
+      // Lean the existing seated figures into the handlebars, without changing their rule poses.
+      figures.group.children.forEach((root, index) => {
+        if (!root.name.startsWith('story-person-')) return;
+        root.rotation.order = 'YXZ';
+        root.rotation.x = alive[index]?.kind === 'bike' ? .18 : .08;
+      });
     },
     dispose() { figures.dispose(); geometry.forEach(part => part.dispose()); steel.dispose(); rubber.dispose(); rim.dispose(); group.clear(); },
   };

@@ -34,10 +34,15 @@ export function createHomeTowerLook(loadAsset) {
       if (!node.isMesh) return;
       const geometry = node.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverse, node.matrixWorld));
       const p = geometry.attributes.position;
+      geometry.computeBoundingBox();
+      const centre = geometry.boundingBox.getCenter(new THREE.Vector3());
+      const pole = /splayed-leg|watchtower-foot/.test(nameOf(node));
       for (let n = 0; n < p.count; n++) {
         const y = p.getY(n), deck = 7.64;
-        p.setXYZ(n, -p.getX(n) * 1.8, y <= deck ? y * HOME_TOWER.platform / deck :
-          HOME_TOWER.platform + (y - deck) * 1.5, -p.getZ(n) * 1.8);
+        const x = pole ? centre.x + (p.getX(n) - centre.x) * .45 : p.getX(n);
+        const z = pole ? centre.z + (p.getZ(n) - centre.z) * .45 : p.getZ(n);
+        p.setXYZ(n, -x * 1.8, y <= deck ? y * HOME_TOWER.platform / deck :
+          HOME_TOWER.platform + (y - deck) * 1.5, -z * 1.8);
       }
       geometry.computeVertexNormals();
       const material = Array.isArray(node.material) ? node.material[0] : node.material;
