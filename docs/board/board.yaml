@@ -1179,6 +1179,30 @@ tasks:
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-4B.md"
 
+  - id: HOME-GROUND-5
+    title: "Home Ground step 5: the well he drills with Tin Town's rig, the hand pump and the tank"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["HOME-GROUND-4B"]
+    locks: ["home-ground"]
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-GROUND-5.md"
+
+  - id: HOME-GROUND-5B
+    title: "Home Ground step 5: garden beds, the greenhouse, fire peppers and jumping beans"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["HOME-GROUND-5"]
+    locks: ["home-ground"]
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-GROUND-5B.md"
+
   - id: QA-AUDIO-SWEEP
     title: "Six older audio cards: cured by the sample witness, given it, or still open"
     owner: "codex"
