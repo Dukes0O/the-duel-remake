@@ -654,3 +654,10 @@ the game.
   about half as tall again as wanted.
 - **A loose test for red finds a chestnut coat too.** When the look finds the comb by the model's texture colour, paint
   the comb a strong red in the recipe and test for it strictly.
+
+### Reusing a tall building at a smaller height (HOME-GROUND-4)
+
+- Scaling a tower's footprint and shortening its height makes its legs read as thick masonry. Scale the support
+  cross-sections separately, keep the bracing and ladder, and inspect the actual loaded asset beside a person.
+- A model sheet must wait for the figure loader before capture. An empty vehicle can look complete while its
+  rider is still loading; inspect the loader's error and readiness state before judging the mounted pose.

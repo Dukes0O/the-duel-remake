@@ -15,6 +15,8 @@ import {GATE_POST, boardSpot, boxInLand, crateSpot, cratesLeft, gateOf, hensWait
   pieceInLand, buildInLand, groundPoint} from '../home-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {HOME_HEN_MODEL, createEgg, createHen, createNestBox, corrugated as buildingTin} from './home-hens-look.js';
+import {createHomeTowerLook} from './home-tower-look.js';
+import {createHomeRaidersLook} from './home-raiders-look.js';
 
 const MOST_MARKS = 96;
 // The eggs drawn in one nest box: a clutch of up to this many shows how full it is.
@@ -122,7 +124,7 @@ function newsTexture() {
 // A piece's middle, run and height in the land; a nest box stands in its cell.
 function shapeOf(piece) {
   if (HOME_BUILDS[piece.kind]) return {...buildInLand(piece), length: HOME_BUILDS[piece.kind].width * HOME_STEP,
-    depth: HOME_BUILDS[piece.kind].depth * HOME_STEP, height: 2.5};
+    depth: HOME_BUILDS[piece.kind].depth * HOME_STEP, height: piece.kind === 'tower' ? 6.7 : 2.5};
   if (piece.kind === 'box') return {...boxInLand(piece), length: HOME_BOX.size, heading: 0, height: HOME_BOX.height};
   return {...pieceInLand(piece), height: HOME_PIECES[piece.kind].height};
 }
@@ -172,6 +174,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const keep = geometry => { geometries.push(geometry); return geometry; };
 
   const buildings = new Map(), haul = createHaulLoadLook(), loadDraws = new Map();
+  const towers = createHomeTowerLook(loadAsset);
+  const raiders = createHomeRaidersLook(loadAsset); group.add(raiders.group);
   materials.building = yardSurface();
   materials.chalk = new THREE.LineBasicMaterial({color: 0xe8e2cf});
   const crewProps = ['rook', 'wren'].map(id => {
@@ -194,6 +198,12 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     const drawn = new THREE.Group(); drawn.name = 'home-' + kind; group.add(drawn);
     const w = HOME_BUILDS[kind].width * HOME_STEP, d = HOME_BUILDS[kind].depth * HOME_STEP;
     const stages = Array.from({length: 4}, (_, index) => { const part = new THREE.Group(); part.name = kind + '-stage-' + (index + 1); drawn.add(part); return part; });
+    if (kind === 'tower') {
+      towers.add(stages);
+      const mark = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, .03, d))), materials.chalk);
+      mark.name = 'tower-footprint'; mark.position.y = .07; drawn.add(mark);
+      const result = {drawn, stages, mark}; buildings.set(key, result); return result;
+    }
     const scrap = (stage, make) => {
       const builder = scrapBuilder(); make(builder.frame(0, 0, 0, 0));
       const geometry = keep(mergeGeometries(builder.parts, false));
@@ -425,6 +435,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       const state = worldJob?.open?.parts?.home;
       group.visible = state?.on === true;
       if (!group.visible) return;
+      raiders.update(worldJob, here, seconds, drawnShift);
       const record = worldJob.open.world.open.home ?? null;
       for (const drawing of buildings.values()) drawing.drawn.visible = false;
       for (const row of record?.builds ?? []) {
@@ -463,7 +474,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
               const roll = new THREE.Mesh(keep(new THREE.TorusGeometry(.22, .008, 4, 20)), materials.post);
               roll.rotation.y = Math.PI / 2; roll.position.set(.55 + n * .04, .63, .3); load.add(roll);
             }
-          } else {
+          } else if (kind === 'shed') {
             const door = new THREE.Mesh(keep(buildingTin(.9, 1.9, {seed: 50})), materials.tin);
             door.rotation.x = -Math.PI / 2; door.position.set(0, .85, .95); load.add(door);
           }
@@ -473,7 +484,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
           load.visible = !!show;
           if (show) {
             const at = onBed ? record.flatbed : location === 'stack' ?
-              {...HOME_LOAD_STACK, x: HOME_LOAD_STACK.x + (kind === 'shed' ? 2.7 : 0)} : groundPoint(location.i, location.j);
+              {...HOME_LOAD_STACK, x: HOME_LOAD_STACK.x + (kind === 'shed' ? 2.7 : kind === 'tower' ? -2.7 : 0)} : groundPoint(location.i, location.j);
             // The supply-truck model's deck is 1.5125 m high, behind its cab. Its wheels touch y=0.
             const yaw = onBed ? at.yaw : 0, behind = onBed ? -1.4 : 0;
             load.position.set(at.x + Math.sin(yaw) * behind, ground(at.x, at.z, drawnShift) + (onBed ? 1.5125 : 0),
@@ -563,6 +574,13 @@ export function createHomeGroundView({course, loadAsset} = {}) {
         for (const piece of (record?.pieces ?? []).filter(row => row.kind === 'panel')) {
           const {x, z, length, heading} = pieceInLand(piece);
           const along = {x: Math.cos(heading), z: -Math.sin(heading)};
+          if (piece.down) {
+            const pose = new THREE.Object3D();
+            pose.position.set(x, ground(x, z, drawnShift) + .06, z);
+            pose.rotation.set(Math.PI / 2, 0, 0); pose.rotateOnWorldAxis(up, heading); pose.updateMatrix();
+            panels.setMatrixAt(panelCount++, pose.matrix);
+            continue;
+          }
           place(panels, panelCount++, x, ground(x, z, drawnShift), z, yawOf(heading));
           for (const end of [-1, 1]) {
             const px = x + along.x * end * length / 2, pz = z + along.z * end * length / 2;
@@ -722,6 +740,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       }
     },
     dispose() {
+      towers.dispose();
+      raiders.dispose();
       moss.dispose();
       crew.dispose();
       for (const load of loadDraws.values()) for (const mesh of [...load.children]) if (mesh.name.startsWith('haul-piece:')) haul.release(mesh);

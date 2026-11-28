@@ -38,12 +38,16 @@ function memoryBackups(){
 }
 
 // Home records live at profile.story.open.home; world.open.home is their outing copy.
-for (const version of [1, 2, 3]) {
+for (const version of [1, 2, 3, 4]) {
   const home = {version, name: 'Old ground', pieces: [{kind: 'panel', i: 2, j: 0, axis: 'x'}], marks: []};
   if (version >= 2) Object.assign(home, {hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}],
     boxes: [{i: 2, j: 3, eggs: 7}], eggs: 31, lastSeen: 1000});
-  if (version === 3) Object.assign(home, {builds: [{kind: 'shed', i: 2, j: 8, turn: 0, stage: 2}],
+  if (version >= 3) Object.assign(home, {builds: [{kind: 'shed', i: 2, j: 8, turn: 0, stage: 2}],
     loads: {coop: 'stack', shed: {i: 2, j: 8}}, flatbed: {x: 1, z: 2, yaw: .3}});
+  if (version === 4) {
+    home.builds.push({kind: 'shed', i: 7, j: 8, turn: 0, stage: 4});
+    home.crew = {job: {kind: 'shed', i: 2, j: 8}, began: 950, done: 1900};
+  }
   const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}, story: {version: 1, open: {home}}};
   const source = memoryStorage({[PLAYERS_KEY]: JSON.stringify({version: 2, activePlayerId: 'home',
     players: [{id: 'home', name: 'Home', profile}]})});
@@ -60,7 +64,10 @@ for (const version of [1, 2, 3]) {
   assert.deepEqual(captureCareer(source), before, 'backup detection never upgrades the home');
   const upgraded = upgradeHome(home);
   assert.equal(upgraded.version, HOME_RECORD_VERSION);
-  for (const [key, value] of Object.entries(home)) if (key !== 'version') assert.deepEqual(upgraded[key], value);
+  for (const [key, value] of Object.entries(home)) if (key !== 'version') {
+    if (key === 'loads') assert.deepEqual(upgraded.loads, {...value, tower: 'stack'});
+    else assert.deepEqual(upgraded[key], value);
+  }
   profile.story.open.home = upgraded;
   source.setItem(PLAYERS_KEY, JSON.stringify({version: 2, activePlayerId: 'home', players: [{id: 'home', name: 'Home', profile}]}));
   assert.equal(needsCareerMigration(source), false, 'a current home alone asks for no repeat migration backup');

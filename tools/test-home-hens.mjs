@@ -393,7 +393,7 @@ const memory = values => {
   const on = run(beginOpenLand({id: 'roam-on', steps: [{kind: 'roam'}], open: {world}}), viewOf({...groundPoint(10, 10), yaw: 0}, {}, {homeClock: 1_800_000_000}), DT);
   const upgraded = homeOf(on.open);
   equal({version: upgraded.version, pieces: upgraded.pieces, marks: upgraded.marks, name: upgraded.name},
-    {version: 4, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
+    {version: 5, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
   equal([upgraded.hens, upgraded.boxes, upgraded.eggs, upgraded.lastSeen], [[], [], 0, 1_800_000_000 + DT], 'and gains no hens yet, and the last visit');
   equal(upgradeHome(stepOne), {...newHome('G-Town'), pieces: stepOne.pieces}, 'the upgrade adds the step 2 and 3 fields and keeps every old field');
 
@@ -475,7 +475,7 @@ const memory = values => {
 
 // A literal version 2 stays byte-for-byte intact when read or when the switch is off.
 {
-  const {builds, loads, flatbed, crew, ...oldFields} = withBoxes(giveHens(fenced()), [[3, 4]]);
+  const {builds, loads, flatbed, crew, raids, ...oldFields} = withBoxes(giveHens(fenced()), [[3, 4]]);
   const old = {...oldFields, version: 2, eggs: 31, lastSeen: 1800000000};
   old.hens[0] = {...old.hens[0], name: 'Pepper', due: 123}; old.boxes[0].eggs = 17;
   const before = JSON.stringify(old), world = landWith(old).world;
@@ -490,8 +490,8 @@ const memory = values => {
   const off = run(landWith(old), {...viewOf({...groundPoint(2, 2), yaw: 0}), homeGround: false}, 1);
   equal(JSON.stringify(homeOf(off.open)), before, 'the switch off preserves version 2 exactly');
   const upgraded = upgradeHome(old);
-  equal({...upgraded, version: 2, builds: undefined, loads: undefined, flatbed: undefined, crew: undefined},
-    {...old, builds: undefined, loads: undefined, flatbed: undefined, crew: undefined}, 'upgrading preserves every version 2 field');
+  equal({...upgraded, version: 2, builds: undefined, loads: undefined, flatbed: undefined, crew: undefined, raids: undefined},
+    {...old, builds: undefined, loads: undefined, flatbed: undefined, crew: undefined, raids: undefined}, 'upgrading preserves every version 2 field');
   equal(upgradeHome(upgraded), upgraded, 'upgrading version 4 changes nothing');
   equal(JSON.stringify(old), before, 'the old record is not changed in place');
   for (const bad of [null, {}, {coop: 'bed', shed: 'bed'}, {coop: {i: -1, j: 1}, shed: 'stack'}])

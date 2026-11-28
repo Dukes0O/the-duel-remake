@@ -390,6 +390,38 @@ go into the real game after step 4.
   during talk. F reads the news board within 6 m; nearby naming, Moss and box interactions keep their own reach.
 - Cues: `home.crew.arrive`, `home.crew.hammer`, `home.crew.done`. Claude drives this step by hand before release.
 
+### Step 4 as built (HOME-GROUND-4, behind the switch `home-ground`)
+
+- Version 5 keeps earlier home fields and adds `raids: {played, sittings, nextDue, testDone, won, lost}`, a tower load,
+  and optional `down` on panels. The existing verified career backup gates older-home migration. Active raiders,
+  tower climbing and this outing's raid news are never saved. With the switch off, older records stay unchanged.
+- A sitting is one opened Home Ground outing, resumed outings included (Claude, 27 November). Only simulation play
+  seconds count. From sitting four, a seeded 75–105-minute deadline waits for a later dusk with the player within
+  150 m of home. The first coop instead brings the harmless one-bike lesson at its next dusk.
+- Real raids use two bikes and one buggy. Bikes head for the coop; a buggy above 25 km/h knocks down tin panels.
+  B repairs one fallen panel. All wrecked or fled beyond 60 m wins; after four minutes, a surviving raider inside
+  loses at most `floor(stored eggs / 10)` eggs. Leaving costs nothing and grants no win. Loot belongs to HOME-GROUND-4B.
+- G offers the 2×2 tower. Deliver its load on the flatbed, then hammer legs, platform, ladder, rail and roof. F at
+  the ladder climbs in two seconds; F on top descends. The platform is 4.4 m high, putting the eye about 6 m up.
+  The tower holds the launcher ready and gives its rockets 25% more reach. The builders can raise a second tower
+  in 45 minutes after the first is built. Numbers live in `src/world/open/content/home-ground.js`.
+- The old town tower is adapted in `home-tower-look.js`; `home-raiders-look.js` draws scrap bikes and the buggy
+  with the existing Road Rat figures. The mode adapter connects their hit bodies to existing combat, and removes
+  them when a raid ends. Named cues: `home.raid.call`, `.bike`, `.ram`, `.won`, `.lost`, `home.fence.fall`,
+  `home.fence.up`, `home.tower.climb`, `home.tower.stage`. Sound selection remains with OPEN-SOUND.
+- Look comparison: `docs/board/looks/home-ground/round-1.jpg` (206 KB), beside the
+  [1972 Suzuki TC90 photograph](https://www.justbikes.com.au/motorcycles-for-sale/1972-suzuki-tc90-road/JBW5193623).
+  The exposed frame, high forks, narrow tank, worn seat and knobby wheels read at raid distance. The bike is simpler
+  than the photograph; Claude's drive judges the mounted pose, look and Easy difficulty before release.
+- Easy raiders retreat after losing a fifth of their health; Medium and Hard keep 30% and 20% health thresholds.
+  Retreat goes back through the approach gap, then 60 m beyond the fence. A 20-seed controlled RPG sample won
+  15/20 on the ground and 18/20 from the tower. Ground success exceeds the roughly six-in-ten aim; Claude's drive
+  judges child difficulty. Probe recipe: seeds 1–20; closed perimeter with north gate, coop at (3,7), optional tower
+  at (13,7); stationary defender at ground (10,10) or tower top; three normal rockets at 8, 11 and 14 seconds;
+  nearest active raider, aim updated every 0.25 seconds without leading; aim at 0.9 m height from a 1.4 m eye offset;
+  seeded yaw error ±0.08 rad and pitch error ±0.025 rad
+  (`makeRng(seed + 175)`); 30 Hz weapon/projectile and raid steps through the real Scablands course, memory saves.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.

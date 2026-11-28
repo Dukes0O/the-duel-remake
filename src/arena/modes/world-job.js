@@ -1,5 +1,6 @@
 import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal,
   checkpointRoadView, applyCheckpointRoadRequest} from './road-riders.js';
+import {syncHomeGround} from './home-ground.js';
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
@@ -2101,6 +2102,7 @@ export function stepWorldJob(duel, dt) {
   }
   // TOWN-JOBS-2: a truck drives the Road Rats at a town job off by driving at them, as on an escort.
   if (TOWN_STEP_KINDS.has(currentStep?.kind) && townStepHasRats(currentStep)) runDownRaiders(duel, worldJob, point);
+  if (worldJob.homeRaidZone) runDownRaiders(duel, worldJob, point);
   const thingsHit = [...(state.worldJobThingsHit || []),
     ...(state.onFoot && state.input?.interact &&
       worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'heist'
@@ -2278,6 +2280,7 @@ export function stepWorldJob(duel, dt) {
     if (clearings !== worldJob.open.parts.sites?.clearings)
       (worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid)).siteClearings = clearings;
     worldJob.open = openStep.open;
+    syncHomeGround(duel, worldJob);
     if (openStep.leave) worldJob.roamExit = openStep.leave;
     view.open = {world: worldJob.open.world, holds: worldJob.open.holds, leave: openStep.leave,
       ...(checkpointsEnabled && openRoam && {lightsLadder: worldJob.open.world.ledger.made.includes('way/patience-ladder')})};

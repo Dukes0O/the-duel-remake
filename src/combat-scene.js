@@ -660,6 +660,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       for (let zoneIndex = 0; zoneIndex < s.raids.zones.length && fighterCount < fighterCapacity; zoneIndex++) {
         const raiders = s.raids.zones[zoneIndex].raiders;
         for (let index = 0; index < raiders.length && fighterCount < fighterCapacity; index++) {
+          if (raiders[index].homeRaid) continue; // Home Ground draws the mounted Rats with their vehicles.
           const entry = raiderEntries[fighterCount];
           entry.fighter = raiders[index];
           fighterRoster[fighterCount++] = entry;

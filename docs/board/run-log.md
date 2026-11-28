@@ -1845,3 +1845,5 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge HOME-GROUND-3 (Codex Astra, laptop lane, two rounds): the first coop and shed, raised by hand in four stages from a load brought on Tin Town's flatbed; Claude added the flatbed's drawing gate at the merge
 - Merge HOME-GROUND-3B (Codex Sol, laptop lane): Rook and Wren raise the next coop or shed on the real clock, with the step 2 drive's four fixes
 - Merge HOME-GROUND-3-DRIVE (Codex Sol, laptop lane): the eight fixes from Claude's drive of step 3; Claude updated test-open-roam-start's taps to press and release at the merge
+- Janitor HOME-GROUND-4 (28 November): no unused module candidates; uncertain asset candidates left intact. Generated builds and QA scratch recycled; the comparison sheet is 206 KB. Existing size overruns and idle branches remain on STATUS; unfinished lane retained for Claude review.
+- Merge HOME-GROUND-4 (Codex Astra, laptop lane): the watchtower, play-time raids, the unlosable first bike and raids on his fence; the bike's look goes to a second round (HOME-RAID-BIKE-LOOK)

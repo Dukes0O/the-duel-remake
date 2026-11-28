@@ -26,9 +26,22 @@ export const HOME_BOX = Object.freeze({id: 'box', name: 'nest box', hammer: 2.5,
 export const HOME_BUILDS = Object.freeze({
   coop: Object.freeze({name: 'coop', width: 2, depth: 2, hammer: 6, hens: 6, kg: 320, cue: 'home.coop.stage'}),
   shed: Object.freeze({name: 'shed', width: 2, depth: 3, hammer: 6, kg: 440, cue: 'home.shed.stage'}),
+  tower: Object.freeze({name: 'watchtower', width: 2, depth: 2, hammer: 6, kg: 360, cue: 'home.tower.stage'}),
 });
 export const HOME_LOAD_STACK = Object.freeze({x: 5975, z: 76});
 export const HOME_STAGES = Object.freeze(['floor', 'frame', 'walls', 'roof']);
+export const HOME_TOWER_STAGES = Object.freeze(['legs', 'platform', 'ladder', 'rail and roof']);
+export const HOME_TOWER = Object.freeze({platform: 4.4, climbSeconds: 2, reach: 2.5, rocketReach: 1.25});
+// HOME-GROUND-4: demands count supplied play seconds only. No value here is a wall-clock deadline.
+export const HOME_RAID = Object.freeze({
+  firstSitting: 4, earliest: 75 * 60, latest: 105 * 60, seconds: 4 * 60,
+  testSeconds: 60, near: 150, fled: 60, ramKmh: 25, eggShare: .1,
+  startMetres: 45, bikeMps: 7, buggyMps: 9, chaseMetres: 10,
+  // Easy raiders flee after losing a fifth of their health; a harmless graze still leaves them fighting.
+  easy: Object.freeze({bikeHealth: 45, buggyHealth: 110, retreatHealth: .8, blockedSeconds: 45}),
+  medium: Object.freeze({bikeHealth: 60, buggyHealth: 140, retreatHealth: .3, blockedSeconds: 65}),
+  hard: Object.freeze({bikeHealth: 75, buggyHealth: 170, retreatHealth: .2, blockedSeconds: 85}),
+});
 // Auntie Solder has the panels stacked at the ground for him: 76 fence the edge round the gate, and four are over.
 export const HOME_PANELS = 80;
 // The lane runs from the gate straight across the ground to the far fence, as wide as the gate (section 6).
@@ -38,7 +51,7 @@ export const HAMMER_STRIKE_SECONDS = .6;
 // The outline stands this far in front of him.
 export const HOME_REACH = 1.6;
 export const HOME_BOX_REACH = 3;
-export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60});
+export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60, tower: 45 * 60});
 // The cursor from above moves this fast, in metres a second.
 export const HOME_CURSOR_SPEED = 12;
 // The camera from above: straight down over the middle of the ground, high enough to see all of it with room round it.
@@ -92,6 +105,9 @@ export const HOME_CUES = Object.freeze({
   loadOn: 'home.load.on', loadOff: 'home.load.off', coopStage: 'home.coop.stage', shedStage: 'home.shed.stage',
   roost: 'home.hens.roost', shedDoor: 'home.shed.door',
   crewArrive: 'home.crew.arrive', crewHammer: 'home.crew.hammer', crewDone: 'home.crew.done',
+  raidCall: 'home.raid.call', raidBike: 'home.raid.bike', raidRam: 'home.raid.ram',
+  fenceFall: 'home.fence.fall', fenceUp: 'home.fence.up', towerClimb: 'home.tower.climb',
+  raidWon: 'home.raid.won', raidLost: 'home.raid.lost',
 });
 
 // What he reads. Every line is a whole sentence.
@@ -156,6 +172,19 @@ export const HOME_WORDS = Object.freeze({
   shedStoreOne: 'Your shed holds one egg.',
   crewHand: 'Press F to hand the {piece} to the builders.',
   crewBusy: 'Rook and Wren are raising your {piece}. You can help them by hammering a stage yourself.',
+  towerUp: 'Press F to climb your watchtower.',
+  towerDown: 'Press F to climb down from your watchtower.',
+  towerClimbing: 'You are climbing the ladder.',
+  fenceUp: 'Tap B with the hammer to stand this panel up.',
+  raidCall: 'The Rats are coming. Get up a tower or meet them at the fence.',
+  raidWren: 'Rats on the road! Get up the tower!',
+  raidTest: 'One Rat tested your fence and rode away. Nothing was taken.',
+  raidWon: 'The Rats came at dusk. You drove them off.',
+  raidLost: 'The Rats got into the coop and took {count} eggs before they left.',
+  raidLostOne: 'The Rats got into the coop and took one egg before they left.',
+  raidLeft: 'You left the raid. Nothing was lost and nothing was won.',
+  panelsDown: '{count} panels of your fence are down. Tap B with the hammer to stand them up.',
+  panelDown: 'One panel of your fence is down. Tap B with the hammer to stand it up.',
 });
 
 // What the board at the gate says (src/world/open/home-rule.js, boardLines). Every line is a whole sentence.
