@@ -44,3 +44,9 @@ load unchanged after the verified backup.
 - The lane tier, the rule 23 guards and `npm run build`. One independent review of the save. Claude drives it by hand.
 
 ## Claude answers
+
+**28 November 2026, the five picks** (the questions file, commit `11e074edf`): all approved. Keys 4 to 6 for the tin's
+slots, ignored in a talk or the name box. Six seeds of each plain crop and three of each power food to start, and a harvest
+gives its seed back. A crop grows only while a tank within 12 m has water, with no drain rate yet; dry time never counts.
+Six beds from Auntie Solder's timber; the greenhouse in four six-second stages by hand, then an hour by the crew. Jumping
+beans reach 6 m; both powers ease back over their last twenty seconds and last only for the outing, while the tin is saved.
