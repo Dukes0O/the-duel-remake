@@ -21,6 +21,7 @@
 globalThis.cancelAnimationFrame ??= () => {};
 import {sweepObstacle} from '../src/collision.js';
 import {FIGHTER_RULES} from '../src/onfoot.js';
+import {crewRpgTiming} from '../src/crew-gear/gear.js';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {DRIVE, COURSE} from '../src/config.js';
@@ -333,7 +334,7 @@ function holdFort(duel, child, hands, view) {
   const turn = wrap(yawWanted - fighter.yaw), tilt = pitchWanted - (fighter.pitch || 0);
   const step = CHILD.footTurnRadiansPerSecond * DT;
   const ready = flat < 40 && state.stageTimeSec + 1e-9 >= weapons.nextFireAt && Math.abs(turn) < step * 1.5 && Math.abs(tilt) < .02 &&
-    (!car || weapons.lockSeconds >= COMBAT_TUNING.foot.rpgLockSeconds - 1e-9);
+    (!car || weapons.lockSeconds >= (crewRpgTiming(duel, fighter.crewId)?.lockSeconds ?? COMBAT_TUNING.foot.rpgLockSeconds) - 1e-9);
   const fire = ready && !hands.fired;
   duel.setFighterInput({turnLeft: turn > step / 2, turnRight: turn < -step / 2, forward: false, back: false,
     left: false, right: false, sprint: false, jump: false, lookX: 0,
