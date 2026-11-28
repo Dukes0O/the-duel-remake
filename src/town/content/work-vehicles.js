@@ -23,6 +23,9 @@ const row = values => Object.freeze({driveKind:'wheels', joints:Object.freeze([]
   tools:Object.freeze(values.tools ?? {}), model:Object.freeze(values.model)});
 
 export const WORK_VEHICLES = Object.freeze([
+  row({...machineDefinition('excavator'), model:{file:'machines-1.glb', node:'excavator'},
+    emptyMassKg:machineDefinition('excavator').massKg, engineKw:95, topSpeedKmh:machineDefinition('excavator').maxSpeedMps * 3.6,
+    wheelbaseM:3.5, halfWidthM:1.53, halfLengthM:2.63, heightM:3.2, work:['swing', 'boom', 'arm', 'bucket']}),
   // HOME-GROUND-5: this is the Dig's rig and track solver, borrowed for an open outing.
   row({...machineDefinition('drill'), model:{file:'machines-2.glb', node:'drill-rig'},
     emptyMassKg:machineDefinition('drill').massKg, engineKw:60, topSpeedKmh:machineDefinition('drill').maxSpeedMps * 3.6,

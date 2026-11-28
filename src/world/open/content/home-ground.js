@@ -51,6 +51,9 @@ export const HOME_STAGES = Object.freeze(['floor', 'frame', 'walls', 'roof']);
 export const HOME_TOWER_STAGES = Object.freeze(['legs', 'platform', 'ladder', 'rail and roof']);
 export const HOME_TANK_STAGES = Object.freeze(['stand', 'legs', 'drum', 'lid']);
 export const HOME_TANK = Object.freeze({litres: 1000, seconds: 12 * 60 * 60, reach: 8});
+export const HOME_DIG = Object.freeze({depth: 1.5, scoops: 4, seconds: 1.8, width: 3.1});
+// A four-metre square pond at 1.5 metres deep holds 24 cubic metres.
+export const HOME_POND = Object.freeze({width: 2, depth: 2, litres: 24000, seconds: HOME_TANK.seconds, reach: HOME_TANK.reach});
 export const HOME_WELL = Object.freeze({width: 1, depth: 1, reach: 1.5, pumpSeconds: 6, cuttingTime: 1 / 3});
 export const HOME_TOWER = Object.freeze({platform: 4.4, climbSeconds: 2, reach: 2.5, rocketReach: 1.25});
 // HOME-GROUND-4: demands count supplied play seconds only. No value here is a wall-clock deadline.
@@ -124,6 +127,7 @@ export const FOOT_BURST = Object.freeze({seconds: 3, refillSeconds: 6});
 
 // Every event's sound cue. OPEN-SOUND chooses and registers the sounds; until then these are names only.
 export const HOME_CUES = Object.freeze({
+  digBite: 'home.dig.bite', digDump: 'home.dig.dump', digTear: 'home.dig.tear', digDitch: 'home.dig.ditch', pondFill: 'home.pond.fill',
   plant: 'home.bed.plant', harvest: 'home.bed.harvest', glassStage: 'home.glass.stage',
   potGlow: 'home.pot.glow', eat: 'home.eat', powerEnd: 'home.power.end',
   pair: 'home.power.pair', protein: 'home.power.protein',
@@ -146,6 +150,28 @@ export const HOME_CUES = Object.freeze({
 
 // What he reads. Every line is a whole sentence.
 export const HOME_WORDS = Object.freeze({
+  digger: "Auntie Solder has a digger doing nothing in her yard. It's yours to borrow.",
+  digDrive: 'Drive with W, A, S and D. Press B to stop and work the bucket.',
+  digWork: 'Press B to drive again. Press G to choose tearing down, a ditch, a cellar or a pond.',
+  digLocked: 'Finish your water tank first, and Auntie Solder will lend you her digger.',
+  digAim: 'Move the bucket over the place you want to dig.',
+  digTear: 'Hold Space with the bucket against your building to take off its next stage. Press E to empty the bucket.',
+  digBusy: 'Finish moving or building the other one of this kind first.',
+  digHens: 'Your hens are walking out. Wait until they are clear of the coop.',
+  digFull: 'The bucket is full. Press E to empty it before the next scoop.',
+  digDitch: 'Hold Space to dig this ditch cell. No wheel can cross it.',
+  ditchOutside: 'Dig the ditch just outside your fence.',
+  ditchGate: 'That would cut off the gate. Leave the lane and its edges open.',
+  digCellar: 'Hold Space with the bucket over your shed to dig its cellar in four scoops.',
+  cellarDone: 'Your cellar keeps half your eggs and scrap safe from the Rats.',
+  digPond: 'Hold Space to dig this pond in four scoops. A pump within eight metres will fill it.',
+  pondDone: 'Your pond is dug. A pump within eight metres will fill it in twelve hours.',
+  pondExists: 'Finish digging the pond you have started first.',
+  doorLane: 'That would block the digger from a building door. Leave a clear way at least three metres wide.',
+  pileOn: 'Press F to lift this building pile onto the flatbed. Its plants travel with it.',
+  pileOff: 'Press F to put this building pile beside its new mark.',
+  pondWater: 'Your pond holds {litres} litres of water. The hens can drink here.',
+  raidLostStore: 'The Rats took {eggs} eggs and {scrap} scrap from above ground. Your hens will walk home.',
   bedTimber: "Auntie Solder left old timber with the tank for six garden beds. Press G to choose a bed.",
   seedsGift: "Marigold's growers sent you seeds: fire peppers and jumping beans. They only grow under glass.",
   moreSeeds: "Marigold's growers have sent more seeds: super spinach, night carrots, iron beets and stink garlic.",
@@ -159,6 +185,9 @@ export const HOME_WORDS = Object.freeze({
   glassReady: 'Walk inside to plant your power food seeds in the pots.',
   glassLoad: "Auntie Solder left glass and frame at Tin Town's gate. Bring them home on the flatbed for your greenhouse.",
   bedHold: 'Hold B to hammer up this garden bed.',
+  bedLift: 'Press B to pick up this garden bed with its crop.',
+  bedCarry: 'Press B to set your garden bed down. It keeps its crop.',
+  digUnfinished: 'Bring the digger back to finish taking this building down.',
   bedsUsed: 'You have used all six beds of old timber.',
   plantCrop: 'Press F to plant {crop}.',
   harvestCrop: 'Press F to harvest your {crop}.',

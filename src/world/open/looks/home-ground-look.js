@@ -19,6 +19,7 @@ import {createHomeGardenLook} from './home-garden-look.js';
 import {createHomeTowerLook} from './home-tower-look.js';
 import {createHomeRaidersLook} from './home-raiders-look.js';
 import {createDrillCuttingsView} from '../../../machines/drill-view.js';
+import {createHomeDigLook} from './home-dig-look.js';
 
 const MOST_MARKS = 96;
 // The eggs drawn in one nest box: a clutch of up to this many shows how full it is.
@@ -178,6 +179,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const keep = geometry => { geometries.push(geometry); return geometry; };
 
   const garden = createHomeGardenLook(group, ground);
+  const digging = createHomeDigLook(group, ground);
   const buildings = new Map(), haul = createHaulLoadLook(), loadDraws = new Map();
   const towers = createHomeTowerLook(loadAsset);
   const raiders = createHomeRaidersLook(loadAsset); group.add(raiders.group);
@@ -499,7 +501,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       if (!group.visible) return;
       raiders.update(worldJob, here, seconds, drawnShift);
       const record = worldJob.open.world.open.home ?? null;
-      garden.update(record, drawnShift);
+      digging.update(record, state, drawnShift);
+      const keptPots = [];
       const waterDt = waterClock === null ? 0 : Math.max(0, Math.min(.25, seconds - waterClock)); waterClock = seconds;
       well.visible = !!record?.well;
       if (record?.well) {
@@ -538,9 +541,10 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       }
       for (const kind of Object.keys(HOME_BUILDS)) {
         const row = record?.builds?.find(item => item.kind === kind && item.stage < 4) ?? record?.builds?.find(item => item.kind === kind);
-        const location = record?.loads?.[kind];
+        const pile = record?.piles?.find(pile => pile.building.kind === kind);
+        const location = pile?.position ?? record?.loads?.[kind];
         const onBed = location === 'bed' && state.flatbedOuting;
-        const show = !!record?.boxes?.length && location && (location !== 'bed' || onBed) && !(row?.stage > 0);
+        const show = location && (location !== 'bed' || onBed) && (pile || !!record?.boxes?.length && !(row?.stage > 0));
         let load = loadDraws.get(kind);
         if (show && !load) {
           load = new THREE.Group(); load.name = 'home-load-' + kind;
@@ -571,15 +575,34 @@ export function createHomeGroundView({course, loadAsset} = {}) {
           if (show) {
             const at = onBed ? record.flatbed : location === 'stack' ?
               {...HOME_LOAD_STACK, x: HOME_LOAD_STACK.x + (kind === 'shed' ? 2.7 : kind === 'tower' ? -2.7 : 0),
-                z: HOME_LOAD_STACK.z + (kind === 'tank' ? 2.7 : kind === 'greenhouse' ? -2.7 : 0)} : groundPoint(location.i, location.j);
+                z: HOME_LOAD_STACK.z + (kind === 'tank' ? 2.7 : kind === 'greenhouse' ? -2.7 : 0)} :
+                Number.isFinite(location.x) ? location : groundPoint(location.i, location.j);
             // The supply-truck model's deck is 1.5125 m high, behind its cab. Its wheels touch y=0.
             const yaw = onBed ? at.yaw : 0, behind = onBed ? -1.4 : 0;
             load.position.set(at.x + Math.sin(yaw) * behind, ground(at.x, at.z, drawnShift) + (onBed ? 1.5125 : 0),
               at.z + Math.cos(yaw) * behind);
             load.rotation.y = yaw;
+            load.scale.y = pile && row?.stage > 0 && row.stage < 4 ? (4 - row.stage) / 4 : 1;
+            for (const pot of pile?.pots ?? []) {
+              const x = (pot.slot % 2 ? .55 : -.55), z = Math.floor(pot.slot / 2) * .75 - .75;
+              keptPots.push({row: pot, pot: true, key: `kept-pot/${kind}/${pot.slot}`, at: {
+                x: load.position.x + x * Math.cos(yaw) + z * Math.sin(yaw), y: load.position.y + .7,
+                z: load.position.z - x * Math.sin(yaw) + z * Math.cos(yaw)}});
+            }
           }
         }
       }
+      let gardenRecord = record;
+      if (state.carriedBed && state.standing) {
+        const bed = record.beds.find(row => row.i === state.carriedBed.i && row.j === state.carriedBed.j);
+        if (bed) {
+          gardenRecord = {...record, beds: record.beds.filter(row => row !== bed)};
+          const {x, z, yaw} = state.standing;
+          keptPots.push({row: bed, pot: false, key: 'carried-bed', at: {x: x + Math.sin(yaw) * 1.8,
+            z: z + Math.cos(yaw) * 1.8, y: ground(x, z, drawnShift) + .8}});
+        }
+      }
+      garden.update(gardenRecord, drawnShift, keptPots);
       const deliveryGate = gateOf(record), delivery = record && hensWaiting(record) ? crateSpot(deliveryGate) : null;
       const nextMossKey = delivery ? `${delivery.x}/${delivery.z}` : '';
       if (mossKey !== nextMossKey) {
@@ -832,6 +855,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       }
     },
     dispose() {
+      digging.dispose();
       garden.dispose();
       cuttings.dispose();
       towers.dispose();

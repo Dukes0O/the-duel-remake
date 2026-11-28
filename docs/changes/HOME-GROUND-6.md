@@ -1,0 +1,12 @@
+# HOME-GROUND-6
+- Added Tin Town's borrowed excavator: original joints, bucket, tracks and model; four-scoop teardown, ditch, cellar and pond.
+- Salvaged piles keep building water and plants through flatbed delivery and crew rebuilding; hens leave before a coop scoop.
+- Beds move free; door aprons and the gate lane stay open; raider wheels route around ditches; the cellar protects half the store.
+- Version 10 preserves older fields and uses the existing verified backup. Pond filling uses monotonic real time, online and away.
+- Independent save review: fixed pond clock omission without a standing tank and pile validation after crew access; reviewer confirmed both.
+- Checks: pending until 06:30 local, Kyle's reserved night-check window. No test, build, browser, frame or balance result claimed yet.
+- Changed assertions: town vehicle list adds excavator; hen migration expects approved v10 instead of v9. Claude's written review owed.
+- Race fingerprints: pending replay and world guards; no signature regenerated.
+- Cues: home.dig.bite, home.dig.dump, home.dig.tear, home.dig.ditch, home.pond.fill; sound selection remains OPEN-SOUND.
+- Claude's hand drive remains due. No browser or frame check in this lane; home-ground remains dev.
+- **Removed:** no released feature removed; teardown consumes standing buildings and rebuilding consumes their saved piles.

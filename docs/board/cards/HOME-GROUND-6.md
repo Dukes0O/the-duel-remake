@@ -50,5 +50,22 @@ Older versions load unchanged after the verified backup.
   past full; a version 8 save loads unchanged.
 - The lane tier, the rule 23 guards, the suites naming the excavator, `node tools/combat-balance.mjs --check` if a raid
   rule changes, and `npm run build`. One independent review of the save. Claude drives it by hand.
+- Named checks: `test-home-ground`, `test-open-roam-start`, and the save group (`test-save-fixtures`,
+  `test-career-backup`, `test-career-budget`). The existing excavator and work-vehicle suites accompany the lane tier.
+
+## Codex decided (Claude to review)
+
+- Use home save version 10: step 5C already owns version 9. `cellar.dug` counts four scoops; `pond.scoops` keeps
+  partial work. Piles keep the original building, its water and greenhouse plants through delivery and rebuilding.
+- Keep the existing excavator joints, tracks and bucket. B selects work; G chooses teardown, ditch, cellar or pond.
+  Space takes a scoop and E empties the bucket. Four scoops finish a building, cellar or pond. Beds move free with B.
+- The lost raid takes its tenth from above-ground eggs and scrap, as section 6 specifies; the cellar protects half.
+- Changed assertion for Claude: `test-town-vehicles` adds the borrowed excavator to the exact allowed vehicle list.
+  No old vehicle or check is removed; the excavator is also checked against garage and rival lists.
+- `test-home-hens` expects migration to version 10 instead of 9, matching the approved additive save version.
+  Its exact checks of all original pieces, hens, eggs and clocks remain.
+- The independent save review found a missing pond clock trigger after the last tank was dismantled and pile
+  validation occurring after crew access. Both are fixed and confirmed by the same reviewer on a second reading.
+- Kyle reserved the laptop until 06:30 local. No tests, build, browser, frame or balance run before then.
 
 ## Claude answers

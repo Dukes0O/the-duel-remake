@@ -253,4 +253,48 @@ assert.equal(flatbedJob.vehicle.loadKg, 0, 'the disabled hooks cannot load the t
   assert.equal(rigApp.profile.story.open.home.well.depth, partial, 'leaving saves the partial hole');
 }
 
+// HOME-GROUND-6: the borrowed excavator uses its own tracked drive and bucket joints through the real inputs.
+{
+  const digApp = freshApp(1);
+  digApp.duel.featureFlags = homeFlags;
+  assert(digApp.visitWasteland()); digApp.advance(8);
+  assert.equal(digApp.startOpenRoam('excavator'), false, 'the digger waits for a completed tank');
+  const before = worldForProfile(digApp.profile, digApp.seed);
+  const home = {...newHome('Digger test'), builds: [{kind: 'tank', i: 15, j: 3, turn: 0, stage: 4, litres: 12, filled: null}]};
+  const saved = settleOpenWorld(digApp.profile, {...before, open: {...before.open, home}}, {atStart: before});
+  assert(saved.ok); digApp.profile = saved.profile; assert(digApp._saveProfile());
+  const wall = () => yardHomeScreen({profile: digApp.profile, playerName: 'Test', escapeHTML: String,
+    panel: 'cards', featureFlags: digApp.duel.featureFlags});
+  assert.match(wall(), /Go out in Tin Town's digger/);
+  digApp.duel.featureFlags = on;
+  assert.doesNotMatch(wall(), /story-open-digger/);
+  assert.equal(digApp.startOpenRoam('excavator'), false, 'the disabled switch gates the digger action');
+  digApp.duel.featureFlags = homeFlags;
+  const bytes = JSON.stringify(digApp.profile);
+  assert(digApp.startOpenRoam('excavator'));
+  assert.equal(JSON.stringify(digApp.profile), bytes, 'borrowing never changes saved progress or the garage');
+  const state = digApp.duel.state, job = state.arena.worldJob;
+  assert.equal(job.vehicle.id, 'excavator');
+  assert.equal(workVehicleToDraw(state, homeFlags).id, 'excavator');
+  assert.equal(workVehicleToDraw(state, on), null);
+  digApp.advance(5);
+  const at = groundPoint(10, 9), nearest = digApp.duel.course.nearest(at.x, at.z);
+  Object.assign(state, {s: nearest.s, prevS: nearest.s, lateral: nearest.lateral, prevLateral: nearest.lateral,
+    speedMph: 0, yawVelocity: 0, pushVelocity: 0, onFoot: false,
+    headingError: -digApp.duel.course.at(nearest.s).heading});
+  digApp.keys.KeyW = true; digApp.advance(3); digApp.keys.KeyW = false;
+  const machine = job.open.parts.home.digger.machine;
+  const travel = Math.hypot(machine.x - at.x, machine.z - at.z);
+  assert(travel > 2 && travel < 7, 'the borrowed digger drives at its own tracked speed');
+  digApp.advance(1);
+  assert(ringJobVehicleBell(digApp.duel)); digApp.advance(1 / 60);
+  assert.equal(job.open.parts.home.digger.mode, 'work', 'B selects bucket work');
+  const arm = job.open.parts.home.digger.machine.jointAngles.arm;
+  digApp.keys.KeyI = true; digApp.advance(.5); digApp.keys.KeyI = false;
+  assert.notEqual(job.open.parts.home.digger.machine.jointAngles.arm, arm, 'I reaches the original excavator arm solver');
+  digApp.keys.KeyG = true; digApp.advance(.1); digApp.keys.KeyG = false;
+  assert.equal(job.open.parts.home.digger.kind, 'ditch', 'G selects the next digging job once per press');
+  assert(digApp.leaveWorldJob());
+}
+
 console.log('test-open-roam-start: ok');

@@ -900,8 +900,10 @@ export class App {
   _startOpenRoam(vehicle) {
     this._refreshPlayer();
     const home = savedOpenRecord(this.profile)?.home;
-    if (vehicle !== undefined && (!['flatbed', 'drill'].includes(vehicle) || this._switches().enabled('home-ground') !== true ||
-        !home || vehicle === 'drill' && !home.builds?.some(row => row.kind === 'coop' && row.stage === 4))) return false;
+    if (vehicle !== undefined && (!['flatbed', 'drill', 'excavator'].includes(vehicle) || this._switches().enabled('home-ground') !== true ||
+        !home || vehicle === 'drill' && !home.builds?.some(row => row.kind === 'coop' && row.stage === 4) ||
+        vehicle === 'excavator' && !home.builds?.some(row => row.kind === 'tank' && row.stage === 4) &&
+          !home.piles?.some(pile => pile.building.kind === 'tank'))) return false;
     const routineRoads = night2Banked(savedLedger(this.profile)) && this.gasRunAvailable() ?
       (emberBattleOpen(this.profile) ? ['long'] : GAS_RUN_ROADS) : [];
     // HOME-GROUND-2: the one reading of the laptop's clock for the player's ground, as the outing opens.
@@ -3449,6 +3451,8 @@ export class App {
       steer: keyboardSteer || pad.steer,
       boost: heldInput(context, 'boost', k) || pad.boost,
       interact: !!(heldInput(context, 'interact', k) || pad.interact),
+      ...(st.arena?.worldJob?.vehicle?.id === 'excavator' && this._switches().enabled('home-ground') === true ?
+        {homeDiggerKeys: Object.fromEntries(['KeyI', 'KeyK', 'KeyJ', 'KeyL', 'KeyE', 'KeyG'].map(key => [key, !!k[key]]))} : {}),
     });
     if (context === 'firetruck') setJobVehicleSpray(this.duel, heldInput(context, 'spray', k)); // TOWN-FIRE-JOB: hold H to spray
   }
