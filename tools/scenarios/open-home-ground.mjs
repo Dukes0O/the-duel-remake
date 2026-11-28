@@ -7,12 +7,13 @@
 //
 // Keys go to the page as the browser's own key events. Between them the page's simulation is stepped with
 // window.__qaApp.advance, and the walker is turned to face where he is going (the mouse's job in play).
-import {HOME_CORNER, HOME_STEP, HOME_WORDS} from '../../src/world/open/content/home-ground.js';
-import {boxInLand, crateSpot, newsBoardSpot} from '../../src/world/open/home-rule.js';
+import {HOME_CORNER, HOME_STEP, HOME_WORDS, HOME_LOAD_STACK} from '../../src/world/open/content/home-ground.js';
+import {boxInLand, buildInLand, crateSpot, newsBoardSpot} from '../../src/world/open/home-rule.js';
 
 const FLAGS = 'hidden-road,story-choices,crew-gear,warlord-cards,home-ground';
 const KEYS = {KeyW: ['w', 87], KeyB: ['b', 66], KeyR: ['r', 82], KeyG: ['g', 71], KeyV: ['v', 86], KeyX: ['x', 88],
-  KeyF: ['f', 70], KeyD: ['d', 68], ShiftLeft: ['Shift', 16], Space: [' ', 32], Digit1: ['1', 49], Enter: ['Enter', 13]};
+  KeyF: ['f', 70], KeyD: ['d', 68], KeyS: ['s', 83], ArrowLeft: ['ArrowLeft', 37], ArrowRight: ['ArrowRight', 39],
+  ShiftLeft: ['Shift', 16], Space: [' ', 32], Digit1: ['1', 49], Enter: ['Enter', 13]};
 const DAY = 24 * 60 * 60;
 const point = (a, b) => ({x: HOME_CORNER.x + a * HOME_STEP, z: HOME_CORNER.z + b * HOME_STEP});
 
@@ -56,6 +57,12 @@ export const pageFunctions = {
     return Math.hypot(to.x - fighter.x, to.z - fighter.z);
   },
   camera: mode => { window.__qaApp.setFootCamera(mode); return window.__qaApp.footCameraMode; },
+  driving: target => {
+    const {duel} = window.__qaApp, state = duel.state, at = duel.course.worldAt(state.s, state.lateral);
+    const error = Math.atan2(target.x - at.x, target.z - at.z) - duel.course.at(state.s).heading - state.headingError;
+    return {onFoot: state.onFoot, vehicle: state.arena?.worldJob?.vehicle?.id, speed: Math.abs(state.speedMph),
+      distance: Math.hypot(target.x - at.x, target.z - at.z), error: Math.atan2(Math.sin(error), Math.cos(error))};
+  },
   face: yaw => { window.__qaApp.duel.state.fighter.yaw = yaw; window.__qaApp.advance(.05); return true; },
   // He tips his head up or down (the mouse's job in play); negative looks down.
   look: pitch => { window.__qaApp.duel.state.fighter.pitch = pitch; window.__qaApp.advance(.02); return true; },
@@ -441,5 +448,63 @@ export async function run(context) {
   now = await home();
   if (now.record.boxes[0].eggs !== 0 || now.record.eggs !== before.eggs + before.boxes[0].eggs) fail('F did not gather the eggs.', now.record);
   report.gathered = now.record.eggs;
+
+  // Step 3 uses only keys. The missing vehicle handoff fails here until Claude resolves its scope question;
+  // this route never injects a delivery or a completed building.
+  if (await walk(point(3, 13), .2) > .5) fail('He could not reach the place for his coop.');
+  await evaluate('face', Math.PI);
+  for (let n = 0; n < 5 && (await home()).kind !== 'coop'; n++) await tap('KeyG');
+  if ((await home()).kind !== 'coop') fail('G did not offer the coop.');
+  await tap('KeyB');
+  now = await home();
+  const coop = now.record.builds.find(row => row.kind === 'coop');
+  if (!coop || coop.stage !== 0) fail('B did not mark the coop footprint.', now.record.builds);
+  const flatbed = now.record.flatbed;
+  await walk(point(10, 3), .5);
+  await walk(point(10, -4), .5);
+  if (await walk({x: flatbed.x + 2, z: flatbed.z}, .3) > .7) fail('He could not walk beside the flatbed.');
+  await tap('KeyF');
+  const driving = await evaluate('driving', HOME_LOAD_STACK);
+  if (driving.onFoot || driving.vehicle !== 'flatbed') fail('The Home Ground flatbed handoff is not available.', driving);
+  const driveTo = async target => {
+    const held = new Set();
+    const setKey = async (code, down) => {
+      if (held.has(code) === down) return;
+      await key(down ? 'keyDown' : 'keyUp', code);
+      if (down) held.add(code); else held.delete(code);
+    };
+    try {
+      for (let n = 0; n < 900; n++) {
+        const at = await evaluate('driving', target);
+        if (at.onFoot) fail('He left the flatbed during the delivery.');
+        if (at.distance <= 3 && at.speed < .3) return;
+        const braking = at.distance < Math.max(3, at.speed * .7) || (Math.abs(at.error) > .8 && at.speed > 7);
+        await setKey('KeyW', !braking && at.speed < 10);
+        await setKey('KeyS', braking);
+        await setKey('ArrowLeft', !braking && at.error > .08);
+        await setKey('ArrowRight', !braking && at.error < -.08);
+        await evaluate('advance', .1);
+      }
+      fail('The flatbed did not reach its delivery stop.', target);
+    } finally { for (const code of held) await key('keyUp', code); }
+  };
+  await driveTo(HOME_LOAD_STACK);
+  await tap('KeyF');
+  if ((await home()).record.loads.coop !== 'bed') fail('One press did not load the coop.');
+  await driveTo(point(10, -5));
+  await driveTo(point(10, 9));
+  const coopAt = buildInLand(coop);
+  await driveTo({x: coopAt.x + 3.5, z: coopAt.z});
+  await tap('KeyF');
+  if (typeof (await home()).record.loads.coop !== 'object') fail('One press did not unload the coop at its mark.');
+  await tap('KeyF');
+  if (!(await evaluate('driving', coopAt)).onFoot) fail('F while stopped did not let him out.');
+  await walk({x: coopAt.x, z: coopAt.z + 3}, .3);
+  await evaluate('face', Math.PI);
+  await hold('KeyB', 24.3);
+  now = await home();
+  if (now.record.builds.find(row => row.kind === 'coop')?.stage !== 4) fail('Holding B did not raise all four coop stages.', now.record.builds);
+  if (now.record.boxes.length !== 4) fail('The coop did not add its three nest boxes.', now.record.boxes);
+  report.coop = 'Marked, delivered and raised by real keys.';
   return {...report, pieces: left.pieces.length, kept: true};
 }

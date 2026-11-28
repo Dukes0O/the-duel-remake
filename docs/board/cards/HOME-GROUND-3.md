@@ -68,3 +68,13 @@ unchanged and gains the fields the first time the part runs with its switch on.
   Claude drives the merged step by hand.
 
 ## Claude answers
+
+## Builder handoff
+
+The version 3 record, load rules, footprints, hand-raised stages, coop care and shed store are implemented. The
+flatbed handoff and the migration backup hook need the scope decision in `docs/board/questions/HOME-GROUND-3.md`.
+The real-key scenario includes the delivery and coop stages but cannot pass before that vehicle bridge exists.
+
+Changed assertions for Claude's written review: two version 1 upgrade expectations now require version 3 and its
+added fields; the exact board text now includes the settled building invitation; the board's reread check compares
+all of its text instead of only its former four-line count. No tolerance or old progress check was loosened.

@@ -343,6 +343,23 @@ go into the real game after step 4.
   or G shows the build outline. On his ground the launcher is lowered; the fire key takes it back, and while he builds
   he holds a hammer, or a wrench for the gate.
 
+### Step 3 implementation, awaiting its vehicle bridge (HOME-GROUND-3)
+
+- The record is version 3. It keeps every earlier field and adds `builds: [{kind, i, j, turn, stage}]`,
+  `loads: {coop, shed}` and `flatbed: {x, z, yaw}`. Loads are `stack`, `bed`, or a grid point `{i, j}`. Stage 0 is a
+  movable mark; stages 1 to 4 are the floor, frame, walls and roof. Once the floor stands, its load is consumed.
+- The first coop occupies 2 by 2 cells and the shed 2 by 3. Each stage takes six seconds of holding B. G offers
+  both after the hens have a nest box. R turns them through four directions. The lane, edge and overlap rules apply
+  both when marking buildings and when placing a fence or a new gate beside them.
+- A finished coop adds three ordinary egg boxes to `boxes`. Their cells come from `coopBoxes`; they cannot be
+  lifted as old crates. F gathers all three. Up to six hens walk through its open front at dusk and leave at dawn.
+  The shed's door and the gate board name the same egg store. No new currency or separate store is introduced.
+- Version 1 and 2 records remain unchanged when read and while the switch is off. Only the enabled part upgrades
+  them. The shared migration backup detector still needs to cover that upgrade before this step is complete.
+- The load transfer and weight rules are tested, but the outing still lacks the vehicle handoff needed to drive
+  the flatbed and apply that weight. `docs/board/questions/HOME-GROUND-3.md` records both required scope decisions.
+  The extended real-key scenario is syntax-checked only; its delivery cannot pass until the bridge is built.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.
