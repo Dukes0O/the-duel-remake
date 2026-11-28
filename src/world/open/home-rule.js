@@ -93,7 +93,7 @@ export function buildingDoor(row) {
 }
 export function buildSlot(kind, position, yaw, turn = 0) {
   const size = HOME_BUILDS[kind], w = (turn % 2 ? size.depth : size.width), d = (turn % 2 ? size.width : size.depth);
-  const reach = HOME_REACH + (Math.abs(Math.sin(yaw)) * w + Math.abs(Math.cos(yaw)) * d) * HOME_STEP / 2;
+  const reach = 2 + (Math.abs(Math.sin(yaw)) * w + Math.abs(Math.cos(yaw)) * d) * HOME_STEP / 2;
   const {a, b} = toGrid(position.x + Math.sin(yaw) * reach, position.z + Math.cos(yaw) * reach);
   return {kind, i: Math.round(a - w / 2), j: Math.round(b - d / 2), turn, stage: 0};
 }

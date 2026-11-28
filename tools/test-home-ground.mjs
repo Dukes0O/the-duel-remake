@@ -18,7 +18,7 @@ import {LAND} from '../src/world/scablands-names.js';
 import {FOOT_BURST, HOME_CELLS, HOME_CORNER, HOME_CUES, HOME_OFFER_ID, HOME_PANELS, HOME_SIZE, HOME_WORDS,
   defaultHomeName} from '../src/world/open/content/home-ground.js';
 import {boardSpot, build, cleanHomeName, groundPoint, homeSolids, lift, newHome, outlineFor, panelsLeft, pieceInLand,
-  readableHome, refusal, slotInFront, toggleMark, markBuild, buildRefusal, liftBuild, raiseBuild, buildInLand,
+  readableHome, refusal, slotInFront, buildSlot, buildBounds, toggleMark, markBuild, buildRefusal, liftBuild, raiseBuild, buildInLand,
   homeLoadKg, transferHomeLoad, buildBox, giveHens, buildingDoor, boardLines, crewOffer, handToCrew, advanceCrew, upgradeHome, newsBoardSpot, boxSlotInFront, boxInLand, facedThing, ripenHome} from '../src/world/open/home-rule.js';
 import {HOME_LOAD_STACK, HOME_BUILDS} from '../src/world/open/content/home-ground.js';
 import {createHomeGroundView} from '../src/world/open/looks/home-ground-look.js';
@@ -26,6 +26,8 @@ import {PerspectiveCamera, Vector3} from 'three';
 import {CARS} from '../src/config.js';
 import {ARENA_FIELD} from '../src/arena/arena-event.js';
 import {homeCameraPose, homeBuildCameraPose, stepHomeLift} from '../src/world/open/home-camera.js';
+import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
+import {stepFootTransition} from '../src/onfoot-transition.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
 import {worldHudModel} from '../src/world/world-hud.js';
 
@@ -368,7 +370,7 @@ const memory = values => {
   check(readableHome(lift(home, home.pieces[0])), 'a ground with a piece picked up is readable');
 }
 
-// The enabled part transfers on the F edge, exposes weight, and draws the bundle at the truck's pose.
+// The enabled part transfers on a short F release, exposes weight, and draws the bundle at the truck's pose.
 {
   let home = buildBox({...build(newHome('Delivery'), {kind: 'gate', i: 8, j: 0, axis: 'x'}),
     hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}]}, {i: 2, j: 3});
@@ -385,6 +387,8 @@ const memory = values => {
   result = run(open, drive, DT);
   check(result.open.parts.home.prompt.includes('Press F to load the tin for the coop'), 'a stopped flatbed names the load');
   result = run(result.open, {...drive, interact: true}, DT);
+  equal(homeOf(result.open).loads.coop, 'stack', 'pressing F alone never moves a load');
+  result = run(result.open, drive, DT);
   open = result.open;
   equal(homeOf(open).loads.coop, 'bed', 'one tap loads the coop through the open part');
   equal(open.parts.home.loadKg, HOME_BUILDS.coop.kg, 'the part exposes the carried load weight');
@@ -392,7 +396,8 @@ const memory = values => {
   const at = buildInLand(coop), arrival = {...drive, carPosition: at, homeCarHeading: 1.2};
   result = run(open, {...arrival, interact: true}, DT);
   equal(homeOf(result.open).loads.coop, 'bed', 'holding F does not unload again on arrival');
-  open = run(result.open, arrival, DT).open;
+  open = run(result.open, {...arrival, interact: true}, .4).open;
+  open = run(open, arrival, DT).open;
   const view = createHomeGroundView(), job = {open};
   const before = JSON.stringify(open);
   view.update(job, {}, 0);
@@ -403,12 +408,28 @@ const memory = values => {
   check(bundle.position.y > scablandsSurfaceHeightAt(at.x, at.z) + 1, 'the bundle rests on the raised deck');
   equal(JSON.stringify(open), before, 'drawing the bed never changes the home or outing state');
   result = run(open, {...arrival, interact: true}, DT);
+  result = run(result.open, arrival, DT);
   equal(homeOf(result.open).loads.coop, {i: coop.i, j: coop.j}, 'one fresh tap sets the load beside the mark');
   equal(result.open.parts.home.loadKg, 0, 'unloading clears the exposed weight');
   check(cues(result.events).includes(HOME_CUES.loadOff), 'unloading emits its sound cue');
   view.update({open: result.open}, {}, 0);
   equal(bundle.rotation.y, 0, 'a delivered bundle no longer follows the truck heading');
   view.dispose();
+  const duel = new LegacyRoadsideDuel({seed: 1989});
+  duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', startStage: 0, discoveredGate: true, seed: 1989});
+  Object.assign(duel.state, {status: 'racing', countdown: 0, speedMph: 0});
+  duel.state.input.interact = true;
+  let leaving = result.open;
+  for (let n = 0; n < 24; n++) {
+    stepFootTransition(duel, DT);
+    const person = duel.state.onFoot ? {...arrival.carPosition, yaw: 0} : null;
+    leaving = run(leaving, viewOf(person, {}, {...arrival, onFoot: duel.state.onFoot,
+      fighter: person && {position: person, yaw: 0}, interact: true}), DT).open;
+    equal(homeOf(leaving).loads.coop, {i: coop.i, j: coop.j}, 'holding F never lifts the delivered tin');
+  }
+  check(duel.state.onFoot, 'the existing 0.4 second hold still gets him out');
+  leaving = run(leaving, viewOf({...arrival.carPosition, yaw: 0}), DT).open;
+  equal(homeOf(leaving).loads.coop, {i: coop.i, j: coop.j}, 'release after leaving keeps the tin on the ground');
   const untouched = run(openLand({...world, open: {...world.open, home}}), {...drive, homeGround: false, interact: true}, DT);
   equal(homeOf(untouched.open), home, 'with the switch off, delivery changes no home fields');
 }
@@ -483,10 +504,67 @@ const memory = values => {
   home = transferHomeLoad(homeOf(open), {vehicle: 'flatbed', position: HOME_LOAD_STACK, speedKmh: 0});
   home = transferHomeLoad(home, {vehicle: 'flatbed', position: buildInLand(home.builds[0]), speedKmh: 0});
   open = {...open, world: {...open.world, open: {...open.world.open, home}}};
-  const out = run(open, viewOf(me, {build: true}), 24.2);
+  const out = run(open, viewOf({...me, x: me.x + .2}, {build: true}), 24.2);
   equal(homeOf(out.open).builds[0].stage, 4, 'holding B raises all four six-second stages');
   equal(cues(out.events).filter(name => name === HOME_CUES.coopStage).length, 4, 'each coop stage has its cue');
   check(readableHome(homeOf(out.open)), 'the part writes a valid version 4 record');
+  const talk = out.requests.find(request => request.id === 'home-ground/builders');
+  check(talk?.anchorPosition && talk.scene.lines[0].speaker === 'wren', 'the first hand-built coop opens Wren teaching');
+  check(Math.hypot(talk.position.x - me.x - .2, talk.position.z - me.z) < 2.5,
+    'the teaching anchor is within talk range, so the job cannot close it as a distant talk');
+  const wren = out.open.parts.home.crewPeople.find(person => person.id === 'wren');
+  equal({x: wren.x, z: wren.z}, {x: talk.position.x, z: talk.position.z}, 'Wren stands at her teaching anchor');
+  const toPlayer = Math.atan2(me.x + .2 - wren.x, me.z - wren.z);
+  check(Math.abs(Math.sin(wren.yaw - toPlayer)) < 1e-8 && Math.cos(wren.yaw - toPlayer) > .99, 'Wren faces him while teaching');
+}
+
+// The same marked front remains reachable across its width, at each turn and after every stage.
+{
+  for (const kind of ['coop', 'shed']) for (let turn = 0; turn < 4; turn++) {
+    const row = {kind, i: 7, j: 7, turn, stage: 0};
+    const centre = buildInLand(row), heading = turn * Math.PI / 2;
+    for (const side of [-1.7, 0, 1.7]) {
+      const front = HOME_BUILDS[kind].depth + 2;
+      const me = {x: centre.x + Math.sin(heading) * front + Math.cos(heading) * side,
+        z: centre.z + Math.cos(heading) * front - Math.sin(heading) * side, yaw: heading + Math.PI};
+      let home = markBuild(newHome('Reach'), row);
+      home = {...home, loads: {...home.loads, [kind]: {i: row.i, j: row.j}}};
+      for (let stage = 0; stage < 4; stage++) {
+        const world = newWorld({seed: 5, night: 2});
+        const out = run(openLand({...world, open: {...world.open, home}}), viewOf(me, {build: true}), 6.05);
+        equal(homeOf(out.open).builds[0].stage, stage + 1, 'anywhere along the faced front raises the next stage');
+        home = homeOf(out.open);
+      }
+    }
+    const me = {...groundPoint(10, 10), yaw: heading};
+    const slot = buildSlot(kind, me, me.yaw, turn), b = buildBounds(slot);
+    const lo = groundPoint(b.i0, b.j0), hi = groundPoint(b.i1, b.j1);
+    const gap = Math.hypot(Math.max(lo.x - me.x, 0, me.x - hi.x), Math.max(lo.z - me.z, 0, me.z - hi.z));
+    check(gap >= 1 && gap <= 3, 'the snapped new footprint starts about two metres beyond his feet');
+  }
+}
+// Carried counts use the singular only when one remains.
+{
+  let home = {...newHome('Counts'), hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}],
+    boxes: [{i: 1, j: 1, eggs: 0}]};
+  const world = newWorld({seed: 5, night: 2}), me = {...groundPoint(5, 5), yaw: 0};
+  let open = openLand({...world, open: {...world.open, home}});
+  for (let n = 0; n < 2; n++) {
+    open = run(open, viewOf(me, {piece: true}), DT).open;
+    open = run(open, viewOf(me), DT).open;
+  }
+  check(open.parts.home.prompt.includes('You have 1 old crate left.'), 'one remaining crate has a singular noun');
+  home = {...newHome('Panels'), pieces: Array.from({length: 79}, (_, n) => ({kind: 'panel', i: n % 20,
+    j: Math.floor(n / 20), axis: 'x'}))};
+  open = run(openLand({...world, open: {...world.open, home}}), viewOf(me, {build: true}), DT).open;
+  open = run(open, viewOf(me), DT).open;
+  check(open.parts.home.prompt.includes('You have 1 tin panel left.'), 'one remaining panel has a singular noun');
+  home = {...newHome('One egg'), boxes: [{i: 5, j: 5, eggs: 1}]};
+  const boxAt = boxInLand(home.boxes[0]);
+  const out = run(openLand({...world, open: {...world.open, home}}),
+    viewOf({x: boxAt.x, z: boxAt.z + 2, yaw: Math.PI}, {}, {interact: true}), DT);
+  check(out.requests.some(request => request.text === 'You gathered one egg. You have 1 egg in your store.'),
+    'gathering one egg also uses the singular store count');
 }
 
 // Four quarter turns still alternate a panel's two axes in the overhead view.
@@ -562,7 +640,13 @@ const memory = values => {
   const reloaded = run(land(JSON.parse(JSON.stringify(homeOf(returned.open)))), viewOf(me, {}, {homeClock: 2800}), DT);
   equal(homeOf(reloaded.open).boxes, homeOf(returned.open).boxes, 'a second load cannot add duplicate nests');
   // A real gate is needed for the board handoff.
-  const withGate = build(ready, {kind: 'gate', i: 8, j: 0, axis: 'x'});
+  let withGate = build(ready, {kind: 'gate', i: 8, j: 0, axis: 'x'});
+  for (let cell = 0; cell < HOME_CELLS; cell++) for (const piece of [
+    {kind: 'panel', i: cell, j: 0, axis: 'x'}, {kind: 'panel', i: cell, j: HOME_CELLS, axis: 'x'},
+    {kind: 'panel', i: 0, j: cell, axis: 'z'}, {kind: 'panel', i: HOME_CELLS, j: cell, axis: 'z'},
+  ]) withGate = build(withGate, piece);
+  check(withGate.pieces.length === 77, 'the builders walk into a fully fenced ground');
+  withGate = giveHens(withGate);
   const board = newsBoardSpot(withGate.pieces.find(row => row.kind === 'gate'));
   const at = {...board, x: board.x - 5, yaw: 0};
   let out = run(land(withGate), viewOf(at, {}, {homeClock: 1000}), DT);
@@ -571,7 +655,28 @@ const memory = values => {
   check(homeOf(out.open).crew.job && cues(out.events).includes(HOME_CUES.crewArrive), 'F hands the job over and names the arrival cue');
   check(out.open.parts.home.crewPeople.length === 2, 'Rook and Wren walk from town in the rule state');
   const saved = JSON.parse(JSON.stringify(homeOf(out.open)));
-  out = run(out.open, viewOf(at, {}, {homeClock: 1000}), 600);
+  const away = {...groundPoint(18, 18), yaw: 0};
+  let crossed = new Set(), openedForCrew = false;
+  const previous = new Map(out.open.parts.home.crewPeople.map(person => [person.id, person]));
+  const gateAt = pieceInLand(withGate.pieces.find(row => row.kind === 'gate'));
+  for (let n = 0; n < 60 * 60; n++) {
+    out = run(out.open, viewOf(away, {}, {homeClock: 1000}), DT);
+    const state = out.open.parts.home;
+    openedForCrew ||= state.gateOpen;
+    for (const person of state.crewPeople) {
+      const before = previous.get(person.id);
+      if (before.z < gateAt.z && person.z >= gateAt.z) {
+        check(Math.abs(person.x - gateAt.x) < .01 && state.gateOpen, 'each builder crosses the middle of the open gate');
+        crossed.add(person.id);
+      }
+      previous.set(person.id, person);
+    }
+  }
+  check(openedForCrew && crossed.size === 2, 'both builders open and walk through the gate while the player is away');
+  check(out.open.parts.home.crewPeople.every(person => person.working), 'both reach the site and start working within a minute');
+  check(out.open.parts.home.crewPeople.every(person => Math.hypot(person.x - buildingDoor(second).x,
+    person.z - buildingDoor(second).z) < 1), 'both work beside the assigned building');
+  out = run(out.open, viewOf(at, {}, {homeClock: 1000}), 540);
   const active = homeOf(out.open);
   const offline = run(land(saved), viewOf(at, {}, {homeClock: saved.lastSeen + 600 - DT}), DT);
   check(Math.abs(active.crew.done - homeOf(offline.open).crew.done) < 1e-6, 'outing seconds and closed-game seconds count the same work');

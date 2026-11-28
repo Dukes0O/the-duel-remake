@@ -145,6 +145,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const std = (name, color, extra = {}) => new THREE.MeshStandardMaterial({name, color, roughness: .82, metalness: .18, ...extra});
   const materials = {
     tin: std('home tin', 0xc4c2b8, {map: wear, side: THREE.DoubleSide, flatShading: true}),
+    buildingTin: std('home building tin', 0xa39b89, {map: wear, side: THREE.DoubleSide, roughness: .94, flatShading: true}),
+    seamRust: std('home sheet seams', 0x623923, {roughness: 1}),
     post: std('home posts', 0x4a4036, {roughness: .9}),
     stake: std('home stakes', 0x8a6a44, {roughness: .95, metalness: 0}),
     flag: std('home flags', 0xb8432a, {roughness: .95, metalness: 0, side: THREE.DoubleSide}),
@@ -211,8 +213,21 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       }
     });
     const tin = (stage, width, height, x, y, z, yaw = 0, pitch = 0, seed = 1) => {
-      const mesh = new THREE.Mesh(keep(buildingTin(width, height, {seed, dents: [{x: .15, y: .55, r: .25, depth: .035}]})), materials.tin);
-      mesh.position.set(x, y, z); mesh.rotation.set(pitch, yaw, 0); mesh.castShadow = mesh.receiveShadow = true; stages[stage].add(mesh);
+      const sheets = new THREE.Group(); sheets.position.set(x, y, z); sheets.rotation.set(pitch, yaw, 0);
+      stages[stage].add(sheets);
+      // Separate overlapping sheets carry their own rust seams, bent corners and dents.
+      const count = Math.ceil(width / 1.05), span = width / count;
+      for (let n = 0; n < count; n++) {
+        const bent = (n + seed) % 3 === 0;
+        const geometry = keep(buildingTin(span + .035, height, {seed: seed + n,
+          dents: [{x: -.17, y: height * .3, r: .28, depth: .09},
+            {x: span / 2, y: .08, r: .22, depth: bent ? -.13 : .025}]}));
+        const mesh = new THREE.Mesh(geometry, materials.buildingTin);
+        mesh.position.x = -width / 2 + span * (n + .5); mesh.rotation.y = bent ? .018 : -.008;
+        mesh.castShadow = mesh.receiveShadow = true; sheets.add(mesh);
+        const seam = new THREE.Mesh(keep(buildingTin(.045, height, {seed: seed + n})), materials.seamRust);
+        seam.position.set(-width / 2 + span * n, 0, .012); sheets.add(seam);
+      }
     };
     tin(2, w, 2.4, 0, .08, -d / 2, Math.PI, 0, 7);
     for (const side of [-1, 1]) tin(2, d, 2.1, side * w / 2, .08, 0, side * Math.PI / 2, 0, 12 + side);
@@ -384,6 +399,10 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const outlineFill = new THREE.Mesh(keep(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0)), materials.fill);
   const outlineEdges = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0))), materials.edge);
   outline.add(outlineBox, outlineFill, outlineEdges);
+  const outlineCorners = Array.from({length: 4}, () => {
+    const post = new THREE.Mesh(keep(new THREE.BoxGeometry(.055, .25, .055)), materials.fill);
+    outline.add(post); return post;
+  });
   // A mark is a chalk strip half a metre wide, so that it can be seen from straight above.
   const marks = new THREE.InstancedMesh(keep(new THREE.BoxGeometry(1, .08, .5).translate(0, .04, 0)), materials.mark, MOST_MARKS);
   marks.name = 'home-marks'; group.add(marks);
@@ -655,8 +674,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       const target = state.gateOpen ? 1 : 0;
       gateSwing += Math.sign(target - gateSwing) * Math.min(Math.abs(target - gateSwing), 1 / 60);
       for (const {leaf, side} of leaves) leaf.rotation.y = side * gateSwing * Math.PI * .45;
-      // The outline: pale where he can build, yellow where he can pick up, red where he cannot. The fill rises as he
-      // hammers. From above it stands taller and the grid is shown.
+      // A ground rectangle and four short posts leave the view clear. The faint first stage stays near the soil.
       const shape = state.outline;
       outline.visible = !!shape;
       grid.visible = tops.visible = state.above === true;
@@ -673,18 +691,20 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       if (shape) {
         const piece = shape.mode === 'lift' ? shape.target : shape.piece;
         const {x, z, length, heading, height: tall, depth: buildingDepth} = shapeOf(piece);
-        const height = (tall + .1) * (state.above ? 1.4 : 1);
+        const height = state.above ? .12 : Math.min(.18, tall * .1);
         const colour = OUTLINE[shape.mode] ?? OUTLINE.build;
         materials.outline.color.setHex(colour); materials.fill.color.setHex(colour); materials.edge.color.setHex(colour);
         const wobble = shape.shake ? Math.sin(seconds * 60) * .06 : 0;
-        outline.position.set(x + wobble, ground(x, z, drawnShift), z); outline.rotation.y = yawOf(heading);
+        outline.position.set(x + wobble, ground(x, z, drawnShift) + .045, z); outline.rotation.y = yawOf(heading);
         // From above the outline is drawn a metre thick, or it would be a hair seen from 60 m.
         const depth = buildingDepth ?? (state.above ? 1 : .3);
-        outlineBox.scale.set(length, height, depth); outlineEdges.scale.set(length, height, depth);
+        outlineBox.scale.set(length, height, depth); outlineEdges.scale.set(length, .025, depth);
+        outlineCorners.forEach((post, index) => post.position.set((index % 2 ? 1 : -1) * length / 2, .1,
+          (index < 2 ? -1 : 1) * depth / 2));
         // While he hammers, the real piece rises out of the ground through its seconds, and the pale fill is not drawn.
         outlineFill.visible = shape.progress > 0 && !rising.visible && !buildingDepth;
         // The outline fades to a faint frame so that the rising piece is what he sees.
-        materials.outline.opacity = rising.visible || (buildingDepth && shape.progress > 0) ? .08 : .32;
+        materials.outline.opacity = rising.visible || (buildingDepth && shape.progress > 0) ? .04 : .1;
         outlineFill.scale.set(length * .98, Math.max(.01, height * shape.progress), depth + .02);
         if (rising.visible) {
           const grow = Math.max(.04, shape.progress);
