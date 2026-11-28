@@ -28,7 +28,7 @@ import {TALK_RANGE, distanceToPerson} from './people.js';
 import {AWAY_LONGEST, BOARD_NEAR, BOARD_SECONDS, BUILD_IDLE_SECONDS, FOOT_BURST, HAMMER_STRIKE_SECONDS, HEN_LOOK, HOME_BOX,
   HOME_CELLS, HOME_CUES, HOME_CURSOR_SPEED, HOME_OFFER, HOME_OFFER_ID, HOME_PIECES, HOME_REACH, HOME_SIZE, HOME_STEP,
   HOME_WORDS, MOSS_HENS_ID, MOSS_TALK, defaultHomeName, HOME_BUILDS, HOME_STAGES, HOME_LOAD_STACK, HOME_CREW_TALK,
-  HOME_TOWER_STAGES, HOME_RAID, HOME_TANK_STAGES, HOME_TANK, HOME_WELL, HOME_BED, HOME_CROPS, HOME_GLASS_STAGES} from '../content/home-ground.js';
+  HOME_TOWER_STAGES, HOME_RAID, HOME_TANK_STAGES, HOME_TANK, HOME_WELL, HOME_BED, HOME_CROPS, HOME_GLASS_STAGES, HOME_POND} from '../content/home-ground.js';
 import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoom, boxSlotInFront, boxesFull, build,
   buildBox, cleanHomeName, crateSpot, cratesLeft, facedThing, gateOf, gatesLeft, gatherBox, giveHens, groundCentre,
   groundPoint, hensWaiting, homeSolids, lift, liftBox, markAt, nameHen, newHome, newsBoardSpot, outlineFor, outsideBy,
@@ -45,6 +45,8 @@ import {makeRng} from '../../../rng.js';
 import {createDrillRigState, stepDrillRig, drillYardControls, drillMaterialAt} from '../../../machines/drill.js';
 import {machineMoveContact} from '../../../machines/yard-solids.js';
 import {stepMover} from '../../scablands-movers.js';
+import {stepHomeDigger} from '../home-digger.js';
+import {moveHomeBed, tearingBuild} from '../home-rule.js';
 
 // He builds while he stands within this many metres of his ground; the gate opens for him within GATE_OPENS.
 const BUILD_NEAR = 4, GATE_OPENS = 7, PROMPT_NEAR = 14, BOARD_REACH = 2.5, CRATE_REACH = 3;
@@ -64,12 +66,12 @@ const HEN_HEADS_TO_BOX = 25, HEN_WALK = .55, HEN_KEEP_IN = 1.2;
 function begin() {
   return {held: {}, kind: 'panel', turns: 0, hammer: null, above: false, cursor: null, outline: null, prompt: '',
     powers: Object.fromEntries(Object.keys(HOME_CROPS).filter(id => HOME_CROPS[id].power).map(id => [id, 0])),
-    meals: {}, pairs: {}, fenceBundle: false, bundleAt: null, lastFoot: null,
+    meals: {}, pairs: {}, fenceBundle: false, bundleAt: null, lastFoot: null, carriedBed: null,
     burst: {charge: 1, active: false, spent: false, shown: false}, gateOpen: false, solidsKey: '', naming: false,
     namingHen: null, namingKey: '', namingChain: false, offerOpen: false, given: false, opened: null, ripenedAt: 0,
     building: false, idle: 0, tool: null, strike: null, armed: false, onGround: false, flock: [], flockSeed: 1,
     board: null, boardShown: false, crateTalk: false, crewTalk: false, crewLesson: null, crewWalk: 0, crewKey: '', crewPeople: [],
-    loadHeld: null, raid: null, lastDay: null, tower: null, drillRig: null, drilling: false, drillSoundAt: 0};
+    loadHeld: null, raid: null, lastDay: null, tower: null, drillRig: null, drilling: false, drillSoundAt: 0, digger: null};
 }
 
 // The third speed. It empties in FOOT_BURST.seconds of use; once spent it refills fully before it can be used again.
@@ -104,7 +106,9 @@ function startFlock(hens, from) {
 const insideGround = value => Math.max(HEN_KEEP_IN, Math.min(HOME_SIZE - HEN_KEEP_IN, value));
 // Walk round the coop's walls to its open front. This path belongs to the rules, never to the renderer.
 function coopPath(record, hen, target, leaving = false) {
-  const at = buildInLand(record.builds.find(row => row.kind === 'coop' && row.stage === 4));
+  const row = record.builds.find(row => row.kind === 'coop' && row.stage === 4);
+  if (!row) return [];
+  const at = buildInLand(row);
   const c = Math.cos(at.heading), s = Math.sin(at.heading), dx = hen.x - at.x, dz = hen.z - at.z;
   const x = dx * c - dz * s, z = dx * s + dz * c;
   const point = (lx, lz) => ({x: at.x + lx * c + lz * s, z: at.z - lx * s + lz * c});
@@ -119,13 +123,22 @@ function coopPath(record, hen, target, leaving = false) {
   return path;
 }
 // `since` is the seconds since the record's dues were last brought up to date: a hen's egg is due in `due - since`.
-function stepFlock(flock, seedIn, record, dt, events, since, partOfDay) {
+function stepFlock(flock, seedIn, record, dt, events, since, partOfDay, evacuation = null) {
   let seed = seedIn;
   const room = boxRoom(record) > 0;
   const box = room ? boxForEgg(record.boxes) : -1;
   const out = flock.map((hen, index) => {
     const due = (record.hens[index]?.due ?? Infinity) - since;
     let {x, z, yaw, mode, left, tx, tz} = hen;
+    if (evacuation) {
+      const bounds = buildBounds(evacuation), at = toGrid(x, z);
+      const inside = at.a >= bounds.i0 - .2 && at.a <= bounds.i1 + .2 && at.b >= bounds.j0 - .2 && at.b <= bounds.j1 + .2;
+      if (!inside) return {...hen, mode: 'peck', homePath: null, leaving: false};
+      const path = hen.leaving && hen.homePath?.length ? hen.homePath : coopPath({...record, builds: [evacuation]}, hen, null, true);
+      const target = path[0], far = Math.hypot(target.x - x, target.z - z), stride = Math.min(far, HEN_WALK * dt);
+      if (far > .01) { yaw = Math.atan2(target.x - x, target.z - z); x += (target.x - x) / far * stride; z += (target.z - z) / far * stride; }
+      return {...hen, x, z, yaw, mode: 'walk', leaving: true, homePath: far - stride <= .05 ? path.slice(1) : path};
+    }
     const roost = roostAt(record, index, partOfDay);
     let path = hen.homePath ?? null;
     if (roost && (!path || hen.leaving)) path = coopPath(record, hen, roost);
@@ -155,6 +168,10 @@ function stepFlock(flock, seedIn, record, dt, events, since, partOfDay) {
           let a = draw(seed); seed = a.seed; let b = draw(seed); seed = b.seed;
           tx = corner.x + insideGround(x - corner.x + (a.value - .5) * 12);
           tz = corner.z + insideGround(z - corner.z + (b.value - .5) * 12);
+          if (record.pond?.litres > 0 && pick.value < .15) {
+            const bank = groundPoint(record.pond.i + 1, record.pond.j + 2.4);
+            tx = bank.x; tz = bank.z;
+          }
           mode = 'walk';
         } else {
           const next = pick.value < .8 ? 'peck' : 'scratch';
@@ -237,6 +254,7 @@ export const homePart = {
       const counted = awayFor(kept.lastSeen, moment);
       const ripe = ripenHome(kept, counted);
       const returned = finishCarters(fillHomeTanks(ripe.home, moment), moment === null ? kept.lastSeen : Math.max(moment, kept.lastSeen ?? 0));
+      if (returned.home.pond?.litres === HOME_POND.litres && kept.pond?.litres < HOME_POND.litres) events.push(cue(HOME_CUES.pondFill));
       if (returned.receipt) events.push(cue(HOME_CUES.cartersBack));
       const opened = openHomeSitting({...returned.home,
         lastSeen: moment === null ? ripe.home.lastSeen : Math.max(moment, ripe.home.lastSeen ?? 0)}, context.seed);
@@ -261,6 +279,7 @@ export const homePart = {
       const filled = record.builds.some(row => row.kind === 'tank' && row.litres === HOME_TANK.litres &&
         home.builds?.some(old => matchesBuild(old, row) && old.litres < HOME_TANK.litres));
       if (filled) events.push(cue(HOME_CUES.tankFill));
+      if (record.pond?.litres === HOME_POND.litres && home.pond?.litres < HOME_POND.litres) events.push(cue(HOME_CUES.pondFill));
       const returned = finishCarters(record, record.lastSeen);
       record = returned.home;
       if (returned.receipt) {
@@ -340,7 +359,8 @@ export const homePart = {
       choices.push(choice('laid', record));
     }
 
-    if ((record.beds.some(row => row.crop) || record.pots.some(row => row.crop) || record.crew.job || cartersBusy(record) || record.builds.some(row => row.kind === 'tank' && row.stage === 4)) && now > next.ripenedAt) {
+    if ((record.beds.some(row => row.crop) || record.pots.some(row => row.crop) || record.crew.job || cartersBusy(record) ||
+        record.pond || record.builds.some(row => row.kind === 'tank' && row.stage === 4)) && now > next.ripenedAt) {
       catchUp();
       choices.push(choice('crew-clock', record));
     }
@@ -362,10 +382,12 @@ export const homePart = {
       const moved = transferHomeLoad(record, {vehicle: view.homeVehicle, position: view.carPosition, speedKmh: view.speedKmh});
       if (moved !== record) {
         const kind = Object.keys(HOME_BUILDS).find(key => moved.loads[key] !== record.loads[key]);
+        const pile = kind && moved.piles?.some(row => row.building.kind === kind && (row.position === 'bed' ||
+          record.piles?.some(old => old.building.kind === kind && old.position === 'bed')));
         const loot = !kind;
         const loading = loot ? moved.loot.length === record.loot.length : moved.loads[kind] === 'bed';
         const piece = loot && loading ? record.loot.find((row, index) => row !== moved.loot[index]).kind : kind;
-        loadPrompt = words(loot ? loading ? 'lootOn' : 'lootOff' : loading ? 'loadOn' : 'loadOff', {piece});
+        loadPrompt = words(pile ? loading ? 'pileOn' : 'pileOff' : loot ? loading ? 'lootOn' : 'lootOff' : loading ? 'loadOn' : 'loadOff', {piece});
         if (loadTap) {
           if (loot && !loading) requests.push(say('loot-stored', words('lootStored', {count: moved.scrap - record.scrap})));
           record = moved;
@@ -392,6 +414,11 @@ export const homePart = {
       const result = stepHomeRig(state, next, record, view, context.seed, now, dt, events);
       record = result.record; drillPrompt = result.prompt;
     } else { next.drillRig = null; next.drilling = false; }
+    if (view.homeVehicle === 'excavator' && view.carPosition) {
+      if (view.homeDrillKeys?.Space) catchUp();
+      const result = stepHomeDigger(state.digger, record, view, dt, next.flock);
+      next.digger = result.state; record = result.home; drillPrompt = result.prompt; events.push(...result.events);
+    } else next.digger = null;
 
     const gate = gateOf(record);
     const gateMiddle = gate && pieceInLand(gate);
@@ -447,7 +474,7 @@ export const homePart = {
     }
     if (record.hens.length && next.flock.length !== record.hens.length) next.flock = startFlock(record.hens, groundCentre());
     if (next.flock.length) {
-      const walked = stepFlock(next.flock, next.flockSeed, record, dt, events, now - next.ripenedAt, view.partOfDay);
+      const walked = stepFlock(next.flock, next.flockSeed, record, dt, events, now - next.ripenedAt, view.partOfDay, next.digger?.evacuation);
       next.flock = walked.flock; next.flockSeed = walked.seed;
     }
 
@@ -560,6 +587,8 @@ export const homePart = {
         atCrate ? HOME_WORDS.crateWaiting : drillPrompt || loadPrompt;
     } else {
       if (pressed('piece')) next.kind = nextKind(state.kind, record);
+      if (next.carriedBed) next.kind = 'bed';
+      else if (pressed('build') && cropAt && !cropAt.pot && !next.above) next.kind = 'bed';
       if (pressed('turn')) next.turns = (state.turns + 1) % 4;
       if (pressed('view')) {
         next.above = !state.above;
@@ -707,7 +736,8 @@ export const homePart = {
           record.hens.length && !record.boxes.length ? HOME_WORDS.firstBox : HOME_WORDS.startBuild;
       }
     }
-    if (cropAt && !next.naming && !next.above && !keys.build) next.prompt = note || cropPrompt(record, cropAt);
+    if (cropAt && !next.naming && !next.above && !keys.build && !next.carriedBed) next.prompt = note || cropPrompt(record, cropAt) +
+      (cropAt.pot ? '' : ' ' + HOME_WORDS.bedLift);
     // The news board keeps its full six-metre reach even when he stands beside a building.
     if (atNews && !next.naming && !next.above) next.prompt = newsPrompt;
     if (canUsePower && next.powers.superSpinach > 0 && !next.building)
@@ -771,7 +801,8 @@ export const homePart = {
 
     // The fence, the gate and the nest boxes are solid; the gate's leaves only while it is shut.
     const solidsKey = JSON.stringify([record.pieces, record.boxes.map(box => [box.i, box.j]),
-      record.builds.map(row => [row.kind, row.i, row.j, row.turn, row.stage]), record.well?.pump, next.gateOpen]);
+      record.builds.map(row => [row.kind, row.i, row.j, row.turn, row.stage]), record.well?.pump, record.ditch,
+      record.pond && [record.pond.i, record.pond.j, record.pond.scoops], next.gateOpen]);
     if (solidsKey !== state.solidsKey) {
       next.solidsKey = solidsKey;
       requests.push({type: 'solids', id: 'home-ground', solids: homeSolids(record, {gateOpen: next.gateOpen, heightAt: scablandsSurfaceHeightAt})});
@@ -809,6 +840,23 @@ function stepBed({state, next, record, fighter, keys, pressed, dt, events, catch
   }
   const slot = next.above ? {kind: 'bed', i: Math.floor(next.cursor.a), j: Math.floor(next.cursor.b), turn: next.turns} :
     buildSlot('bed', fighter.position, fighter.yaw, next.turns);
+  const nearby = !next.above && nearbyCrop(record, fighter.position, fighter.yaw);
+  if (next.carriedBed || nearby && !nearby.pot) {
+    const held = next.carriedBed;
+    const row = held ? record.beds.find(row => row.i === held.i && row.j === held.j) : record.beds[nearby.index];
+    const reason = held ? bedRefusal({...record, beds: record.beds.filter(item => item !== row)}, slot) : null;
+    next.outline = {piece: held ? slot : {...row, kind: 'bed'}, mode: reason ? 'refused' : held ? 'build' : 'lift', reason};
+    next.hammer = null;
+    next.prompt = reason ? HOME_WORDS[reason] : held ? HOME_WORDS.bedCarry : HOME_WORDS.bedLift;
+    if (pressed('build') && !next.above) {
+      if (reason) events.push(cue(HOME_CUES.refused));
+      else if (!held) { next.carriedBed = {i: row.i, j: row.j}; events.push(cue(HOME_CUES.lift)); }
+      else {
+        catchUp(); record = moveHomeBed(getRecord(), held, slot); next.carriedBed = null; events.push(cue(HOME_CUES.boxUp));
+      }
+    }
+    return record;
+  }
   const reason = bedRefusal(record, slot), slotKey = JSON.stringify(slot);
   let hammer = state.hammer?.slotKey === slotKey && keys.build ? state.hammer : null;
   if (reason && pressed('build')) events.push(cue(HOME_CUES.refused));
@@ -931,7 +979,7 @@ function stepBuilding({state, next, record, fighter, keys, pressed, dt, events, 
   next.hammer = hammer;
   next.outline = next.building || next.above ? {piece: row ?? slot, mode: reason ? 'refused' : 'build', reason,
     progress: hammer ? hammer.seconds / HOME_BUILDS[kind].hammer : 0, marked: !!row, shake: !!reason && pressed('build')} : null;
-  next.prompt = note || (reason ? HOME_WORDS[reason] : row?.stage === 4 ?
+  next.prompt = note || (row && tearingBuild(record, row) ? HOME_WORDS.digUnfinished : reason ? HOME_WORDS[reason] : row?.stage === 4 ?
     (kind === 'tower' ? HOME_WORDS.towerUp : kind === 'tank' ? HOME_WORDS.tankRead : kind === 'greenhouse' ? HOME_WORDS.glassReady : kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
     row ? next.above ? HOME_WORDS.buildLift : buildHasLoad(record, row) ? words('buildStage', {piece: kind, stage: (kind === 'tower' ? HOME_TOWER_STAGES : kind === 'tank' ? HOME_TANK_STAGES : kind === 'greenhouse' ? HOME_GLASS_STAGES : HOME_STAGES)[row.stage]}) :
       words('buildLoad', {piece: kind}) + ' ' + HOME_WORDS.buildLift : words('buildMark', {piece: kind}));

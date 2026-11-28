@@ -7,7 +7,7 @@ import {stepMover, TRUCK_GRADE} from '../scablands-movers.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {ratsGiveUpSeconds} from '../jobs/town-rats.js';
 import {HOME_RAID as R, HOME_CUES, HOME_WORDS, HOME_CELLS, HOME_TOWER, HOME_LOOT} from './content/home-ground.js';
-import {groundPoint, groundCentre, outsideBy, buildInLand, buildingDoor, pieceInLand, homeSolids, powerStrength, outsideGarlic} from './home-rule.js';
+import {groundPoint, groundCentre, outsideBy, buildInLand, buildingDoor, pieceInLand, homeSolids, powerStrength, outsideGarlic, cellarStored, toGrid} from './home-rule.js';
 
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const cue = name => ({type: 'homeCue', cue: name});
@@ -79,9 +79,57 @@ function targetOf(raid, rider, home) {
   return coop ? buildingDoor(coop) : groundCentre();
 }
 
+// Find a short way around the dug cells. Only wheel obstacles enter this route; the ordinary mover still handles
+// fences, buildings and slopes. Its stable neighbour order makes the same raid take the same way every time.
+export function ditchRoute(home, from, to, radius = .85) {
+  const solids = (home.ditch ?? []).map(cell => ({...groundPoint(cell.i + .5, cell.j + .5), halfX: 1, halfZ: 1, heading: 0}));
+  const clear = (a, b) => !solids.some(solid => sweepObstacle(a, b, solid,
+    Math.atan2(b.x - a.x, b.z - a.z), {halfWidth: radius, halfLength: radius}));
+  if (!solids.length || clear(from, to)) return [to];
+  const margin = 6, size = HOME_CELLS + margin * 2, key = (i, j) => `${i}/${j}`;
+  const g = toGrid(from.x, from.z), start = {i: Math.max(-margin, Math.min(HOME_CELLS + margin - 1, Math.floor(g.a))),
+    j: Math.max(-margin, Math.min(HOME_CELLS + margin - 1, Math.floor(g.b)))};
+  const point = row => groundPoint(row.i + .5, row.j + .5);
+  if (!clear(from, point(start))) return [];
+  const queue = [start], visited = new Map([[key(start.i, start.j), null]]);
+  for (let index = 0; index < queue.length && index < size * size; index++) {
+    const cell = queue[index], at = point(cell);
+    if (clear(at, to)) {
+      const path = [to];
+      let back = cell;
+      while (back) { path.unshift(point(back)); back = visited.get(key(back.i, back.j)); }
+      // Remove collinear grid points, keeping each turn outside the ditch's full wheel clearance.
+      const short = [];
+      let anchor = from;
+      for (let n = 0; n < path.length; n++) if (n === path.length - 1 || !clear(anchor, path[n + 1])) {
+        short.push(path[n]); anchor = path[n];
+      }
+      return short;
+    }
+    for (const [di, dj] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+      const next = {i: cell.i + di, j: cell.j + dj}, id = key(next.i, next.j);
+      if (next.i < -margin || next.j < -margin || next.i >= HOME_CELLS + margin || next.j >= HOME_CELLS + margin ||
+          visited.has(id) || !clear(at, point(next))) continue;
+      visited.set(id, cell); queue.push(next);
+    }
+  }
+  return [];
+}
+
+function aroundDitch(home, rider, target) {
+  if (!home.ditch?.length) return {rider, target};
+  const signature = JSON.stringify(home.ditch), goal = `${target.x}/${target.z}`;
+  let route = rider.ditchKey === signature && rider.ditchGoal === goal ? rider.ditchRoute : null;
+  if (!route) route = ditchRoute(home, rider.position, target, rider.kind === 'bike' ? .45 : .85);
+  while (route.length > 1 && gap(rider.position, route[0]) < .15) route = route.slice(1);
+  return {rider: {...rider, ditchKey: signature, ditchGoal: goal, ditchRoute: route}, target: route[0] ?? rider.position};
+}
+
 function moveRider(raid, rider, home, dt, view) {
   if (rider.health <= 0 || rider.fled) return {home, rider, events: []};
-  const target = targetOf(raid, rider, home), from = rider.position, far = gap(from, target);
+  const routed = aroundDitch(home, rider, targetOf(raid, rider, home));
+  rider = routed.rider;
+  const target = routed.target, from = rider.position, far = gap(from, target);
   const speed = rider.kind === 'bike' ? R.bikeMps : R.buggyMps;
   const travel = Math.min(far, speed * dt);
   if (far < .1) {
@@ -140,7 +188,9 @@ export function useHomeFightPowers(raid, fighter, powers, pairs, {shove = false,
 
 export function finishHomeRaid(home, raid, outcome, seed) {
   if (raid.outcome) return {home, raid, events: []};
-  const eggs = outcome === 'lost' && !raid.test ? Math.floor(home.eggs * R.eggShare) : 0;
+  const safe = cellarStored(home), lost = outcome === 'lost' && !raid.test;
+  const eggs = lost ? Math.floor((home.eggs - safe.eggs) * R.eggShare) : 0;
+  const scrap = lost ? Math.floor(((home.scrap ?? 0) - safe.scrap) * R.eggShare) : 0;
   const raids = {...home.raids};
   if (raid.test) raids.testDone = outcome !== 'left';
   else {
@@ -149,7 +199,7 @@ export function finishHomeRaid(home, raid, outcome, seed) {
     raids.nextDue = raids.played + raidInterval(seed, raids.won + raids.lost);
   }
   const news = raid.test && outcome !== 'left' ? HOME_WORDS.raidTest : outcome === 'left' ? HOME_WORDS.raidLeft :
-    outcome === 'won' ? HOME_WORDS.raidWon : eggs === 1 ? HOME_WORDS.raidLostOne : HOME_WORDS.raidLost.replace('{count}', eggs);
+    outcome === 'won' ? HOME_WORDS.raidWon : HOME_WORDS.raidLostStore.replace('{eggs}', eggs).replace('{scrap}', scrap);
   let loot = home.loot;
   if (outcome === 'won' && !raid.test) {
     const piece = (kind, position, yaw) => ({kind, position: {x: position.x, z: position.z, yaw}, worth: HOME_LOOT[kind].worth});
@@ -160,7 +210,7 @@ export function finishHomeRaid(home, raid, outcome, seed) {
         z: raid.entry.z + raid.normal.z * 3 - raid.normal.x * (index * 2 - 1)}, rng.range(-Math.PI, Math.PI)));
     loot = [...(home.loot ?? []), ...wrecks, ...crates];
   }
-  return {home: {...home, eggs: home.eggs - eggs, raids, loot}, raid: {...raid, outcome}, news,
+  return {home: {...home, eggs: home.eggs - eggs, scrap: (home.scrap ?? 0) - scrap, raids, loot}, raid: {...raid, outcome}, news,
     events: outcome === 'left' ? [] : [cue(outcome === 'lost' ? HOME_CUES.raidLost : HOME_CUES.raidWon)]};
 }
 

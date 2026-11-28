@@ -14,6 +14,8 @@ import {createHaulLoadLook, stackHaulPieces} from './haul-load-look.js';
 import {scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {createGroundShade} from '../../world/scrap-look.js';
 import {createDrillView} from '../../machines/drill-view.js';
+import {createMachineView} from '../../machines/view.js';
+import {machineDefinition} from '../../machines/content/machines.js';
 
 const MODEL_FOLDER = '/assets/models/wasteland/town/';
 // Wheel centres stand 0.52 to 0.57 m up on the models, which is their radius.
@@ -61,8 +63,8 @@ export function workVehicleToDraw(state, flags) {
   const worldJob = state.arena.worldJob;
   // HOME-GROUND-3: Tin Town's flatbed on an open outing is drawn with Home Ground's switch alone.
   const homeMachine = flags?.enabled?.('home-ground') === true && worldJob?.definition?.id === 'open-roam' &&
-    ['flatbed', 'drill'].includes(worldJob?.vehicle?.id);
-  if (worldJob?.vehicle?.id === 'drill' && !homeMachine) return null;
+    ['flatbed', 'drill', 'excavator'].includes(worldJob?.vehicle?.id);
+  if (['drill', 'excavator'].includes(worldJob?.vehicle?.id) && !homeMachine) return null;
   if (flags?.enabled?.('wasteland-town') !== true && !homeMachine) return null;
   return worldJob?.vehicle ?? null;
 }
@@ -90,12 +92,14 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
   function build(vehicle, source) {
     const definition = workVehicleDefinition(vehicle.id), node = findModelNode(source, definition.model.node);
     if (!node) return null;
-    const body = node.clone(true);
+    let body = node.clone(true);
     body.position.set(0, 0, 0);
     // The models face along -z; the renderer's cars face along +z.
     const drill = vehicle.id === 'drill' ? createDrillView(body) : null;
-    const turned = drill?.root ?? new THREE.Group();
-    if (!drill) { turned.rotation.y = Math.PI; turned.add(body); }
+    const digger = vehicle.id === 'excavator' ? createMachineView({model: body, definition: machineDefinition('excavator')}) : null;
+    if (digger) body = digger.body;
+    const turned = digger?.root ?? drill?.root ?? new THREE.Group();
+    if (!drill && !digger) { turned.rotation.y = Math.PI; turned.add(body); }
     const group = new THREE.Group();
     group.name = `work-vehicle:${vehicle.id}`;
     group.add(turned);
@@ -128,7 +132,7 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     const stack = new THREE.Group();
     stack.name = 'haul-stack';
     turned.add(stack);
-    return {id:vehicle.id, group, turned, drill, body, contactY:tyres.isEmpty() ? 0 : tyres.min.y, steers, spins,
+    return {id:vehicle.id, group, turned, drill, digger, body, contactY:tyres.isEmpty() ? 0 : tyres.min.y, steers, spins,
       bedBox:bedBox && !bedBox.isEmpty() ? bedBox : null, stack, stackKey:'', stackIds:null,
       load:loadNode ? findModelNode(body, loadNode) : null,
       maxSteer:definition.maxSteerDeg * Math.PI / 180, roll:0, clock:null};
@@ -308,6 +312,7 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
   }
 
   function remove() {
+    shown?.digger?.dispose();
     if (shown) for (const mesh of [...shown.stack.children]) look.release(mesh);
     // Only the auger was made for this view; shared model geometry and materials belong to the asset cache.
     shown?.body.getObjectByName('drill-auger')?.traverse(node => {
@@ -359,6 +364,11 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     shown.clock = clock;
     const rig = state.arena.worldJob.open?.parts.home?.drillRig;
     if (shown.drill && rig) shown.drill.update(rig, shown.body, seconds);
+    const digging = state.arena.worldJob.open?.parts.home?.digger;
+    if (shown.digger && digging) {
+      shown.digger.update({...digging.machine, x: 0, y: 0, z: 0, heading: 0}, seconds);
+      shown.turned.position.y = (player.userData.grounding?.contactY ?? 0) - shown.contactY;
+    }
     shown.roll -= (state.speedMph || 0) * MPH_TO_MPS * seconds / WHEEL_RADIUS_M;
     turn.setFromAxisAngle(ALONG_Y, -(state.steerVisual || 0) * shown.maxSteer);
     for (const wheel of shown.steers) wheel.object.quaternion.copy(turn).multiply(wheel.base);

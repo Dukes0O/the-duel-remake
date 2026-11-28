@@ -14,9 +14,9 @@ import {wrapHeading} from '../../offroad-physics.js';
 
 // Borrowed rig only: the machine solver owns its tracks. The car keeps contacts, entry and exit, and its HUD.
 export function prepareHomeDrillControls(duel, world, input) {
-  if (world.definition.id !== 'open-roam' || world.vehicle?.id !== 'drill' ||
+  if (world.definition.id !== 'open-roam' || !['drill', 'excavator'].includes(world.vehicle?.id) ||
       duel.featureFlags?.enabled?.('home-ground') !== true || duel.state.onFoot) return false;
-  world.homeDrillKeys = {KeyW: input.throttle > 0, KeyS: input.brake > 0,
+  world.homeDrillKeys = {...(world.vehicle.id === 'excavator' ? input.homeDiggerKeys : {}), KeyW: input.throttle > 0, KeyS: input.brake > 0,
     KeyA: input.steer < 0, KeyD: input.steer > 0, Space: input.boost === true, KeyB: world.homeDrillToggle === true};
   world.homeDrillToggle = false;
   Object.assign(input, {throttle: 0, brake: 0, steer: 0, boost: false});
@@ -30,6 +30,7 @@ export function syncHomeGround(duel, world, dt = 0) {
     if (state.fighter) delete state.fighter.homeIronStrength;
     return;
   }
+  world.updateHomeGround?.(world.open.world.open.home);
   if (state.fighter) state.fighter.homeIronStrength = powerStrength(home.powers?.ironBeets);
   const defender = state.onFoot && state.fighter;
   const garlic = defender && !defender.knockedDown ? powerStrength(home.powers?.stinkGarlic) : 0;
@@ -53,8 +54,9 @@ export function syncHomeGround(duel, world, dt = 0) {
     .map(row => ({id: 'home-sight/' + row.id, kind: 'light', x: row.x, z: row.z,
       y: row.y ?? scablandsSurfaceHeightAt(row.x, row.z) + 2, radius: row.raider ? 1.3 : 3})) : [];
   if (state.arena) state.arena.markers = [...(state.arena.markers ?? []).filter(row => !String(row.id).startsWith('home-sight/')), ...marks];
-  if (!state.onFoot && !state.combatWrecking && world.vehicle?.id === 'drill' && home.drillRig) {
-    const pose = home.drillRig.machine, near = duel.course.nearest(pose.x, pose.z, state.s);
+  const machine = world.vehicle?.id === 'excavator' ? home.digger?.machine : world.vehicle?.id === 'drill' ? home.drillRig?.machine : null;
+  if (!state.onFoot && !state.combatWrecking && machine) {
+    const pose = machine, near = duel.course.nearest(pose.x, pose.z, state.s);
     Object.assign(state, {s: near.s, lateral: near.lateral,
       headingError: wrapHeading(pose.heading - duel.course.at(near.s).heading), speedMph: pose.speedMps / DRIVE.mphToWorld,
       groundHeight: scablandsSurfaceHeightAt(pose.x, pose.z)});

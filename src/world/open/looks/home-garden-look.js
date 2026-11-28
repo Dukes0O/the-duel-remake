@@ -104,13 +104,14 @@ export function createHomeGardenLook(group, ground) {
   return {
     glassMaterial: materials.glass,
     greenhouse,
-    update(record, shift) {
+    update(record, shift, keptPots = []) {
       for (const item of draws.values()) item.root.visible = false;
-      for (const pot of [false, true]) for (const row of record?.[pot ? 'pots' : 'beds'] ?? []) {
-        const at = cropInLand(record, row, pot);
+      const spaces = [false, true].flatMap(pot => (record?.[pot ? 'pots' : 'beds'] ?? []).map(row =>
+        ({row, pot, at: cropInLand(record, row, pot), key: `${pot ? 'pot' : 'bed'}/${row.i}/${row.j}/${row.slot ?? 0}`})));
+      for (const {row, pot, at, key} of [...spaces, ...keptPots]) {
         if (!at) continue;
-        const key = `${pot ? 'pot' : 'bed'}/${row.i}/${row.j}/${row.slot ?? 0}`, item = planting(key, pot);
-        item.root.visible = true; item.root.position.set(at.x, ground(at.x, at.z, shift), at.z);
+        const item = planting(key, pot);
+        item.root.visible = true; item.root.position.set(at.x, at.y ?? ground(at.x, at.z, shift), at.z);
         item.root.rotation.y = pot ? 0 : row.turn * Math.PI / 2;
         item.plants.visible = !!row.crop;
         if (!row.crop) continue;

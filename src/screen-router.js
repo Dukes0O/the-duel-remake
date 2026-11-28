@@ -404,6 +404,7 @@ root.addEventListener('click',e => {
     case 'story-open-roam': if (app.startOpenRoam?.()) { lastScreen = null; renderState(app.duel.state); } return;
     case 'story-open-flatbed': if (app.startOpenRoam?.('flatbed')) { lastScreen = null; renderState(app.duel.state); } return;
     case 'story-open-drill': if (app.startOpenRoam?.('drill')) { lastScreen = null; renderState(app.duel.state); } return;
+    case 'story-open-digger': if (app.startOpenRoam?.('excavator')) { lastScreen = null; renderState(app.duel.state); } return;
     case 'yard-cards': if(app.wastelandUnlocked() && (app._switches().enabled('warlord-cards') || app._switches().enabled('story-choices'))){openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;

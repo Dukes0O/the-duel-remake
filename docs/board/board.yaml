@@ -1093,19 +1093,6 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
-  - id: HOME-GROUND-6
-    title: "Home Ground step 6: the digger tears down, digs the ditch, the cellar and the pond"
-    owner: "codex"
-    model: "astra"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Codex Astra, laptop lane, 28 November 2026"
-    needs: []
-    locks: ["home-ground"]
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-6.md"
-
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"

@@ -505,6 +505,27 @@ go into the real game after step 4.
 - One independent save and fight review found repeated car-contact damage and a cancelled pair after eating again.
   Both were fixed and confirmed. The reviewer found no further save, input or fight-number faults.
 
+### Step 6 as built (HOME-GROUND-6, behind the switch `home-ground`)
+
+- A finished tank unlocks Tin Town's borrowed excavator. It reuses the Dig's model, tracked drive, joints and bucket.
+  B switches driving and working. G cycles teardown, ditch, cellar and pond. Space takes a scoop; E empties the
+  bucket. Its existing A/D, W/S, I/K and J/L controls swing, raise, reach and curl. A full bucket must be emptied.
+- Four scoops take down a coop, shed, tower, tank or greenhouse. Hens walk out before the first coop scoop. Nest
+  eggs go into the store; greenhouse pots and tank water stay in the salvaged pile. One short F tap on the stopped
+  flatbed collects it. Deliver it to a new mark and the taught crew rebuild it at their existing rate, even if it
+  was the only building of that kind. B lifts and places a garden bed free, keeping its crop and growth.
+- Each door keeps a 3.1 m machine apron. Outside the fence, the bucket cuts 2 m cells 1.5 m deep. The gate's lane
+  and its adjacent cells stay open. Ditches block wheels; raiders take a repeatable route around them.
+- Four scoops under a finished shed dig its cellar. Half the eggs and scrap, rounded down, are protected. A lost
+  raid takes its tenth only from the eggs and scrap above. Four scoops inside the ground dig one 4 m square pond.
+  A pump within 8 m fills its 24,000 litres over 12 real hours. Partial digging and disconnected time add no water;
+  backward clocks never remove water or count time twice. Hens wander to the water's edge.
+- Version 10 adds `ditch`, `cellar: {dug}`, `pond: {i,j,scoops,litres,filled}` or null, and `piles` holding
+  `{building,position,pots,torn}`. Versions 1 to 9 are read unchanged; the verified backup precedes the enabled
+  upgrade. Partial digging, plants, water, cargo and crew rebuilding all survive leaving. Bucket poses are not saved.
+- Cues: `home.dig.bite`, `home.dig.dump`, `home.dig.tear`, `home.dig.ditch`, `home.pond.fill`. OPEN-SOUND chooses
+  their sounds. No release or hand-drive verdict is claimed by this implementation.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.

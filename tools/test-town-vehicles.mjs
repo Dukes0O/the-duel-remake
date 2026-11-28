@@ -52,14 +52,20 @@ function stop(duel) {
   return {seconds, metres:Math.hypot(to.x - from.x, to.z - from.z)};
 }
 
-test('the five town work vehicles and borrowed home drill are machine-shaped data and never garage cars', () => {
-  assert.deepEqual([...WORK_VEHICLE_IDS].sort(), [...FIVE, 'drill'].sort());
+test('the five town work vehicles and borrowed home machines are machine-shaped data and never garage cars', () => {
+  assert.deepEqual([...WORK_VEHICLE_IDS].sort(), [...FIVE, 'drill', 'excavator'].sort());
   const drill = WORK_VEHICLE_DEFINITIONS.drill;
   assert.equal(drill.driveKind, 'tracks');
   assert.equal(drill.maxSpeedMps, 1.2);
   assert.equal(drill.model.node, 'drill-rig');
   assert.equal(Object.hasOwn(CARS, 'drill'), false);
   assert.equal(ARENA_FIELD.includes('drill'), false);
+  const excavator = WORK_VEHICLE_DEFINITIONS.excavator;
+  assert.doesNotThrow(() => defineMachine(excavator));
+  assert.equal(excavator.driveKind, 'tracks');
+  assert.equal(excavator.model.node, 'excavator');
+  assert.equal(Object.hasOwn(CARS, 'excavator'), false);
+  assert.equal(ARENA_FIELD.includes('excavator'), false);
   for (const id of FIVE) {
     const definition = WORK_VEHICLE_DEFINITIONS[id];
     assert.doesNotThrow(() => defineMachine(definition), `${id} passes MACHINE-CORE's own rule`);

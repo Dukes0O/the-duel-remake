@@ -52,6 +52,15 @@ import {drillSite} from '../src/machines/drill.js';
 import {HOME_TANK} from '../src/world/open/content/home-ground.js';
 import {markWell, wellInLand, homeDrillHole, drillHomeWell, fitHomePump, fillHomeTanks, tankConnected,
   wellRefusal, tankWords} from '../src/world/open/home-rule.js';
+import {HOME_DIG, HOME_POND, HOME_CREW_SECONDS} from '../src/world/open/content/home-ground.js';
+import {canBorrowDigger, tearHomeBuild, digDitch, ditchRefusal, digCellar, cellarStored, digPond,
+  fillHomePond, moveHomeBed, pondInLand, pondRefusal} from '../src/world/open/home-rule.js';
+import {installSiteGround} from '../src/world/open/site-ground.js';
+import {ditchRoute} from '../src/world/open/home-raid-rule.js';
+import {homeDigTarget, stepHomeDigger} from '../src/world/open/home-digger.js';
+import {machineDefinition} from '../src/machines/content/machines.js';
+import {createMachineState, machineToolPosition} from '../src/machines/machine.js';
+import {sweepObstacle} from '../src/collision.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -1161,7 +1170,7 @@ const memory = values => {
   out = stepOpenLand(land(kept), viewOf(reader, {}, {homeClock: completedAt + HOME_TANK.seconds}), 0, parts);
   equal(homeOf(out.open).builds.at(-1).litres, HOME_TANK.litres, 'two separate outings total twelve real hours without double counting');
   // A crew-built tank starts filling only after its lid is complete, even when both events happened offline.
-  const second = {...tank, i: 14, j: 9};
+  const second = {...tank, i: 14, j: 9, turn: 1};
   let crew = {...home, lastSeen: 1000, builds: home.builds.map(row => row.kind === 'tank' ? {...row, filled: 1000} : row)};
   crew = markBuild(crew, second); crew = {...crew, loads: {...crew.loads, tank: {i: second.i, j: second.j}}};
   crew = handToCrew(crew, second, 1000);
@@ -1528,5 +1537,166 @@ const memory = values => {
   for (let n = 0; n < 240; n++) stepFighter(course, {s: 0, lateral: 0}, jumper,
     {forward: true, jump: n === 0, homeJumpMeters: 6, homeLeapStrength: 1});
   check(jumper.z > 39, 'peppers with beans carry a real running jump over a forty-metre gap');
+}
+// Step 6: four scoops, salvaged loads, protected stores and real-clock water. Only memory saves are used.
+{
+  const tank = {kind: 'tank', i: 15, j: 3, turn: 0, stage: 4, litres: 370, filled: 1000};
+  const base = {...newHome('Digging', 1000), builds: [tank], moreSeeds: true, eggs: 101, scrap: 203};
+  const world = newWorld({seed: 42, night: 2});
+  const land = home => openLand({...world, open: {...world.open, home}});
+  const readBack = home => {
+    check(readableHome(home), 'each digging transition is a readable home');
+    const saved = settleOpenWorld({}, {...world, open: {...world.open, home}});
+    check(saved.ok, 'each digging transition passes the real save writer');
+    equal(savedOpenRecord(saved.profile).home, home, 'each digging transition survives save and reload exactly');
+    return JSON.parse(JSON.stringify(home));
+  };
+  check(canBorrowDigger(base) && !canBorrowDigger(newHome('Bare')), 'the standing tank unlocks the borrowed excavator');
+  for (const kind of ['coop', 'shed', 'tower', 'tank', 'greenhouse']) {
+    let home = {...base, builds: kind === 'tank' ? [] : [tank]};
+    const mark = {kind, i: 3, j: 6, turn: 0, stage: 0, ...(kind === 'tank' ? {litres: 0, filled: null} : {})};
+    home = markBuild(home, mark);
+    home = {...home, loads: {...home.loads, [kind]: {i: mark.i, j: mark.j}}};
+    for (let n = 0; n < 4; n++) home = raiseBuild(home, mark);
+    if (kind === 'tank') home.builds[0] = {...home.builds[0], litres: tank.litres};
+    if (kind === 'coop') home = {...home, hens: [{breed: 'tin-town-brown', name: 'Pip', due: 100}],
+      boxes: home.boxes.map(box => ({...box, eggs: 3}))};
+    if (kind === 'greenhouse') home = {...home, pots: home.pots.map((pot, n) => ({...pot, crop: 'firePeppers', grown: 70 + n}))};
+    const plants = structuredClone(home.pots), hens = structuredClone(home.hens), eggs = home.eggs + home.boxes.reduce((n, box) => n + box.eggs, 0);
+    for (let scoop = 0; scoop < HOME_DIG.scoops; scoop++) {
+      home = tearHomeBuild(home, home.builds.find(row => row.kind === kind));
+      equal(home.builds.find(row => row.kind === kind)?.stage ?? 0, 3 - scoop, 'each scoop removes one building stage');
+      home = readBack(home);
+    }
+    equal(home.hens, hens, 'tearing down keeps every hen');
+    equal(home.eggs, eggs, 'tearing down keeps every stored and nested egg');
+    equal(home.piles[0].pots, plants, 'greenhouse plants stay with their salvaged building');
+    check(canBorrowDigger(home), 'tearing down the last tank does not take the borrowed digger away');
+    const original = home.piles[0].building;
+    home = transferHomeLoad(home, {vehicle: 'flatbed', position: home.piles[0].position, speedKmh: 0});
+    equal(home.loads[kind], 'bed', 'one flatbed tap collects that building load');
+    home = readBack(home);
+    const placed = {...mark, i: 3, j: 12, turn: 1};
+    home = markBuild(home, placed);
+    home = transferHomeLoad(home, {vehicle: 'flatbed', position: buildInLand(placed), speedKmh: 0});
+    equal(crewOffer(home), placed, 'the crew can rebuild the only building of its kind');
+    home = readBack(handToCrew(home, placed, 1000));
+    for (const piles of [null, {}, [null], [{...home.piles[0], building: {...original, kind: {toString: null}}}]])
+      check(!readableHome({...home, piles}), 'damaged piles are rejected safely even with an active crew');
+    home = readBack(advanceCrew(home, HOME_CREW_SECONDS[kind], 1000 + HOME_CREW_SECONDS[kind]).home);
+    check(home.builds.some(row => row.kind === kind && row.i === placed.i && row.j === placed.j && row.stage === 4), 'the crew raises the salvaged building');
+    equal(home.piles, [], 'the completed building consumes its one salvaged pile');
+    equal(home.pots, plants.map(pot => ({...pot, i: placed.i, j: placed.j})), 'each saved plant comes back without lost growth');
+    if (kind === 'tank') equal(home.builds[0].litres, original.litres, 'the rebuilt tank keeps its stored water');
+  }
+  const shed = {kind: 'shed', i: 3, j: 6, turn: 0, stage: 4};
+  let cellar = {...base, builds: [...base.builds, shed]};
+  for (let n = 0; n < HOME_DIG.scoops; n++) cellar = readBack(digCellar(cellar, shed));
+  equal(cellarStored(cellar), {eggs: 50, scrap: 101}, 'the cellar protects half of each store rounded down');
+  const lost = finishHomeRaid(cellar, startHomeRaid(cellar, 42, false, 'easy'), 'lost', 42);
+  equal([lost.home.eggs, lost.home.scrap], [96, 193], 'a lost raid takes a tenth only from the above-ground store');
+  equal(finishHomeRaid(lost.home, lost.raid, 'lost', 42).home, lost.home, 'one raid cannot take the store twice');
+  const gated = build(base, {kind: 'gate', i: 8, j: 0, axis: 'x'});
+  equal(ditchRefusal(gated, {i: 8, j: -1}), 'ditchGate', 'a ditch cannot close the gate lane');
+  equal(ditchRefusal(gated, {i: 7, j: -1}), 'ditchGate', 'the cell beside the gate lane also stays open');
+  let ditched = gated;
+  for (let i = 1; i <= 5; i++) ditched = digDitch(ditched, {i, j: -1});
+  ditched = readBack(ditched);
+  const from = groundPoint(3.5, -4), to = groundPoint(3.5, 4);
+  for (const radius of [.45, .85]) {
+    const route = ditchRoute(ditched, from, to, radius);
+    check(route.length > 1, 'both bike and buggy route round the ditch');
+    let previous = from;
+    for (const point of route) {
+      const cuts = homeSolids(ditched, {gateOpen: true, heightAt: scablandsSurfaceHeightAt}).filter(row => row.kind === 'ditch');
+      check(cuts.every(solid => !sweepObstacle(previous, point, solid, Math.atan2(point.x - previous.x, point.z - previous.z),
+        {halfWidth: radius, halfLength: radius})), 'no segment of the route crosses the ditch with its wheels');
+      previous = point;
+    }
+    equal(route.at(-1), to, 'the route still reaches its destination');
+    equal(ditchRoute(ditched, from, to, radius), route, 'the wheel route is repeatable');
+  }
+  const bed = {i: 2, j: 12, turn: 0, crop: 'spinach', grown: 321};
+  const moved = moveHomeBed({...base, beds: [bed]}, bed, {i: 5, j: 12, turn: 1});
+  equal(moved.beds, [{...bed, i: 5, turn: 1}], 'moving a bed keeps its crop and growth');
+  equal(buildRefusal({...base, builds: [shed]}, {kind: 'tower', i: 3, j: 9, turn: 0, stage: 0}), 'doorLane', 'an outline cannot block the machine-width door apron');
+  let pond = {...base, well: {i: 10, j: 10, depth: 10, water: 10, pump: true}};
+  const pondCell = {i: 12, j: 10};
+  for (let n = 0; n < HOME_DIG.scoops; n++) {
+    pond = readBack(digPond(pond, pondCell));
+    if (n < HOME_DIG.scoops - 1) equal(fillHomePond(pond, 999999), pond, 'an unfinished pond does not fill');
+  }
+  equal(pondRefusal(pond, pondCell), 'pondDone', 'the finished pond cannot be dug deeper');
+  const half = fillHomePond(pond, 1000 + HOME_POND.seconds / 2);
+  equal(half.pond.litres, HOME_POND.litres / 2, 'a connected pond is half full at six real hours');
+  equal(fillHomePond(half, 900), half, 'a backward clock never removes or counts water twice');
+  const full = fillHomePond(half, 1000 + HOME_POND.seconds);
+  equal(full.pond.litres, HOME_POND.litres, 'two visits fill exactly twelve real hours');
+  equal(fillHomePond(pond, 1000 + HOME_POND.seconds).pond, full.pond, 'partitioning the real clock does not change water');
+  equal(fillHomePond(full, 999999).pond.litres, HOME_POND.litres, 'the pond never overfills');
+  const pondCentre = pondInLand(pond.pond), ditchCentre = groundPoint(3.5, -.5);
+  const heights = [pondCentre, ditchCentre].map(at => scablandsSurfaceHeightAt(at.x, at.z));
+  const releaseGround = installSiteGround(42);
+  try {
+    releaseGround.updateHome({...pond, ditch: ditched.ditch});
+    for (const [n, at] of [pondCentre, ditchCentre].entries())
+      check(Math.abs(scablandsSurfaceHeightAt(at.x, at.z) - heights[n] + HOME_DIG.depth) < .001,
+        'the saved digging cuts the actual land by one and a half metres');
+  } finally { releaseGround(); }
+  for (const [n, at] of [pondCentre, ditchCentre].entries())
+    equal(scablandsSurfaceHeightAt(at.x, at.z), heights[n], 'leaving restores the shared land surface');
+  const dry = fillHomePond({...pond, well: {...pond.well, pump: false}}, 1000 + HOME_POND.seconds);
+  equal(dry.pond.litres, 0, 'a disconnected pond does not fill');
+  equal(fillHomePond({...dry, well: pond.well}, dry.pond.filled + HOME_POND.seconds / 2).pond.litres,
+    HOME_POND.litres / 2, 'disconnected time is never charged after connecting');
+  for (let n = 0; n < HOME_DIG.scoops; n++) pond = tearHomeBuild(pond, pond.builds.find(row => row.kind === 'tank'));
+  let outing = stepOpenLand(land(pond), viewOf(null, {}, {homeClock: 1000}), 0, parts);
+  outing = stepOpenLand(outing.open, viewOf(null), HOME_POND.seconds, parts);
+  equal(homeOf(outing.open).pond.litres, HOME_POND.litres, 'a pond fills during play without a standing tank or another activity');
+  check(cues(outing.events).includes(HOME_CUES.pondFill), 'the real pond clock emits its full-water cue');
+  readBack(homeOf(outing.open));
+  const snapshot = JSON.stringify(outing.open), look = createHomeGroundView();
+  look.update({open: outing.open}, null, 1);
+  check(look.group.getObjectByName('home-pond-water')?.visible, 'the filled pond has visible water');
+  equal(JSON.stringify(outing.open), snapshot, 'drawing digging and water never changes the record'); look.dispose();
+  const definition = machineDefinition('excavator'), machine = createMachineState(definition);
+  machine.jointAngles.boom = 0;
+  const tip = machineToolPosition(definition, machine, 'bucket'), aim = buildInLand(shed);
+  machine.x = aim.x - tip.x; machine.z = aim.z - tip.z;
+  const state = {machine, mode: 'work', kind: 'tear', seconds: 0, heldKind: false, targetKey: null, evacuation: null};
+  const drive = {carPosition: {x: machine.x, z: machine.z}, homeCarHeading: 0, onFoot: false, homeDrillKeys: {Space: true}};
+  const working = stepHomeDigger(state, cellar, drive, HOME_DIG.seconds);
+  equal(working.home.builds.find(row => row.kind === 'shed').stage, 3, 'the real excavator bucket removes a stage');
+  check(cues(working.events).includes(HOME_CUES.digBite) && cues(working.events).includes(HOME_CUES.digTear), 'a bite and teardown name their sound cues');
+  equal(stepHomeDigger(working.state, working.home, drive, HOME_DIG.seconds).home, working.home, 'a full bucket cannot keep biting');
+  const emptied = stepHomeDigger(working.state, working.home, {...drive, homeDrillKeys: {KeyE: true}}, 1);
+  check(cues(emptied.events).includes(HOME_CUES.digDump), 'emptying uses the existing excavator load transfer and dump cue');
+  const coop = {...shed, kind: 'coop'}, flockHome = {...base, builds: [tank, coop],
+    boxes: [{i: 3, j: 6, eggs: 0}, {i: 4, j: 6, eggs: 0}, {i: 3, j: 7, eggs: 0}]};
+  const waiting = stepHomeDigger(state, flockHome, drive, HOME_DIG.seconds, [{...aim, name: 'Pip'}]);
+  equal(waiting.home, flockHome, 'the first coop scoop waits while a hen is inside');
+  check(waiting.state.evacuation && waiting.prompt === HOME_WORDS.digHens, 'the scoop asks the real flock to walk out first');
+  const high = {...machine, jointAngles: {...machine.jointAngles, boom: .95}};
+  check(homeDigTarget(cellar, high, 'tear', () => 0).reason, 'a bucket high above the roof cannot work');
+  for (const version of [8, 9]) {
+    const legacy = {...base, version};
+    for (const key of ['ditch', 'cellar', 'pond', 'piles']) delete legacy[key];
+    if (version === 8) {
+      delete legacy.moreSeeds;
+      legacy.seeds = {...legacy.seeds}; legacy.foods = {...legacy.foods};
+      for (const id of HOME_EXTRA_FOODS) { delete legacy.seeds[id]; delete legacy.foods[id]; }
+    }
+    const bytes = JSON.stringify(legacy);
+    check(readableHome(legacy), 'the genuine prior save version stays readable');
+    const upgraded = upgradeHome(legacy);
+    for (const [key, value] of Object.entries(legacy)) if (!['version', 'seeds', 'foods'].includes(key))
+      equal(upgraded[key], value, 'digging migration preserves old field ' + key);
+    for (const key of ['seeds', 'foods']) for (const [id, count] of Object.entries(legacy[key]))
+      equal(upgraded[key][id], count, 'digging migration preserves every existing crop count');
+    equal(JSON.stringify(legacy), bytes, 'migration never mutates the older record');
+    equal(homeOf(stepOpenLand(land(legacy), viewOf(null, {}, {homeGround: false}), 10, parts).open), legacy,
+      'the disabled switch leaves the older save unchanged');
+    readBack(upgraded);
+  }
 }
 console.log(`Home ground: ${checks} checks passed.`);

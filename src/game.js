@@ -952,6 +952,8 @@ export class Duel {
   setInput(partial) {
     if(this.state.deepJourney?.controlsLocked)partial={throttle:0,brake:0,steer:0,boost:false,shiftUp:false,shiftDown:false,interact:false};
     const input = this.state.input;
+    if (partial.homeDiggerKeys && this.state.arena?.worldJob?.vehicle?.id === 'excavator' && this.featureFlags.enabled('home-ground'))
+      input.homeDiggerKeys = Object.fromEntries(['KeyI', 'KeyK', 'KeyJ', 'KeyL', 'KeyE', 'KeyG'].map(key => [key, !!partial.homeDiggerKeys[key]]));
     for (const key of ['throttle', 'brake', 'steer']) {
       if (Number.isFinite(partial[key])) input[key] = Math.max(key === 'steer' ? -1 : 0, Math.min(1, partial[key]));
     }

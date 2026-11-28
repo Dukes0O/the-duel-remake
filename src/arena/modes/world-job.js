@@ -372,7 +372,12 @@ export function initializeWorldJob(duel, definition) {
   const worldJob = arena?.worldJob;
   if (!worldJob) return false;
   if (definition.open && duel.course.def?.scablands && duel.featureFlags?.enabled('story-choices')) {
-    endSiteGround.set(worldJob, installSiteGround(definition.open.world.open.landSeed));
+    const release = installSiteGround(definition.open.world.open.landSeed);
+    endSiteGround.set(worldJob, release);
+    if (duel.featureFlags?.enabled('home-ground') === true) {
+      worldJob.updateHomeGround = release.updateHome;
+      worldJob.updateHomeGround?.(definition.open.world.open.home);
+    }
   }
   // Loaned car weapons belong to this run. They never touch the player profile.
   worldJob.originalWeaponLoadout = [...(state.weaponLoadout || [])];
@@ -381,9 +386,9 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
-  const homeVehicle = definition.id === 'open-roam' && ['flatbed', 'drill'].includes(definition.vehicle) &&
+  const homeVehicle = definition.id === 'open-roam' && ['flatbed', 'drill', 'excavator'].includes(definition.vehicle) &&
     duel.featureFlags?.enabled?.('home-ground') === true;
-  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: definition.vehicle === 'drill' ? homeVehicle :
+  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: ['drill', 'excavator'].includes(definition.vehicle) ? homeVehicle :
     duel.featureFlags?.enabled?.('wasteland-town') === true || homeVehicle});
   // SHIPS-DECKS: a car lent for this run (src/world/jobs/job-vehicle.js) is said as the job starts, and is never saved.
   if (definition.vehicleLent?.lineId) sayLine(duel, worldJob, definition.vehicleLent.lineId);
@@ -567,7 +572,7 @@ function driveWorkVehicle(duel, worldJob, input) {
 export function ringJobVehicleBell(duel) {
   const state = duel.state, worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
   if (!worldJob?.vehicle || state.status !== 'racing' || state.paused || state.onFoot) return false;
-  if (worldJob.vehicle.id === 'drill' && worldJob.definition.id === 'open-roam' && duel.featureFlags?.enabled?.('home-ground') === true) {
+  if (['drill', 'excavator'].includes(worldJob.vehicle.id) && worldJob.definition.id === 'open-roam' && duel.featureFlags?.enabled?.('home-ground') === true) {
     worldJob.homeDrillToggle = true;
     return true;
   }
