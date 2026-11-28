@@ -1111,7 +1111,8 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex Astra (Sol is busy on EASY-YOUNG-DRIVER), laptop lane, 28 November 2026"
     needs: []
     locks: ["home-ground"]
     flag: "home-ground"
