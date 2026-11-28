@@ -1,6 +1,7 @@
 import { TERRITORIES } from './wasteland-career.js';
 import {MUDDY_HOLLOW_HUBCAP_IDS} from './wasteland-progress.js';
 import {normalizeWeapons} from './weapon-upgrades.js';
+import {HOME_RECORD_VERSION} from './world/open/home-rule.js';
 import { PROFILE_KEY, PLAYERS_KEY, loadPlayers, normalizeProfile } from './progression.js';
 import { LEADERBOARD_KEY, loadLeaderboard } from './leaderboard.js';
 import { GHOST_KEY, GHOST_ENABLED_KEY, loadGhosts } from './ghost.js';
@@ -146,6 +147,7 @@ export function needsCareerMigration(storage) {
             warlord.losses < 0 || warlord.losses > 1_000_000;
         }) ||
         weaponLevelsNeedMigration(player.profile.wasteland.weapons) ||
+        (isObject(player.profile.story?.open?.home) && player.profile.story.open.home.version < HOME_RECORD_VERSION) ||
         has(player.profile, 'weapons')) ||
       loadPlayers(source).players.some(player => !player.profile.raceSettings);
   } catch { return true; }

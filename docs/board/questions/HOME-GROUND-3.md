@@ -1,5 +1,16 @@
 # HOME-GROUND-3: remaining narrow hooks after Claude's answer
 
+**Resolved, 27 November 2026:** Claude approved both follow-up questions in `5a5a90146`, now merged into this lane.
+The builder is adding the three load-weight hooks and the older-home migration backup check with its tests.
+
+## Round 2: the truck's drawing gate
+
+`workVehicleToDraw` in `src/town/view/work-vehicle-view.js` still returns null whenever `wasteland-town` is off.
+An outing with `home-ground` on alone therefore drives the flatbed's rules but draws the garage car. The card's
+mode-only gate does not cover this view. Recommended: also allow the view for `open-roam`, vehicle `flatbed`,
+and `home-ground` enabled, with the existing work-vehicle view test. The alternative leaves this card incomplete.
+Asked Kyle while the approved work continues. No real saves or shared renderer edits are needed.
+
 The current outing has one driven car. `src/onfoot-transition.js` measures re-entry against that car's `s` and
 `lateral`; `src/arena/modes/world-job.js` starts a work vehicle only from the job definition and reads load weight
 from `worldJob.job.stepState.loadKg`. Keeping the original car parked while entering the flatbed needs a second

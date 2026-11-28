@@ -9,6 +9,7 @@ import {
 import {createProfile,createPlayerRegistry,loadPlayers,savePlayers,PLAYERS_KEY} from '../src/progression.js';
 import {loadLeaderboard} from '../src/leaderboard.js';
 import {loadGhosts} from '../src/ghost.js';
+import {HOME_RECORD_VERSION, newHome, upgradeHome} from '../src/world/open/home-rule.js';
 
 function memoryStorage(initial={}){
   const values=new Map(Object.entries(initial));
@@ -34,6 +35,39 @@ function memoryBackups(){
     async save(record){records.set(record.id,structuredClone(record));},
     async load(id){return structuredClone(records.get(id));},
   };
+}
+
+// Home records live at profile.story.open.home; world.open.home is their outing copy.
+for (const version of [1, 2]) {
+  const home = {version, name: 'Old ground', pieces: [{kind: 'panel', i: 2, j: 0, axis: 'x'}], marks: []};
+  if (version === 2) Object.assign(home, {hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}],
+    boxes: [{i: 2, j: 3, eggs: 7}], eggs: 31, lastSeen: 1000});
+  const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}, story: {version: 1, open: {home}}};
+  const source = memoryStorage({[PLAYERS_KEY]: JSON.stringify({version: 2, activePlayerId: 'home',
+    players: [{id: 'home', name: 'Home', profile}]})});
+  const before = captureCareer(source), store = memoryBackups();
+  assert.equal(needsCareerMigration(source), true, `home v${version} needs a backup`);
+  await assert.rejects(backupBeforeMigration(source, {
+    save: async () => { throw new Error('backup unavailable'); },
+  }), /backup unavailable/);
+  assert.deepEqual(captureCareer(source), before, 'a failed backup leaves the old home unchanged');
+  await assert.rejects(backupBeforeMigration(source, {save: async () => {}, load: async () => null}), /could not be verified/);
+  assert.deepEqual(captureCareer(source), before, 'an unverified backup leaves the old home unchanged');
+  const saved = await backupBeforeMigration(source, store);
+  assert.deepEqual((await store.load(saved.id)).entries, before, 'the verified backup keeps every original byte');
+  assert.deepEqual(captureCareer(source), before, 'backup detection never upgrades the home');
+  const upgraded = upgradeHome(home);
+  assert.equal(upgraded.version, HOME_RECORD_VERSION);
+  for (const [key, value] of Object.entries(home)) if (key !== 'version') assert.deepEqual(upgraded[key], value);
+  profile.story.open.home = upgraded;
+  source.setItem(PLAYERS_KEY, JSON.stringify({version: 2, activePlayerId: 'home', players: [{id: 'home', name: 'Home', profile}]}));
+  assert.equal(needsCareerMigration(source), false, 'a current home alone asks for no repeat migration backup');
+}
+for (const home of [undefined, newHome('Current'), {...newHome('Future'), version: HOME_RECORD_VERSION + 1}]) {
+  const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}, story: {version: 1, open: {home}}};
+  const source = memoryStorage({[PLAYERS_KEY]: JSON.stringify({version: 2, activePlayerId: 'home',
+    players: [{id: 'home', name: 'Home', profile}]})});
+  assert.equal(needsCareerMigration(source), false, 'absent, current and future homes are not old-home migrations');
 }
 const dir=new URL('./fixtures/saves/',import.meta.url);
 const fixtures=readdirSync(fileURLToPath(dir)).filter(name=>name.endsWith('.json')).sort();

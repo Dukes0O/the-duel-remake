@@ -367,6 +367,51 @@ const memory = values => {
   check(readableHome(lift(home, home.pieces[0])), 'a ground with a piece picked up is readable');
 }
 
+// The enabled part transfers on the F edge, exposes weight, and draws the bundle at the truck's pose.
+{
+  let home = buildBox({...build(newHome('Delivery'), {kind: 'gate', i: 8, j: 0, axis: 'x'}),
+    hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}]}, {i: 2, j: 3});
+  const coop = {kind: 'coop', i: 2, j: 8, turn: 0, stage: 0};
+  home = markBuild(home, coop);
+  const world = newWorld({seed: 5, night: 2});
+  let open = openLand({...world, open: {...world.open, home}});
+  const drive = viewOf(null, {}, {homeVehicle: 'flatbed', carPosition: HOME_LOAD_STACK, homeCarHeading: .7, speedKmh: 0});
+  let result = run(open, {...drive, homeVehicle: null}, DT);
+  equal(result.open.parts.home.prompt, HOME_WORDS.needsFlatbed, 'an ordinary car gets the flatbed explanation');
+  equal(homeOf(result.open).loads.coop, 'stack', 'an ordinary car cannot load');
+  result = run(open, {...drive, speedKmh: 2, interact: true}, DT);
+  equal(homeOf(result.open).loads.coop, 'stack', 'a moving flatbed cannot load');
+  result = run(open, drive, DT);
+  check(result.open.parts.home.prompt.includes('Press F to load the tin for the coop'), 'a stopped flatbed names the load');
+  result = run(result.open, {...drive, interact: true}, DT);
+  open = result.open;
+  equal(homeOf(open).loads.coop, 'bed', 'one tap loads the coop through the open part');
+  equal(open.parts.home.loadKg, HOME_BUILDS.coop.kg, 'the part exposes the carried load weight');
+  check(cues(result.events).includes(HOME_CUES.loadOn), 'loading emits its sound cue');
+  const at = buildInLand(coop), arrival = {...drive, carPosition: at, homeCarHeading: 1.2};
+  result = run(open, {...arrival, interact: true}, DT);
+  equal(homeOf(result.open).loads.coop, 'bed', 'holding F does not unload again on arrival');
+  open = run(result.open, arrival, DT).open;
+  const view = createHomeGroundView(), job = {open};
+  const before = JSON.stringify(open);
+  view.update(job, {}, 0);
+  const bundle = view.group.getObjectByName('home-load-coop');
+  check(bundle.visible, 'the carried bundle is visible');
+  equal(bundle.rotation.y, 1.2, 'the bundle turns with the truck');
+  check(Math.hypot(bundle.position.x - at.x, bundle.position.z - at.z) < 2, 'the bundle sits behind the cab');
+  check(bundle.position.y > scablandsSurfaceHeightAt(at.x, at.z) + 1, 'the bundle rests on the raised deck');
+  equal(JSON.stringify(open), before, 'drawing the bed never changes the home or outing state');
+  result = run(open, {...arrival, interact: true}, DT);
+  equal(homeOf(result.open).loads.coop, {i: coop.i, j: coop.j}, 'one fresh tap sets the load beside the mark');
+  equal(result.open.parts.home.loadKg, 0, 'unloading clears the exposed weight');
+  check(cues(result.events).includes(HOME_CUES.loadOff), 'unloading emits its sound cue');
+  view.update({open: result.open}, {}, 0);
+  equal(bundle.rotation.y, 0, 'a delivered bundle no longer follows the truck heading');
+  view.dispose();
+  const untouched = run(openLand({...world, open: {...world.open, home}}), {...drive, homeGround: false, interact: true}, DT);
+  equal(homeOf(untouched.open), home, 'with the switch off, delivery changes no home fields');
+}
+
 // Step 3: one load, one mark, four hand-raised stages. No race or arena vehicle is added.
 {
   let home = build(newHome('Buildings'), {kind: 'gate', i: 8, j: 0, axis: 'x'});

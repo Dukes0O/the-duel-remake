@@ -25,12 +25,13 @@
 import {TALK_RANGE, distanceToPerson} from './people.js';
 import {AWAY_LONGEST, BOARD_NEAR, BOARD_SECONDS, BUILD_IDLE_SECONDS, FOOT_BURST, HAMMER_STRIKE_SECONDS, HEN_LOOK, HOME_BOX,
   HOME_CELLS, HOME_CUES, HOME_CURSOR_SPEED, HOME_OFFER, HOME_OFFER_ID, HOME_PIECES, HOME_REACH, HOME_SIZE, HOME_STEP,
-  HOME_WORDS, MOSS_HENS_ID, MOSS_TALK, defaultHomeName, HOME_BUILDS, HOME_STAGES} from '../content/home-ground.js';
+  HOME_WORDS, MOSS_HENS_ID, MOSS_TALK, defaultHomeName, HOME_BUILDS, HOME_STAGES, HOME_LOAD_STACK} from '../content/home-ground.js';
 import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoom, boxSlotInFront, boxesFull, build,
   buildBox, cleanHomeName, crateSpot, cratesLeft, facedThing, gateOf, gatesLeft, gatherBox, giveHens, groundCentre,
   groundPoint, hensWaiting, homeSolids, lift, liftBox, markAt, nameHen, newHome, newsBoardSpot, outlineFor, outsideBy,
   panelsLeft, pieceInLand, readableHome, ripen, slotAt, slotInFront, toGrid, toggleMark, upgradeHome,
-  buildBounds, buildInLand, buildingDoor, buildSlot, buildRefusal, markBuild, liftBuild, buildHasLoad, raiseBuild, gatherCoop, shedWords, roostAt} from '../home-rule.js';
+  buildBounds, buildInLand, buildingDoor, buildSlot, buildRefusal, markBuild, liftBuild, buildHasLoad, raiseBuild, gatherCoop, shedWords, roostAt,
+  homeLoadKg, transferHomeLoad} from '../home-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {makeRng} from '../../../rng.js';
 
@@ -245,6 +246,37 @@ export const homePart = {
       choices.push(choice('laid', record));
     }
 
+    // A tap of F transfers one bundle. Holding F still uses the existing enter/exit controls.
+    let loadPrompt = '';
+    if (view.homeVehicle === 'flatbed' && view.carPosition && Number.isFinite(view.homeCarHeading)) {
+      const pose = {...view.carPosition, yaw: view.homeCarHeading};
+      if (pose.x !== record.flatbed.x || pose.z !== record.flatbed.z || pose.yaw !== record.flatbed.yaw) {
+        record = {...record, flatbed: {x: pose.x, z: pose.z, yaw: pose.yaw}};
+        choices.push(choice('flatbed', record));
+      }
+    }
+    if (record.boxes.length && !view.onFoot) {
+      const moved = transferHomeLoad(record, {vehicle: view.homeVehicle, position: view.carPosition, speedKmh: view.speedKmh});
+      if (moved !== record) {
+        const kind = Object.keys(HOME_BUILDS).find(key => moved.loads[key] !== record.loads[key]);
+        const loading = moved.loads[kind] === 'bed';
+        loadPrompt = words(loading ? 'loadOn' : 'loadOff', {piece: kind});
+        if (pressed('interact')) {
+          record = moved;
+          choices.push(choice('load', record));
+          events.push(cue(loading ? HOME_CUES.loadOn : HOME_CUES.loadOff));
+          loadPrompt = '';
+        }
+      } else if (view.homeVehicle !== 'flatbed' && view.carPosition && Object.keys(HOME_BUILDS).some(kind => {
+        if (record.builds.some(row => row.kind === kind && row.stage > 0)) return false;
+        const location = record.loads[kind];
+        const at = location === 'stack' ? HOME_LOAD_STACK : typeof location === 'object' ? groundPoint(location.i, location.j) : null;
+        return at && distance(view.carPosition, at) <= 4;
+      })) loadPrompt = HOME_WORDS.needsFlatbed;
+    }
+    next.loadKg = homeLoadKg(record);
+    next.flatbedOuting = view.homeVehicle === 'flatbed';
+
     const gate = gateOf(record);
     const gateMiddle = gate && pieceInLand(gate);
     next.gateOpen = !!gateMiddle && !!where && Math.hypot(where.x - gateMiddle.x, where.z - gateMiddle.z) < GATE_OPENS;
@@ -353,7 +385,7 @@ export const homePart = {
       if (state.above) events.push(cue(HOME_CUES.viewDown));
       Object.assign(next, {above: false, hammer: null, outline: null, building: next.naming && near ? next.building : false});
       next.prompt = next.naming ? '' : atNews ? HOME_WORDS.boardHint : atBoard ? HOME_WORDS.renameHint :
-        atCrate ? HOME_WORDS.crateWaiting : '';
+        atCrate ? HOME_WORDS.crateWaiting : loadPrompt;
     } else {
       if (pressed('piece')) next.kind = nextKind(state.kind, record);
       if (pressed('turn')) next.turns = (state.turns + 1) % 4;

@@ -405,8 +405,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
           }
         }
         const location = record?.loads?.[kind];
-        // The vehicle bridge owns the driven bed. Here the haul look draws the stack and delivered bundles only.
-        const show = !!record?.boxes?.length && location && location !== 'bed' && !(row?.stage > 0);
+        const onBed = location === 'bed' && state.flatbedOuting;
+        const show = !!record?.boxes?.length && location && (location !== 'bed' || onBed) && !(row?.stage > 0);
         let load = loadDraws.get(kind);
         if (show && !load) {
           load = new THREE.Group(); load.name = 'home-load-' + kind;
@@ -435,8 +435,13 @@ export function createHomeGroundView({course, loadAsset} = {}) {
         if (load) {
           load.visible = !!show;
           if (show) {
-            const at = location === 'stack' ? {...HOME_LOAD_STACK, x: HOME_LOAD_STACK.x + (kind === 'shed' ? 2.7 : 0)} : groundPoint(location.i, location.j);
-            load.position.set(at.x, ground(at.x, at.z, drawnShift), at.z);
+            const at = onBed ? record.flatbed : location === 'stack' ?
+              {...HOME_LOAD_STACK, x: HOME_LOAD_STACK.x + (kind === 'shed' ? 2.7 : 0)} : groundPoint(location.i, location.j);
+            // The supply-truck model's deck is 1.5125 m high, behind its cab. Its wheels touch y=0.
+            const yaw = onBed ? at.yaw : 0, behind = onBed ? -1.4 : 0;
+            load.position.set(at.x + Math.sin(yaw) * behind, ground(at.x, at.z, drawnShift) + (onBed ? 1.5125 : 0),
+              at.z + Math.cos(yaw) * behind);
+            load.rotation.y = yaw;
           }
         }
       }
