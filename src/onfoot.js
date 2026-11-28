@@ -145,7 +145,7 @@ export function respawnFighter(course, car, fighter) {
   return fighter;
 }
 
-function attemptMovement(course, car, fighter, dx, dz, feetY, airborne) {
+function attemptMovement(course, car, fighter, dx, dz, feetY, airborne, platforms) {
   if (!dx && !dz) return {moved: false};
   const x = fighter.x + dx, z = fighter.z + dz;
   const nearest = course.nearest(x, z, fighter.s);
@@ -167,7 +167,10 @@ function attemptMovement(course, car, fighter, dx, dz, feetY, airborne) {
   // ground, which the job turns into a fall beside the ship. Without `deckPlate` nothing here changes.
   const deckY = fighter.deckPlate ? deckFloorHeightAt(fighter.deckPlate, x, z) : null;
   if (deckY !== null) ground.y = deckY;
-  const offDeck = !!fighter.deckPlate && deckY === null;
+  const platformY = deckY === null ? homeFloorAt(platforms, x, z, Math.max(fighter.y, feetY)) : null;
+  if (platformY !== null) ground.y = Math.max(ground.y, platformY);
+  const offDeck = !!fighter.deckPlate && deckY === null ||
+    homeFloorAt(platforms, fighter.x, fighter.z, fighter.y) !== null && platformY === null;
   const candidate = {...ground, s: nearest.s, lateral: nearest.lateral};
   if (!allowedGround(course, candidate, car)) {
     fighter.boundaryStops++;
@@ -210,6 +213,16 @@ export function footMoveDirection(yaw, input) {
     z: (Math.cos(yaw) * forward + Math.sin(yaw) * right) / length};
 }
 
+function homeFloorAt(platforms, x, z, feetY) {
+  let y = null;
+  for (const row of platforms ?? []) {
+    const dx = x - row.x, dz = z - row.z, c = Math.cos(row.heading), s = Math.sin(row.heading);
+    if (Math.abs(dx * c - dz * s) <= row.halfX && Math.abs(dx * s + dz * c) <= row.halfZ &&
+        row.y <= feetY + .03) y = Math.max(y ?? -Infinity, row.y);
+  }
+  return y;
+}
+
 export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_SECONDS) {
   if (!Number.isFinite(dt) || Math.abs(dt - FIGHTER_STEP_SECONDS) > 1e-10)
     throw new Error('Fighter movement needs the fixed 120 Hz simulation step.');
@@ -229,9 +242,15 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
   fighter.yaw += ((input.turnLeft ? 1 : 0) - (input.turnRight ? 1 : 0)) *
     T.turnRadiansPerSecond * dt;
   if (input.jump && !fighter.jumpHeld && fighter.airHeight === 0)
-    fighter.verticalSpeed = JUMP_SPEED;
+    fighter.verticalSpeed = input.homeJumpMeters > T.jumpMeters ? Math.sqrt(2 * T.gravity * input.homeJumpMeters) : JUMP_SPEED;
   fighter.jumpHeld = !!input.jump;
 
+  const homeFloor = !fighter.deckPlate ? homeFloorAt(input.homePlatforms, fighter.x, fighter.z, fighter.y) : null;
+  if (homeFloor !== null) {
+    const surface = course.groundAt(fighter.s, fighter.lateral, fighter.y).y;
+    fighter.groundY = Math.max(surface, homeFloor);
+    fighter.airHeight = Math.max(0, fighter.y - fighter.groundY);
+  }
   let airborne = fighter.verticalSpeed !== 0 || fighter.airHeight > 0;
   let feetY = fighter.y;
   if (airborne) {
@@ -246,15 +265,15 @@ export function stepFighter(course, car, fighter, input = {}, dt = FIGHTER_STEP_
 
   const move = footMoveDirection(fighter.yaw, input);
   if (move.x || move.z) {
-    const distance = (input.burst ? T.burstMetersPerSecond : input.sprint ? T.sprintMetersPerSecond *
+    const distance = (input.burst ? T.sprintMetersPerSecond + (T.burstMetersPerSecond - T.sprintMetersPerSecond) * (input.burstStrength ?? 1) : input.sprint ? T.sprintMetersPerSecond *
       (fighter.sprintMultiplier || 1) : T.walkMetersPerSecond * (input.walkScale ?? 1)) *
       (car.arena?.mode === 'fuel-run' && car.arena.participants.find(p => p.id === 'player')?.fuelCanisterId ? .7 : 1) * dt;
     const dx = move.x * distance, dz = move.z * distance;
-    const result = attemptMovement(course, car, fighter, dx, dz, feetY, airborne);
+    const result = attemptMovement(course, car, fighter, dx, dz, feetY, airborne, input.homePlatforms);
     if (result.hit) {
       const into = dx * result.hit.nx + dz * result.hit.nz;
       if (into < 0) attemptMovement(course, car, fighter,
-        dx - into * result.hit.nx, dz - into * result.hit.nz, feetY, airborne);
+        dx - into * result.hit.nx, dz - into * result.hit.nz, feetY, airborne, input.homePlatforms);
     }
   }
 

@@ -28,6 +28,16 @@ export const HOME_BUILDS = Object.freeze({
   shed: Object.freeze({name: 'shed', width: 2, depth: 3, hammer: 6, kg: 440, cue: 'home.shed.stage'}),
   tower: Object.freeze({name: 'watchtower', width: 2, depth: 2, hammer: 6, kg: 360, cue: 'home.tower.stage'}),
   tank: Object.freeze({name: 'water tank', width: 2, depth: 2, hammer: 6, kg: 280, cue: 'home.fence.hammer'}),
+  greenhouse: Object.freeze({name: 'greenhouse', width: 3, depth: 3, hammer: 6, kg: 380, cue: 'home.glass.stage'}),
+});
+export const HOME_BED = Object.freeze({width: 1, depth: 2, hammer: 2.5, count: 6, reach: 12});
+export const HOME_GLASS_STAGES = Object.freeze(['base', 'frame', 'glass', 'door']);
+export const HOME_CROPS = Object.freeze({
+  spinach: Object.freeze({name: 'spinach', seconds: 3600, power: false, seeds: 6}),
+  carrots: Object.freeze({name: 'carrots', seconds: 14400, power: false, seeds: 6}),
+  beans: Object.freeze({name: 'beans', seconds: 28800, power: false, seeds: 6}),
+  firePeppers: Object.freeze({name: 'fire peppers', seconds: 43200, power: true, seeds: 3, lasts: 90}),
+  jumpingBeans: Object.freeze({name: 'jumping beans', seconds: 43200, power: true, seeds: 3, lasts: 120}),
 });
 export const HOME_LOAD_STACK = Object.freeze({x: 5975, z: 76});
 export const HOME_STAGES = Object.freeze(['floor', 'frame', 'walls', 'roof']);
@@ -55,7 +65,7 @@ export const HAMMER_STRIKE_SECONDS = .6;
 // The outline stands this far in front of him.
 export const HOME_REACH = 1.6;
 export const HOME_BOX_REACH = 3;
-export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60, tower: 45 * 60, tank: 60 * 60});
+export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60, tower: 45 * 60, tank: 60 * 60, greenhouse: 60 * 60});
 export const HOME_LOOT = Object.freeze({
   bike: Object.freeze({worth: 6, kg: 110}),
   buggy: Object.freeze({worth: 15, kg: 480}),
@@ -107,6 +117,8 @@ export const FOOT_BURST = Object.freeze({seconds: 3, refillSeconds: 6});
 
 // Every event's sound cue. OPEN-SOUND chooses and registers the sounds; until then these are names only.
 export const HOME_CUES = Object.freeze({
+  plant: 'home.bed.plant', harvest: 'home.bed.harvest', glassStage: 'home.glass.stage',
+  potGlow: 'home.pot.glow', eat: 'home.eat', powerEnd: 'home.power.end',
   hammer: 'home.fence.hammer', up: 'home.fence.up', lift: 'home.piece.lift', gate: 'home.gate.hang',
   refused: 'home.place.refused', sprint: 'foot.sprint', burst: 'foot.burst', spent: 'foot.burst.spent',
   viewUp: 'home.view.up', viewDown: 'home.view.down', mark: 'home.mark.set', unmark: 'home.mark.clear',
@@ -126,6 +138,26 @@ export const HOME_CUES = Object.freeze({
 
 // What he reads. Every line is a whole sentence.
 export const HOME_WORDS = Object.freeze({
+  bedTimber: "Auntie Solder left old timber with the tank for six garden beds. Press G to choose a bed.",
+  seedsGift: "Marigold's growers sent you seeds: fire peppers and jumping beans. They only grow under glass.",
+  glassReady: 'Walk inside to plant your power food seeds in the pots.',
+  glassLoad: "Auntie Solder left glass and frame at Tin Town's gate. Bring them home on the flatbed for your greenhouse.",
+  bedHold: 'Hold B to hammer up this garden bed.',
+  bedsUsed: 'You have used all six beds of old timber.',
+  plantCrop: 'Press F to plant {crop}.',
+  harvestCrop: 'Press F to harvest your {crop}.',
+  cropGrowing: 'Your crop of {crop} is growing. It needs {time} more with water.',
+  cropDry: 'Your crop of {crop} is waiting for water from a tank within 12 metres. It will not die.',
+  noSeeds: 'You have no seeds left for this space.',
+  cropPlanted: 'You planted {crop}.',
+  cropGathered: 'You put {crop} in your store and kept its seed for planting again.',
+  tinPacked: 'Your lunch tin holds {foods}. Press 4, 5 or 6 on foot to eat from that slot.',
+  tinEmpty: 'Your lunch tin is empty. Harvest power food and press F at the shed to pack it.',
+  tinEat: 'You ate {crop}.',
+  tinSlotEmpty: 'That slot in your lunch tin is empty.',
+  powerEnded: 'The effect of your {crop} has worn off.',
+  foodStore: 'Your store holds {foods}.',
+
   askAuntie: 'This bare ground is spoken for. Ask Auntie Solder about it in town.',
   given: 'Your ground is marked on the map. The tin panels are stacked by its corner.',
   hold: 'Hold B to hammer up the {piece}. Press R to turn it and G to change it.',

@@ -77,3 +77,11 @@
 .combat-opponent-marker.is-marked{border-color:#ffb52e;box-shadow:0 0 0 1px #ffb52e}
 /* A town work truck: none of the car's four weapon buttons, the NITRO bar or the car's armor line. */
 #stage.is-work-truck .combat-slot-bar,#stage.is-work-truck .boost-readout,#stage.is-work-truck .combat-player-armor{display:none}
+
+/* Home Ground powers sit beside health, with a leaf that empties on the outing clock. */
+.combat-foot-health{position:relative}
+.combat-home-powers{position:absolute;left:calc(100% + 8px);top:0;display:flex;gap:7px}
+.combat-home-leaf{position:relative;display:block;width:22px;height:32px;overflow:hidden;border:1px solid #a1ac75;border-radius:80% 8% 70% 12%;background:#292e22}
+.combat-home-leaf i{position:absolute;bottom:0;left:0;width:100%;background:#84974e}
+.combat-home-leaf.is-ending i{background:#b29a58}
+.combat-home-powers[hidden],.combat-home-leaf[hidden]{display:none}

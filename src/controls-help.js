@@ -14,6 +14,7 @@ export function controlsHelp(duel) {
       ['A D / LEFT RIGHT', 'Turn'], ['Q / E', 'Step left / right'],
       ['MOUSE', 'Look'], ['L / R CLICK', 'Fire / aim'],
       ['SHIFT', 'Sprint'], ['SPACE', 'Jump'], ['1  2  3', 'Choose your gear'],
+      ...(state.arena?.worldJob?.open?.parts.home?.on ? [['4  5  6', 'Eat from your lunch tin.']] : []),
       ['F', 'Climb aboard the stopped tanker'],
       ['HOLD F', 'Get back in your car'],
       ['C', 'Change camera'], ['ESC / P', 'Pause'], ['H', 'Hide this help']]};

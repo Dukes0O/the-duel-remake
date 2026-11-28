@@ -38,7 +38,7 @@ function memoryBackups(){
 }
 
 // Home records live at profile.story.open.home; world.open.home is their outing copy.
-for (const version of [1, 2, 3, 4, 5, 6]) {
+for (const version of [1, 2, 3, 4, 5, 6, 7]) {
   const home = {version, name: 'Old ground', pieces: [{kind: 'panel', i: 2, j: 0, axis: 'x'}], marks: []};
   if (version >= 2) Object.assign(home, {hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}],
     boxes: [{i: 2, j: 3, eggs: 7}], eggs: 31, lastSeen: 1000});
@@ -57,6 +57,10 @@ for (const version of [1, 2, 3, 4, 5, 6]) {
     home.loot = [{kind: 'crate', position: {x: 5920, z: 110, yaw: .4}, worth: 4}];
     home.scrap = 93; home.carters = {began: 950};
   }
+  if (version >= 7) {
+    home.well = {i: 15, j: 15, depth: 12, water: 12, pump: true}; home.loads.tank = 'stack';
+    home.builds.push({kind: 'tank', i: 16, j: 15, turn: 0, stage: 4, litres: 375, filled: 1000});
+  }
   const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}, story: {version: 1, open: {home}}};
   const source = memoryStorage({[PLAYERS_KEY]: JSON.stringify({version: 2, activePlayerId: 'home',
     players: [{id: 'home', name: 'Home', profile}]})});
@@ -74,7 +78,7 @@ for (const version of [1, 2, 3, 4, 5, 6]) {
   const upgraded = upgradeHome(home);
   assert.equal(upgraded.version, HOME_RECORD_VERSION);
   for (const [key, value] of Object.entries(home)) if (key !== 'version') {
-    if (key === 'loads') assert.deepEqual(upgraded.loads, {...value, ...(version < 5 ? {tower: 'stack'} : {}), tank: 'stack'});
+    if (key === 'loads') assert.deepEqual(upgraded.loads, {...value, ...(version < 5 ? {tower: 'stack'} : {}), ...(version < 7 ? {tank: 'stack'} : {}), greenhouse: 'stack'});
     else assert.deepEqual(upgraded[key], value);
   }
   profile.story.open.home = upgraded;

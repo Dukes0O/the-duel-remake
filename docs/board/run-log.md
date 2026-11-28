@@ -1857,3 +1857,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge HOME-RAID-BIKE-LOOK (Codex Astra, laptop lane): the raid bike, round 2, passes as a worn trail bike (bike-round-2.jpg)
 - Merge HOME-GROUND-5 (Codex Astra, laptop lane): the well he drills with Tin Town's rig, the hand pump and the 1,000-litre tank on the real clock
 - Merge EASY-YOUNG-DRIVER (Codex Sol, laptop lane): Water Road Easy, story-only, 4 to 7 assisted wins in 10 for every job and fight and at least 2 for a weaker driver
+- Merge HOME-GROUND-5B (Codex Astra, laptop lane): garden beds, the greenhouse, the lunch tin, fire peppers and jumping beans

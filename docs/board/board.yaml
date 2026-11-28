@@ -1093,19 +1093,6 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
-  - id: HOME-GROUND-5B
-    title: "Home Ground step 5: garden beds, the greenhouse, fire peppers and jumping beans"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Codex Astra (Sol is busy on EASY-YOUNG-DRIVER), laptop lane, 28 November 2026"
-    needs: []
-    locks: ["home-ground"]
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-5B.md"
-
   - id: HOME-GROUND-5C
     title: "Home Ground step 5: the other four power foods, the pairs and the protein rule"
     owner: "codex"
@@ -1113,7 +1100,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["HOME-GROUND-5B"]
+    needs: []
     locks: ["home-ground"]
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-5C.md"

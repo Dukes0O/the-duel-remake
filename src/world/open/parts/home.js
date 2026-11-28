@@ -28,7 +28,7 @@ import {TALK_RANGE, distanceToPerson} from './people.js';
 import {AWAY_LONGEST, BOARD_NEAR, BOARD_SECONDS, BUILD_IDLE_SECONDS, FOOT_BURST, HAMMER_STRIKE_SECONDS, HEN_LOOK, HOME_BOX,
   HOME_CELLS, HOME_CUES, HOME_CURSOR_SPEED, HOME_OFFER, HOME_OFFER_ID, HOME_PIECES, HOME_REACH, HOME_SIZE, HOME_STEP,
   HOME_WORDS, MOSS_HENS_ID, MOSS_TALK, defaultHomeName, HOME_BUILDS, HOME_STAGES, HOME_LOAD_STACK, HOME_CREW_TALK,
-  HOME_TOWER_STAGES, HOME_RAID, HOME_TANK_STAGES, HOME_TANK, HOME_WELL} from '../content/home-ground.js';
+  HOME_TOWER_STAGES, HOME_RAID, HOME_TANK_STAGES, HOME_TANK, HOME_WELL, HOME_BED, HOME_CROPS, HOME_GLASS_STAGES} from '../content/home-ground.js';
 import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoom, boxSlotInFront, boxesFull, build,
   buildBox, cleanHomeName, crateSpot, cratesLeft, facedThing, gateOf, gatesLeft, gatherBox, giveHens, groundCentre,
   groundPoint, hensWaiting, homeSolids, lift, liftBox, markAt, nameHen, newHome, newsBoardSpot, outlineFor, outsideBy,
@@ -36,7 +36,8 @@ import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoo
   buildBounds, buildInLand, buildingDoor, buildSlot, buildRefusal, markBuild, liftBuild, buildHasLoad, raiseBuild, gatherCoop, shedWords, roostAt,
   homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome, standPanel,
   lootOnBed, cartersBusy, cartersOffer, sendCarters, finishCarters,
-  canBorrowDrill, wellInLand, wellRefusal, markWell, homeDrillHole, drillHomeWell, fitHomePump, fillHomeTanks, tankWords} from '../home-rule.js';
+  canBorrowDrill, wellInLand, wellRefusal, markWell, homeDrillHole, drillHomeWell, fitHomePump, fillHomeTanks, tankWords, buildBed, bedRefusal, cropInLand, nextCrop, plantCrop, harvestCrop, cropWaterSeconds,
+  packTin, eatFromTin, stepHomePowers, powerStrength, tinWords, awayWords} from '../home-rule.js';
 import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, raidInterval, towerAtLadder, stepHomeTower} from '../home-raid-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {makeRng} from '../../../rng.js';
@@ -48,7 +49,7 @@ import {stepMover} from '../../scablands-movers.js';
 const BUILD_NEAR = 4, GATE_OPENS = 7, PROMPT_NEAR = 14, BOARD_REACH = 2.5, CRATE_REACH = 3;
 // From above, a mark may be made where only the missing piece stops the building.
 const MARK_ANYWAY = ['noPanels', 'noGate'];
-const KEY_NAMES = ['build', 'turn', 'piece', 'view', 'burst', 'sprint', 'fire', 'interact'];
+const KEY_NAMES = ['build', 'turn', 'piece', 'view', 'burst', 'sprint', 'fire', 'interact', 'eat1', 'eat2', 'eat3'];
 const say = (key, text) => ({type: 'say', lineId: 'open/home-ground/' + key, text});
 const words = (key, fill = {}) => {
   const values = {...fill, storeEggs: fill.store === 1 ? 'egg' : 'eggs'};
@@ -61,7 +62,7 @@ const HEN_HEADS_TO_BOX = 25, HEN_WALK = .55, HEN_KEEP_IN = 1.2;
 
 function begin() {
   return {held: {}, kind: 'panel', turns: 0, hammer: null, above: false, cursor: null, outline: null, prompt: '',
-    burst: {charge: 1, active: false, spent: false, shown: false}, gateOpen: false, solidsKey: '', naming: false,
+    powers: {firePeppers: 0, jumpingBeans: 0}, burst: {charge: 1, active: false, spent: false, shown: false}, gateOpen: false, solidsKey: '', naming: false,
     namingHen: null, namingKey: '', namingChain: false, offerOpen: false, given: false, opened: null, ripenedAt: 0,
     building: false, idle: 0, tool: null, strike: null, armed: false, onGround: false, flock: [], flockSeed: 1,
     board: null, boardShown: false, crateTalk: false, crewTalk: false, crewLesson: null, crewWalk: 0, crewKey: '', crewPeople: [],
@@ -249,6 +250,7 @@ export const homePart = {
       const job = record.crew.job;
       const before = job && record.builds.find(row => matchesBuild(row, job));
       const ripe = ripenHome(record, now - next.ripenedAt);
+      if (record.pots.some((pot, n) => pot.crop && pot.grown < HOME_CROPS[pot.crop].seconds && ripe.home.pots[n].grown === HOME_CROPS[pot.crop].seconds)) events.push(cue(HOME_CUES.potGlow));
       if (before && ripe.home.builds.find(row => matchesBuild(row, job)).stage > before.stage) events.push(cue(HOME_CUES.crewHammer));
       if (ripe.finished) { next.opened = {...next.opened, finished: ripe.finished}; events.push(cue(HOME_CUES.crewDone)); }
       next.ripenedAt = now;
@@ -265,6 +267,20 @@ export const homePart = {
       }
       return ripe.laid;
     };
+    next.powers = stepHomePowers(state.powers, dt);
+    for (const id of Object.keys(next.powers)) if (state.powers[id] > 0 && next.powers[id] === 0) {
+      events.push(cue(HOME_CUES.powerEnd)); requests.push(say('power-end', words('powerEnded', {crop: HOME_CROPS[id].name})));
+    }
+    if (fighter && !fighter.knockedDown && !next.naming && !view.homeTalking && !next.above) {
+      for (let slot = 0; slot < 3; slot++) if (pressed('eat' + (slot + 1))) {
+        const eaten = eatFromTin(record, slot, next.powers);
+        record = eaten.home; next.powers = eaten.powers;
+        if (eaten.eaten) { events.push(cue(HOME_CUES.eat)); choices.push(choice('eat', record)); }
+        requests.push(say('eat', eaten.eaten ? words('tinEat', {crop: HOME_CROPS[eaten.eaten].name}) : HOME_WORDS.tinSlotEmpty));
+      }
+    }
+    if (next.powers.firePeppers > 0) next.burst = {charge: 1, spent: false,
+      active: !!fighter && !next.above && !!keys.forward, shown: true, strength: powerStrength(next.powers.firePeppers)};
     const gap = now - next.ripenedAt;
     if (record.hens.some(hen => hen.due <= gap) && boxRoom(record) > 0) {
       const laid = catchUp();
@@ -279,7 +295,7 @@ export const homePart = {
       choices.push(choice('laid', record));
     }
 
-    if ((record.crew.job || cartersBusy(record) || record.builds.some(row => row.kind === 'tank' && row.stage === 4)) && now > next.ripenedAt) {
+    if ((record.beds.some(row => row.crop) || record.pots.some(row => row.crop) || record.crew.job || cartersBusy(record) || record.builds.some(row => row.kind === 'tank' && row.stage === 4)) && now > next.ripenedAt) {
       catchUp();
       choices.push(choice('crew-clock', record));
     }
@@ -412,8 +428,9 @@ export const homePart = {
     const crate = hensWaiting(record) ? crateSpot(gate) : null;
     const atCrate = !!fighter && !!crate && distance(fighter.position, crate) <= CRATE_REACH;
     const faced = fighter && near ? facedThing(record, fighter.position, fighter.yaw) : null;
+    const cropAt = fighter && near ? nearbyCrop(record, fighter.position, fighter.yaw) : null;
     const facedBox = faced?.kind === 'box' ? faced : null;
-    const atNews = !!fighter && !!news && !atBoard && !atCrate && !facedBox && distance(fighter.position, news) <= BOARD_NEAR;
+    const atNews = !!fighter && !!news && !atBoard && !atCrate && !facedBox && !cropAt && distance(fighter.position, news) <= BOARD_NEAR;
     const buildingAt = fighter && near ? nearBuild(record, fighter.position, fighter.yaw) : null;
     const hen = fighter && near ? (next.flock.map((row, index) => ({index, far: distance(row, fighter.position),
       angle: Math.abs(Math.atan2(Math.sin(Math.atan2(row.x - fighter.position.x, row.z - fighter.position.z) - fighter.yaw),
@@ -441,7 +458,18 @@ export const homePart = {
         next.crateTalk = true;
         requests.push({type: 'talk', id: MOSS_HENS_ID, scene: MOSS_TALK, person: 'moss', speaker: 'moss', asked: [],
           threadPriority: true, position: {x: crate.x, y: scablandsSurfaceHeightAt(crate.x, crate.z), z: crate.z}, anchorPosition: true});
-      } else if (buildingAt?.stage === 4 && buildingAt.kind !== 'tower' &&
+      } else if (cropAt) {
+        catchUp();
+        const row = record[cropAt.pot ? 'pots' : 'beds'][cropAt.index];
+        const id = row.crop ?? nextCrop(record, cropAt.pot);
+        const changed = row.crop ? harvestCrop(record, cropAt.index, cropAt.pot) : plantCrop(record, cropAt.index, cropAt.pot);
+        if (changed !== record) {
+          record = changed; choices.push(choice('crop', record));
+          events.push(cue(row.crop ? HOME_CUES.harvest : HOME_CUES.plant));
+          note = words(row.crop ? 'cropGathered' : 'cropPlanted', {crop: HOME_CROPS[id].name});
+          requests.push(say('crop', note));
+        }
+      } else if (buildingAt?.stage === 4 && ['coop', 'tank', 'shed'].includes(buildingAt.kind) &&
           (['coop', 'tank'].includes(buildingAt.kind) || distance(fighter.position, buildingDoor(buildingAt)) <= BOARD_REACH)) {
         catchUp();
         if (buildingAt.kind === 'coop') {
@@ -454,7 +482,7 @@ export const homePart = {
         } else if (buildingAt.kind === 'tank') {
           note = tankWords(record, record.builds.find(row => matchesBuild(row, buildingAt)));
           choices.push(choice('tank-read', record));
-        } else { note = shedWords(record); events.push(cue(HOME_CUES.shedDoor)); choices.push(choice('shed-read', record)); }
+        } else if (buildingAt.kind === 'shed') { record = packTin(record); note = shedWords(record) + ' ' + tinWords(record); events.push(cue(HOME_CUES.shedDoor)); choices.push(choice('shed-read', record)); }
         requests.push(say('building', note));
       } else if (facedBox && facedBox.box.eggs > 0) {
         catchUp();
@@ -502,7 +530,10 @@ export const homePart = {
       if (next.kind === 'box' && cratesLeft(record) <= 0) next.kind = 'panel';
       const kind = next.kind;
       const atWell = !next.above && record.well && distance(fighter.position, wellInLand(record.well)) <= 2.5;
-      if (kind === 'well' || (atWell && !pressed('piece') && !HOME_BUILDS[kind])) {
+      if (kind === 'bed') {
+        const changed = stepBed({state, next, record, fighter, keys, pressed, dt, events, catchUp, getRecord: () => record});
+        if (changed !== record) { record = changed; choices.push(choice('bed', record)); }
+      } else if (kind === 'well' || (atWell && !pressed('piece') && !HOME_BUILDS[kind])) {
         const changed = stepWell({state, next, record, fighter, keys, pressed, dt, events, seed: context.seed, catchUp,
           getRecord: () => record});
         if (changed !== record) { record = changed; choices.push(choice('well', record)); }
@@ -630,6 +661,7 @@ export const homePart = {
           record.hens.length && !record.boxes.length ? HOME_WORDS.firstBox : HOME_WORDS.startBuild;
       }
     }
+    if (cropAt && !next.naming && !next.above && !keys.build) next.prompt = note || cropPrompt(record, cropAt);
     // The news board keeps its full six-metre reach even when he stands beside a building.
     if (atNews && !next.naming && !next.above) next.prompt = newsPrompt;
     for (const event of view.jobEvents ?? []) {
@@ -697,10 +729,54 @@ export const homePart = {
 };
 
 // G changes what is in his hands: a panel, the gate while he carries it, an old crate while he has one.
+function nearbyCrop(record, position, yaw) {
+  return ['beds', 'pots'].flatMap(key => record[key].map((row, index) => {
+    const pot = key === 'pots', at = cropInLand(record, row, pot);
+    if (!at) return null;
+    const far = distance(position, at), angle = Math.atan2(at.x - position.x, at.z - position.z) - yaw;
+    return far <= (pot ? 1.6 : 3) && (far < .6 || Math.cos(angle) > .3) ? {index, pot, far} : null;
+  })).filter(Boolean).sort((a, b) => a.far - b.far)[0] ?? null;
+}
+function cropPrompt(record, target) {
+  const row = record[target.pot ? 'pots' : 'beds'][target.index];
+  if (!row.crop) {
+    const id = nextCrop(record, target.pot);
+    return id ? words('plantCrop', {crop: HOME_CROPS[id].name}) : HOME_WORDS.noSeeds;
+  }
+  const crop = HOME_CROPS[row.crop];
+  return words(row.grown >= crop.seconds ? 'harvestCrop' : cropWaterSeconds(record, row, target.pot, 1) > 0 ? 'cropGrowing' : 'cropDry',
+    {crop: crop.name, time: awayWords(crop.seconds - row.grown)});
+}
+function stepBed({state, next, record, fighter, keys, pressed, dt, events, catchUp, getRecord}) {
+  if (next.above) {
+    const step = HOME_CURSOR_SPEED / HOME_STEP * dt;
+    next.cursor = {a: Math.max(0, Math.min(HOME_CELLS - 1, next.cursor.a + ((keys.right || keys.turnRight ? 1 : 0) - (keys.left || keys.turnLeft ? 1 : 0)) * step)),
+      b: Math.max(0, Math.min(HOME_CELLS - 1, next.cursor.b + ((keys.back ? 1 : 0) - (keys.forward ? 1 : 0)) * step))};
+  }
+  const slot = next.above ? {kind: 'bed', i: Math.floor(next.cursor.a), j: Math.floor(next.cursor.b), turn: next.turns} :
+    buildSlot('bed', fighter.position, fighter.yaw, next.turns);
+  const reason = bedRefusal(record, slot), slotKey = JSON.stringify(slot);
+  let hammer = state.hammer?.slotKey === slotKey && keys.build ? state.hammer : null;
+  if (reason && pressed('build')) events.push(cue(HOME_CUES.refused));
+  if (!reason && keys.build && !next.above) {
+    const seconds = (hammer?.seconds ?? 0) + dt, strikes = Math.floor(seconds / HAMMER_STRIKE_SECONDS);
+    if (!hammer || strikes > hammer.strikes) events.push(cue(HOME_CUES.hammer));
+    hammer = {slotKey, seconds, strikes};
+    if (seconds >= HOME_BED.hammer) {
+      catchUp(); record = buildBed(getRecord(), slot); hammer = null;
+      events.push(cue(HOME_CUES.boxUp));
+    }
+  }
+  next.hammer = hammer;
+  next.outline = next.building ? {piece: slot, mode: reason ? 'refused' : 'build', reason,
+    progress: hammer ? hammer.seconds / HOME_BED.hammer : 0, shake: !!reason && pressed('build')} : null;
+  next.prompt = reason ? HOME_WORDS[reason] : HOME_WORDS.bedHold;
+  return record;
+}
 function nextKind(kind, record) {
-  const order = ['panel', 'gate', 'box', 'coop', 'shed', 'tower', 'well', 'tank'];
+  const order = ['panel', 'gate', 'box', 'coop', 'shed', 'tower', 'well', 'tank', 'bed', 'greenhouse'];
   const has = row => row === 'panel' || (row === 'gate' && gatesLeft(record) > 0) || (row === 'box' && cratesLeft(record) > 0) ||
-    (['well', 'tank'].includes(row) ? canBorrowDrill(record) : !!HOME_BUILDS[row] && record.hens.length > 0 && record.boxes.length > 0);
+    (['well', 'tank', 'bed', 'greenhouse'].includes(row) ? canBorrowDrill(record) : !!HOME_BUILDS[row] && record.hens.length > 0 && record.boxes.length > 0);
   for (let n = 1; n <= order.length; n++) {
     const row = order[(order.indexOf(kind) + n) % order.length];
     if (has(row)) return row;
@@ -802,8 +878,8 @@ function stepBuilding({state, next, record, fighter, keys, pressed, dt, events, 
   next.outline = next.building || next.above ? {piece: row ?? slot, mode: reason ? 'refused' : 'build', reason,
     progress: hammer ? hammer.seconds / HOME_BUILDS[kind].hammer : 0, marked: !!row, shake: !!reason && pressed('build')} : null;
   next.prompt = note || (reason ? HOME_WORDS[reason] : row?.stage === 4 ?
-    (kind === 'tower' ? HOME_WORDS.towerUp : kind === 'tank' ? HOME_WORDS.tankRead : kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
-    row ? next.above ? HOME_WORDS.buildLift : buildHasLoad(record, row) ? words('buildStage', {piece: kind, stage: (kind === 'tower' ? HOME_TOWER_STAGES : kind === 'tank' ? HOME_TANK_STAGES : HOME_STAGES)[row.stage]}) :
+    (kind === 'tower' ? HOME_WORDS.towerUp : kind === 'tank' ? HOME_WORDS.tankRead : kind === 'greenhouse' ? HOME_WORDS.glassReady : kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
+    row ? next.above ? HOME_WORDS.buildLift : buildHasLoad(record, row) ? words('buildStage', {piece: kind, stage: (kind === 'tower' ? HOME_TOWER_STAGES : kind === 'tank' ? HOME_TANK_STAGES : kind === 'greenhouse' ? HOME_GLASS_STAGES : HOME_STAGES)[row.stage]}) :
       words('buildLoad', {piece: kind}) + ' ' + HOME_WORDS.buildLift : words('buildMark', {piece: kind}));
 }
 
