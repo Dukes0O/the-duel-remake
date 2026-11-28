@@ -64,6 +64,7 @@ unchanged and gains the fields the first time the part runs with its switch on.
   unloads; a mark refuses the lane; four stages raise a coop; hens go in at dusk and out at dawn; the coop's boxes
   lay and gather; a version 2 save loads unchanged; the flatbed never appears in a race field or an arena.
 - The lane tier, the rule 23 guards and `npm run build`. One independent review of the save.
+- `tools/test-open-roam-start.mjs` checks Claude's flatbed outing button, ownership and switch gates, and the selected work vehicle.
 - The scripted drive: extend `tools/scenarios/open-home-ground.mjs` through one coop, by real keys. It runs at night;
   Claude drives the merged step by hand.
 

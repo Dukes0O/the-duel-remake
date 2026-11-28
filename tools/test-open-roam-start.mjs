@@ -6,6 +6,9 @@ import {OPEN_ROAM_ID} from '../src/world/open/roam-job.js';
 import {isHeld} from '../src/world/open/holds.js';
 import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
 import {beginLedger} from '../src/story/ledger-save.js';
+import {worldForProfile} from '../src/world/open/open-world.js';
+import {settleOpenWorld} from '../src/world/open/open-save.js';
+import {newHome} from '../src/world/open/home-rule.js';
 
 const memory = new Map();
 globalThis.localStorage = {getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)),
@@ -103,5 +106,36 @@ assert(night2Job.open.seconds > 50);
 assert.deepEqual(night2Job.open.world, expected, 'the rest of the first minute adds no marks or other changes');
 assert.deepEqual(night2Job.open.events, []);
 assert.equal(night2.leaveWorldJob(), true);
+
+// HOME-GROUND-3: the flatbed belongs to an outing, never to the saved garage car.
+const flatbedApp = freshApp(1);
+const homeFlags = {enabled: id => id === 'home-ground' || on.enabled(id)};
+flatbedApp.duel.featureFlags = homeFlags;
+assert(flatbedApp.visitWasteland());
+flatbedApp.advance(8);
+const flatbedWall = () => yardHomeScreen({profile: flatbedApp.profile, playerName: 'Test', escapeHTML: String,
+  panel: 'cards', featureFlags: flatbedApp.duel.featureFlags});
+assert.doesNotMatch(flatbedWall(), /story-open-flatbed/, 'no truck outing before he owns ground');
+assert.equal(flatbedApp.startOpenRoam('flatbed'), false);
+const beforeHome = worldForProfile(flatbedApp.profile, flatbedApp.seed);
+const withHome = {...beforeHome, open: {...beforeHome.open, home: newHome('Test Ground')}};
+const kept = settleOpenWorld(flatbedApp.profile, withHome, {atStart: beforeHome});
+assert(kept.ok);
+flatbedApp.profile = kept.profile;
+assert(flatbedApp._saveProfile());
+flatbedApp.duel.featureFlags = on;
+assert.doesNotMatch(flatbedWall(), /story-open-flatbed/, 'the home switch gates the button');
+assert.equal(flatbedApp.startOpenRoam('flatbed'), false, 'the home switch gates the action');
+flatbedApp.duel.featureFlags = homeFlags;
+assert.match(flatbedWall(), /Go out in Tin Town's flatbed/);
+assert.equal(flatbedApp.startOpenRoam('fire-truck'), false, 'the home outing offers only its flatbed');
+const savedBeforeOuting = JSON.stringify(flatbedApp.profile);
+assert(flatbedApp.startOpenRoam('flatbed'));
+const flatbedJob = flatbedApp.duel.state.arena.worldJob;
+assert.equal(flatbedJob.definition.vehicle, 'flatbed');
+assert.equal(flatbedJob.vehicle.id, 'flatbed', 'the truck starts with the town switch off');
+assert.equal(flatbedApp.duel.state.onFoot, true, 'the existing foot entry controls remain in use');
+assert.equal(flatbedJob.open.world.vehicle, undefined, 'the vehicle selection is not world progress');
+assert.equal(JSON.stringify(flatbedApp.profile), savedBeforeOuting, 'selecting the truck leaves the saved profile alone');
 
 console.log('test-open-roam-start: ok');

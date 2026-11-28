@@ -380,7 +380,8 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
-  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true});
+  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true ||
+    (definition.id === 'open-roam' && definition.vehicle === 'flatbed' && duel.featureFlags?.enabled?.('home-ground') === true)});
   // SHIPS-DECKS: a car lent for this run (src/world/jobs/job-vehicle.js) is said as the job starts, and is never saved.
   if (definition.vehicleLent?.lineId) sayLine(duel, worldJob, definition.vehicleLent.lineId);
   if(townWorldJob(definition))duel.course.townLayout=definition.layout??null;

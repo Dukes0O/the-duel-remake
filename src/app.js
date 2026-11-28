@@ -893,18 +893,20 @@ export class App {
   // A job still in play is left first.
   // A gas run starts again on its road (the battle is chosen by the save, as on the wall), a notice-board job by its board name, a story job by its number.
   // OPEN-SHARED: out in the open with no mission (docs/story/open-scablands.md, section 14).
-  startOpenRoam() {
+  startOpenRoam(vehicle) {
     if (!this.isYardHomeActive() || this._switches().enabled('story-choices') !== true) return false;
-    return this._startOpenRoam();
+    return this._startOpenRoam(vehicle);
   }
-  _startOpenRoam() {
+  _startOpenRoam(vehicle) {
     this._refreshPlayer();
+    if (vehicle !== undefined && (vehicle !== 'flatbed' || this._switches().enabled('home-ground') !== true ||
+        !savedOpenRecord(this.profile)?.home)) return false;
     const routineRoads = night2Banked(savedLedger(this.profile)) && this.gasRunAvailable() ?
       (emberBattleOpen(this.profile) ? ['long'] : GAS_RUN_ROADS) : [];
     // HOME-GROUND-2: the one reading of the laptop's clock for the player's ground, as the outing opens.
     const homeClock = this._switches().enabled('home-ground') === true ? Date.now() / 1000 : undefined;
     const job = openRoamJob(this.profile, this.seed, {
-      playerName: this.player.name, legacyHandRuns: emberRuns(this.profile), routineRoads, homeClock,
+      playerName: this.player.name, legacyHandRuns: emberRuns(this.profile), routineRoads, homeClock, vehicle,
     });
     return this._startArenaFight({venueId: 'scablands', mode: 'world-job', opponents: 0, job});
   }

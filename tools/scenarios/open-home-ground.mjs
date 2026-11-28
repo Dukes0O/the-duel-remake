@@ -9,6 +9,7 @@
 // window.__qaApp.advance, and the walker is turned to face where he is going (the mouse's job in play).
 import {HOME_CORNER, HOME_STEP, HOME_WORDS, HOME_LOAD_STACK} from '../../src/world/open/content/home-ground.js';
 import {boxInLand, buildInLand, crateSpot, newsBoardSpot} from '../../src/world/open/home-rule.js';
+import {NIGHT_2_SITES} from '../../src/world/jobs/night-2-sites.js';
 
 const FLAGS = 'hidden-road,story-choices,crew-gear,warlord-cards,home-ground';
 const KEYS = {KeyW: ['w', 87], KeyB: ['b', 66], KeyR: ['r', 82], KeyG: ['g', 71], KeyV: ['v', 86], KeyX: ['x', 88],
@@ -449,8 +450,7 @@ export async function run(context) {
   if (now.record.boxes[0].eggs !== 0 || now.record.eggs !== before.eggs + before.boxes[0].eggs) fail('F did not gather the eggs.', now.record);
   report.gathered = now.record.eggs;
 
-  // Step 3 uses only keys. The missing vehicle handoff fails here until Claude resolves its scope question;
-  // this route never injects a delivery or a completed building.
+  // Step 3 uses only keys. He marks the coop, returns to the yard, then chooses the flatbed outing.
   if (await walk(point(3, 13), .2) > .5) fail('He could not reach the place for his coop.');
   await evaluate('face', Math.PI);
   for (let n = 0; n < 5 && (await home()).kind !== 'coop'; n++) await tap('KeyG');
@@ -459,13 +459,16 @@ export async function run(context) {
   now = await home();
   const coop = now.record.builds.find(row => row.kind === 'coop');
   if (!coop || coop.stage !== 0) fail('B did not mark the coop footprint.', now.record.builds);
-  const flatbed = now.record.flatbed;
-  await walk(point(10, 3), .5);
-  await walk(point(10, -4), .5);
-  if (await walk({x: flatbed.x + 2, z: flatbed.z}, .3) > .7) fail('He could not walk beside the flatbed.');
-  await tap('KeyF');
+  if (!await evaluate('pause')) fail('Could not pause before choosing the flatbed.');
+  await click('arena-yard');
+  await wait('yardHome');
+  await click('yard-cards');
+  await click('story-open-flatbed');
+  await wait('ready');
+  if (await walk({x: NIGHT_2_SITES.car.x + 2, z: NIGHT_2_SITES.car.z}, .3) > .7) fail('He could not walk beside the flatbed.');
+  await hold('KeyF', .65);
   const driving = await evaluate('driving', HOME_LOAD_STACK);
-  if (driving.onFoot || driving.vehicle !== 'flatbed') fail('The Home Ground flatbed handoff is not available.', driving);
+  if (driving.onFoot || driving.vehicle !== 'flatbed') fail('He did not enter the outing\'s flatbed.', driving);
   const driveTo = async target => {
     const held = new Set();
     const setKey = async (code, down) => {
@@ -497,7 +500,7 @@ export async function run(context) {
   await driveTo({x: coopAt.x + 3.5, z: coopAt.z});
   await tap('KeyF');
   if (typeof (await home()).record.loads.coop !== 'object') fail('One press did not unload the coop at its mark.');
-  await tap('KeyF');
+  await hold('KeyF', .45);
   if (!(await evaluate('driving', coopAt)).onFoot) fail('F while stopped did not let him out.');
   await walk({x: coopAt.x, z: coopAt.z + 3}, .3);
   await evaluate('face', Math.PI);

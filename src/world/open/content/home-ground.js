@@ -144,6 +144,7 @@ export const HOME_WORDS = Object.freeze({
   buildExists: 'You have already marked a place for this building.',
   loadOn: 'Press F to load the tin for the {piece} onto the flatbed.',
   loadOff: 'Press F to set the tin for the {piece} down beside its mark.',
+  needsFlatbed: 'This needs a truck with a bed. Go out in Tin Town\'s flatbed to bring it home.',
   gatherCoop: 'Press F to gather the eggs from the coop.',
   shedDoor: 'Press F to see what your shed holds.',
   shedStore: 'Your shed holds {count} eggs.',
@@ -167,7 +168,7 @@ export const BOARD_WORDS = Object.freeze({
   storeNone: 'Your store has no eggs in it yet.',
   fenceFirst: 'Close your fence all the way round, and Moss will bring you two hens.',
   crate: 'Moss has left two hens in a crate by your gate.',
-  firstBuildings: 'Your hens need a coop before the Rats find them. Auntie Solder has left tin for a coop and a shed at Tin Town\'s gate, and her flatbed by yours.',
+  firstBuildings: 'Your hens need a coop before the Rats find them. Auntie Solder has left tin for a coop and a shed at Tin Town\'s gate. Go out in Tin Town\'s flatbed to bring it home.',
 });
 
 // Auntie Solder's one talk. The choice gives him the ground (src/world/open/parts/home.js).
