@@ -9,6 +9,16 @@ covered").
 
 ## Design, settled by Claude before code
 
+**First, four fixes from Claude's drive of step 2** (`docs/board/looks/home-ground/drive-3.md`), in the same files:
+1. A nest box (and any small piece's outline) is placed about 3 m ahead, and while the build outline is shown the
+   first-person view tilts down about 15 degrees, so the piece sits in the middle of the view above the prompt line.
+   The F reach for a box grows to match. Check by behaviour: the placed box is inside the camera's view, above the
+   prompt.
+2. The ground's HUD (the board's lines, the prompt, the burst bar and the weapon panel) is hidden while the big map
+   is open.
+3. Moss, and Rook and Wren when they talk, turn to face him for the talk and back afterwards.
+4. Within the 6 m at which the board shows itself, the prompt says "Press F to read the board again." and F reads it.
+
 **Who.** Two of Auntie Solder's Tin Town crew: Rook, a big quiet man who carries the sheets, and Wren, a girl of about
 fifteen who does the hammering and all the talking. They are drawn with the open world's existing people figures.
 

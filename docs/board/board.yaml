@@ -358,16 +358,6 @@ tasks:
 
 
 
-  - id: QA-WAVE1-AUDIO-FLIGHT
-    title: "Check the moving weapon flight sound alone"
-    owner: "claude"
-    lane: "QA"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-WAVE1-AUDIO-FLIGHT.md"
-
   - id: WILD-HIT
     title: "Cars knock roadside animals down, with a small heap and a bit of blood (Kyle, 19 November)"
     owner: "claude"
@@ -446,26 +436,6 @@ tasks:
     claimed_by: "Claude, since 18 November 2026, with a Sonnet helper on the laptop for the browser scenarios"
     needs: []
     details: "docs/board/cards/QA-NIGHT-18-NOV.md"
-
-  - id: QA-NIGHT-19-NOV
-    title: "The night check of 19 November: stopped at four hours; Lab panel cured; wildlife-view fails outside the code"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-NIGHT-19-NOV.md"
-
-  - id: QA-NIGHT-20-NOV
-    title: "The night check of 20 November: two pins moved by the solids fix, re-recorded; three checks cured"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    details: "docs/board/cards/QA-NIGHT-20-NOV.md"
 
   - id: STORY-CHOICES
     title: "The story rebuilt around choices: the form, the ledger, the map of choices, one chapter in full (Kyle, 18 November)"
@@ -1234,13 +1204,3 @@ tasks:
   # with owner claude-cloud, each on its own cloud/<card> branch.
 
   # Claude's drive of the merged batch, 27 November 2026 (docs/board/looks/drive-2026-11-27.md).
-  - id: MAP-NO-WAY-WRAP
-    title: "Big map: 'No way is known.' wraps one word per line in the ways panel"
-    owner: "claude"
-    lane: "UI"
-    size: "S"
-    status: "ready"
-    needs: []
-    locks: []
-    flag: "story-choices"
-    details: "docs/board/cards/MAP-NO-WAY-WRAP.md"
