@@ -36,3 +36,6 @@ at the crate; fix the hen name box's sentence about the board; hide the weapon p
 **27 November 2026, after the drive:** the seven fixes are card HOME-GROUND-2-DRIVE (Codex Sol); the hen's art round 5
 is HOME-HEN-BODY (Claude), merged the same day: a laying hen's own body, round, low and heavy, passed at
 4 of 5 (`docs/board/looks/home-ground/hens-round-5.jpg`). Step 3 (builders) is cut after Kyle's and Gratian's try of step 2.
+
+**27 November 2026, step 3 cut ahead of the try (Kyle):** HOME-GROUND-3 (the first coop and shed, raised by hand
+from a load on Tin Town's flatbed, Codex Astra) and then HOME-GROUND-3B (Rook and Wren, the builders, Codex Sol).
