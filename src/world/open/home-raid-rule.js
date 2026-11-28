@@ -6,7 +6,7 @@ import {sweepObstacle} from '../../collision.js';
 import {stepMover, TRUCK_GRADE} from '../scablands-movers.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {ratsGiveUpSeconds} from '../jobs/town-rats.js';
-import {HOME_RAID as R, HOME_CUES, HOME_WORDS, HOME_CELLS, HOME_TOWER} from './content/home-ground.js';
+import {HOME_RAID as R, HOME_CUES, HOME_WORDS, HOME_CELLS, HOME_TOWER, HOME_LOOT} from './content/home-ground.js';
 import {groundPoint, groundCentre, outsideBy, buildInLand, buildingDoor, pieceInLand, homeSolids} from './home-rule.js';
 
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -116,6 +116,7 @@ function moveRider(raid, rider, home, dt, view) {
 }
 
 export function finishHomeRaid(home, raid, outcome, seed) {
+  if (raid.outcome) return {home, raid, events: []};
   const eggs = outcome === 'lost' && !raid.test ? Math.floor(home.eggs * R.eggShare) : 0;
   const raids = {...home.raids};
   if (raid.test) raids.testDone = outcome !== 'left';
@@ -126,7 +127,17 @@ export function finishHomeRaid(home, raid, outcome, seed) {
   }
   const news = raid.test && outcome !== 'left' ? HOME_WORDS.raidTest : outcome === 'left' ? HOME_WORDS.raidLeft :
     outcome === 'won' ? HOME_WORDS.raidWon : eggs === 1 ? HOME_WORDS.raidLostOne : HOME_WORDS.raidLost.replace('{count}', eggs);
-  return {home: {...home, eggs: home.eggs - eggs, raids}, raid: {...raid, outcome}, news,
+  let loot = home.loot;
+  if (outcome === 'won' && !raid.test) {
+    const piece = (kind, position, yaw) => ({kind, position: {x: position.x, z: position.z, yaw}, worth: HOME_LOOT[kind].worth});
+    const wrecks = raid.riders.filter(row => row.health <= 0).map(row => piece(row.kind, row.position, row.yaw));
+    const rng = makeRng(seed ^ Math.imul(raids.won, 0x4c4f4f54));
+    const crates = Array.from({length: rng.int(1, 2)}, (_, index) => piece('crate',
+      {x: raid.entry.x + raid.normal.x * 3 + raid.normal.z * (index * 2 - 1),
+        z: raid.entry.z + raid.normal.z * 3 - raid.normal.x * (index * 2 - 1)}, rng.range(-Math.PI, Math.PI)));
+    loot = [...(home.loot ?? []), ...wrecks, ...crates];
+  }
+  return {home: {...home, eggs: home.eggs - eggs, raids, loot}, raid: {...raid, outcome}, news,
     events: outcome === 'left' ? [] : [cue(outcome === 'lost' ? HOME_CUES.raidLost : HOME_CUES.raidWon)]};
 }
 

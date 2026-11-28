@@ -32,7 +32,8 @@ import {FEATURE_STATES} from '../src/feature-flags.js';
 import {HOME_RAID, HOME_TOWER} from '../src/world/open/content/home-ground.js';
 import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, ramHomePanels,
   towerAtLadder, stepHomeTower, homeTowerPose} from '../src/world/open/home-raid-rule.js';
-import {standPanel} from '../src/world/open/home-rule.js';
+import {standPanel, lootOnBed, sendCarters, finishCarters, shedWords} from '../src/world/open/home-rule.js';
+import {finishHomeRaid} from '../src/world/open/home-raid-rule.js';
 import {homeRocketReach, selectFootGear, stepFootWeapons} from '../src/onfoot-weapons.js';
 import {syncHomeGround} from '../src/arena/modes/home-ground.js';
 import {damageRaider} from '../src/raiders.js';
@@ -45,6 +46,58 @@ const check = (condition, message) => { assert.ok(condition, message); checks++;
 const equal = (a, b, message) => { assert.deepEqual(a, b, message); checks++; };
 const DT = 1 / 60;
 const parts = [homePart];
+
+// Step 4B: persistent loot, one bed, the store and the carters' one-hour contract.
+{
+  const home = newHome('Loot', 1000), seed = 22;
+  const raid = startHomeRaid(home, seed, false);
+  raid.riders[0].health = 0; raid.riders[2].health = 0; raid.riders[1].fled = true;
+  const won = finishHomeRaid(home, raid, 'won', seed);
+  const wrecks = won.home.loot.filter(row => row.kind !== 'crate');
+  equal(wrecks.map(row => row.kind), ['bike', 'buggy'], 'only wrecked raiders leave wrecks');
+  equal(wrecks.map(row => row.position), [raid.riders[0], raid.riders[2]].map(row => ({...row.position, yaw: row.yaw})),
+    'wrecks keep the exact place where each raider stopped');
+  check(won.home.loot.length >= 3 && won.home.loot.length <= 4, 'a win leaves one or two crates beside the wrecks');
+  equal(finishHomeRaid(home, raid, 'won', seed), won, 'seeded loot repeats exactly');
+  equal(finishHomeRaid(won.home, won.raid, 'won', seed).home, won.home, 'a finished raid never pays twice');
+  for (const outcome of ['lost', 'left']) equal(finishHomeRaid(home, raid, outcome, seed).home.loot, [], outcome + ' leaves nothing');
+  equal(finishHomeRaid(home, {...raid, test: true}, 'won', seed).home.loot, [], 'the harmless lesson yields no loot');
+  let loaded = won.home;
+  for (const row of won.home.loot.slice(0, 3)) loaded = transferHomeLoad(loaded, {vehicle: 'flatbed', position: row.position, speedKmh: 0});
+  equal(lootOnBed(loaded).length, 3, 'three taps put three pieces on the bed');
+  const extra = {kind: 'crate', position: groundPoint(10, 10), worth: 4}; extra.position.yaw = 0;
+  loaded = {...loaded, loot: [...loaded.loot, extra]};
+  equal(transferHomeLoad(loaded, {vehicle: 'flatbed', position: extra.position, speedKmh: 0}), loaded, 'three pieces fill the bed');
+  equal(transferHomeLoad(loaded, {vehicle: 'flatbed', position: HOME_LOAD_STACK, speedKmh: 0}), loaded, 'loot leaves no room for a building bundle');
+  check(homeLoadKg(loaded) > 0 && readableHome(loaded), 'the carried loot has weight and survives validation');
+  const shed = {kind: 'shed', i: 2, j: 8, turn: 0, stage: 4};
+  loaded = {...loaded, builds: [shed]};
+  const worth = lootOnBed(loaded).reduce((sum, row) => sum + row.worth, 0);
+  const delivered = transferHomeLoad(loaded, {vehicle: 'flatbed', position: buildingDoor(shed), speedKmh: 0});
+  equal([delivered.scrap, lootOnBed(delivered).length], [worth, 0], 'one shed tap stores the whole load at its full worth');
+  check(shedWords({...delivered, eggs: 1}).includes('one egg and ' + worth + ' scrap'), 'the shed names eggs and scrap in one sentence');
+  const sent = sendCarters(loaded, 1000), total = loaded.loot.reduce((sum, row) => sum + row.worth, 0);
+  check(readableHome(sent), 'the carters and carried pieces survive save validation');
+  equal(transferHomeLoad(sent, {vehicle: 'flatbed', position: buildingDoor(shed), speedKmh: 0}), sent, 'reserved loot cannot also be delivered by hand');
+  equal(sendCarters(sent, 1100), sent, 'a second press cannot restart the carters');
+  for (const now of [999, 1000, 4599]) equal(finishCarters(sent, now).home, sent, 'carters cannot finish early or on a backward clock');
+  const returned = finishCarters(sent, 4600);
+  equal(returned.receipt, {scrap: total - Math.floor(total / 5), pay: Math.floor(total / 5)}, 'the carters keep a fifth rounded down');
+  equal([returned.home.scrap, returned.home.loot.length, returned.home.carters.began], [returned.receipt.scrap, 0, null], 'all loot is paid and the job ends');
+  equal(finishCarters(returned.home, 9000).home, returned.home, 'completed carters cannot pay twice');
+  for (const bad of [{...loaded, scrap: -1}, {...loaded, loot: [{...extra, worth: 99}]},
+    {...loaded, carters: {began: Infinity}}, {...loaded, loot: [...loaded.loot, {...extra, position: 'bed'}]},
+    {...loaded, loads: {...loaded.loads, coop: 'bed'}}]) check(!readableHome(bad), 'damaged version 6 loot is rejected');
+  const {loot, scrap, carters, ...older} = loaded;
+  const legacy = {...older, version: 5, raids: {...older.raids, won: 7}, loads: {...older.loads, tower: 'bed'}};
+  const bytes = JSON.stringify(legacy);
+  check(readableHome(legacy), 'version 5 remains readable');
+  const upgraded = upgradeHome(legacy);
+  equal(JSON.stringify(legacy), bytes, 'loading version 5 does not mutate it');
+  const {loot: freshLoot, scrap: freshScrap, carters: freshCarters, ...kept} = upgraded;
+  equal({...kept, version: 5}, legacy, 'version 6 preserves every version 5 field including raids and the tower load');
+  equal([freshLoot, freshScrap, freshCarters], [[], 0, {began: null}], 'only the three new fields are added');
+}
 
 check(FEATURE_STATES['home-ground'] === 'dev', 'the ground is behind the development switch home-ground');
 
@@ -488,10 +541,10 @@ const memory = values => {
   check(!Object.hasOwn(CARS, 'flatbed') && !ARENA_FIELD.includes('flatbed'),
     'the flatbed is absent from the race cars and arena field');
   home = {...home, eggs: 31, hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}]};
-  check(boardLines({}, home).includes('Your shed holds 31 eggs.'), 'the board names the shed once it stands');
+  check(boardLines({}, home).includes('Your shed holds 31 eggs and 0 scrap.'), 'the board names both stores once the shed stands');
   const world = newWorld({seed: 5, night: 2}), door = buildingDoor(home.builds[1]);
   const out = run(openLand({...world, open: {...world.open, home}}), viewOf({...door, yaw: Math.PI}, {}, {interact: true}), DT);
-  check(out.requests.some(row => row.text === 'Your shed holds 31 eggs.'), 'one press at the shed door reads the store');
+  check(out.requests.some(row => row.text === 'Your shed holds 31 eggs and 0 scrap.'), 'one press at the shed door reads both stores');
   check(cues(out.events).includes(HOME_CUES.shedDoor), 'the shed door has its sound cue');
 }
 
@@ -884,6 +937,92 @@ const memory = values => {
   syncHomeGround(game, job);
   equal(job.actors.length, 0, 'ending the raid removes its combat bodies');
   equal(game.state.fighter.y, scablandsSurfaceHeightAt(door.x, door.z), 'climbing down restores the ground');
+}
+
+// Step 4B through the real home part: F release, offline/online time, reloads and a read-only look.
+{
+  const world = newWorld({seed: 5, night: 2});
+  const land = home => openLand({...world, open: {...world.open, home}});
+  const gate = {kind: 'gate', i: 8, j: 0, axis: 'x'};
+  const shed = {kind: 'shed', i: 2, j: 8, turn: 0, stage: 4};
+  const point = {...groundPoint(10, 10), yaw: .3};
+  const loot = ['bike', 'buggy', 'crate', 'crate'].map(kind => ({kind, position: {...point}, worth: kind === 'bike' ? 6 : kind === 'buggy' ? 15 : 4}));
+  const home = {...build(newHome('Haul', 1000), gate), builds: [shed], loot, eggs: 9};
+  const drive = viewOf(null, {}, {homeClock: 1000, homeVehicle: 'flatbed', carPosition: point, homeCarHeading: .7, speedKmh: 0});
+  let out = stepOpenLand(land(home), drive, 0, parts);
+  check(out.open.parts.home.prompt.includes('load this bike'), 'a stopped flatbed offers the nearby wreck');
+  out = stepOpenLand(out.open, {...drive, interact: true}, .5, parts);
+  out = stepOpenLand(out.open, drive, DT, parts);
+  equal(lootOnBed(homeOf(out.open)).length, 0, 'holding F never loads a wreck');
+  out = stepOpenLand(out.open, {...drive, interact: true}, DT, parts);
+  out = stepOpenLand(out.open, drive, DT, parts);
+  equal(lootOnBed(homeOf(out.open)).length, 1, 'one short release loads one wreck');
+  check(cues(out.events).includes(HOME_CUES.lootOn), 'the loading cue is named');
+  const saved = JSON.parse(JSON.stringify(homeOf(out.open)));
+  const reopened = stepOpenLand(land(saved), {...drive, homeClock: saved.lastSeen}, 0, parts);
+  equal(homeOf(reopened.open).loot, saved.loot, 'carried and ground loot survive a new outing');
+  const look = createHomeGroundView(), before = JSON.stringify(reopened.open);
+  look.update({open: reopened.open}, {}, 0);
+  const bike = look.group.getObjectByName('home-raid-bike');
+  const buggy = look.group.getObjectByName('home-raid-buggy');
+  const crate = look.group.getObjectByName('home-raid-crate');
+  check(bike.visible && buggy.visible && crate.visible, 'the existing raider look draws the wrecks and dropped crates');
+  check(bike.position.y > scablandsSurfaceHeightAt(point.x, point.z) + 1, 'carried loot rests on the flatbed');
+  check(bike.rotation.z !== 0 && buggy.children.some(mesh => mesh.scale.y < 1), 'wrecks tip and dent the existing models');
+  equal(JSON.stringify(reopened.open), before, 'drawing wrecks never changes the saved loot');
+  const unload = {...drive, carPosition: buildingDoor(shed)};
+  out = stepOpenLand(reopened.open, {...unload, interact: true}, DT, parts);
+  out = stepOpenLand(out.open, unload, DT, parts);
+  equal([homeOf(out.open).scrap, homeOf(out.open).eggs, out.open.parts.home.loadKg], [6, 9, 0], 'shed delivery preserves eggs and clears load mass');
+  check(cues(out.events).includes(HOME_CUES.lootOff), 'unloading names its cue');
+  look.update({open: out.open}, {}, 1);
+  check(!bike.visible, 'a delivered wreck is removed from the drawing');
+  look.dispose();
+  const news = newsBoardSpot(gate), at = {...news, x: news.x - 5, yaw: 0};
+  const read = viewOf(at, {}, {homeClock: 1000});
+  out = stepOpenLand(land(home), read, 0, parts);
+  equal(out.open.parts.home.prompt, HOME_WORDS.cartersOffer, 'the news board offers the carters');
+  // A late handoff must not count the time spent before F was pressed.
+  out = stepOpenLand(out.open, {...read, interact: true}, 600, parts);
+  const sent = JSON.parse(JSON.stringify(homeOf(out.open)));
+  equal(sent.carters.began, 1600, 'the carters begin at the supplied current moment');
+  check(cues(out.events).includes(HOME_CUES.cartersGo), 'sending names its cue');
+  out = stepOpenLand(out.open, read, 1799, parts);
+  const mid = JSON.parse(JSON.stringify(homeOf(out.open)));
+  equal(mid.scrap, 0, 'half an online hour does not deliver');
+  const backward = stepOpenLand(land(mid), {...read, homeClock: 900}, 0, parts);
+  equal(homeOf(backward.open).lastSeen, mid.lastSeen, 'a backward clock keeps the last counted moment');
+  equal(homeOf(backward.open).scrap, 0, 'a backward clock never pays early');
+  const resumed = stepOpenLand(backward.open, {...read, homeClock: 900}, 1801, parts);
+  const away = stepOpenLand(land(mid), {...read, homeClock: 5200}, 0, parts);
+  const online = stepOpenLand(out.open, read, 1801, parts);
+  for (const result of [resumed, away, online]) {
+    equal([homeOf(result.open).scrap, homeOf(result.open).loot.length, homeOf(result.open).carters.began], [24, 0, null],
+      'online, offline and backward-clock resumed play pay the same 24 scrap');
+    check(cues(result.events).includes(HOME_CUES.cartersBack), 'the return cue is named once');
+    check(boardLines(result.open.parts.home.opened, homeOf(result.open)).includes("Tin Town's carters brought in 24 scrap and kept 5 as their pay."),
+      'the board reports net scrap and rounded pay');
+  }
+  const again = stepOpenLand(land(homeOf(away.open)), {...read, homeClock: 8800}, 0, parts);
+  equal(homeOf(again.open).scrap, 24, 'reopening after completion cannot pay again');
+  check(!cues(again.events).includes(HOME_CUES.cartersBack), 'reopening does not repeat the return cue');
+  const off = stepOpenLand(land(mid), {...read, homeGround: false, homeClock: 8800}, 100, parts);
+  equal(JSON.stringify(homeOf(off.open)), JSON.stringify(mid), 'the off switch leaves version 6 and the carter job untouched');
+  const {loot: _loot, scrap: _scrap, carters: _carters, ...old} = home;
+  const version5 = {...old, version: 5};
+  equal(JSON.stringify(homeOf(stepOpenLand(land(version5), {...read, homeGround: false}, 100, parts).open)), JSON.stringify(version5),
+    'the off switch preserves version 5 byte for byte');
+  for (const piece of [null, {...loot[0], kind: {toString: null}}, {...loot[0], kind: ['bike']}]) {
+    const damaged = {...home, loot: [piece]};
+    check(!readableHome(damaged), 'damaged loot kinds are rejected without throwing');
+    equal(savedOpenRecord({story: {version: 1, open: {...world.open, home: damaged}}}), null, 'a damaged version 6 save refuses cleanly');
+    check(!settleOpenWorld({}, {...world, open: {...world.open, home: damaged}}).ok, 'a damaged version 6 record cannot replace a save');
+  }
+  for (const record of [saved, mid, homeOf(away.open)]) {
+    const settled = settleOpenWorld({}, {...world, open: {...world.open, home: record}});
+    check(settled.ok, 'version 6 settles through the actual save writer');
+    equal(savedOpenRecord(settled.profile).home, record, 'carried loot, active carters and stored scrap each survive the save round trip');
+  }
 }
 
 console.log(`Home ground: ${checks} checks passed.`);

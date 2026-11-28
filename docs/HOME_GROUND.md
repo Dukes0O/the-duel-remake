@@ -422,6 +422,21 @@ go into the real game after step 4.
   seeded yaw error ±0.08 rad and pitch error ±0.025 rad
   (`makeRng(seed + 175)`); 30 Hz weapon/projectile and raid steps through the real Scablands course, memory saves.
 
+### Step 4B as built (HOME-GROUND-4B, behind the switch `home-ground`)
+
+- Version 6 keeps every earlier field and adds `loot: [{kind, position, worth}]`, `scrap` and `carters: {began}`.
+  A ground position is `{x, z, yaw}`; `'bed'` keeps carried loot across outings. Idle carters have `began: null`.
+  Versions 1 to 5 remain unchanged when read and with the switch off. The verified career backup gates their upgrade.
+- A won real raid leaves every wrecked bike (6 scrap) and buggy (15) where it stopped, plus one or two seeded crates
+  (4 each) by the approach. Lost raids, leaving and the harmless lesson add nothing. Earlier loot stays.
+- A short F release in the stopped flatbed loads one piece within 4 m, up to three. Beside a finished shed's door,
+  one tap unloads all carried loot at full worth. Building bundles and loot share the bed; cargo adds haul weight.
+  The shed names eggs and scrap in one sentence. Wrecks reuse the raider look with dark metal and dented bodies.
+- F at the news board sends the carters. They reserve all loot, including cargo and later drops, for one real hour.
+  The builders' supplied clock and monotonic last-seen moment count time online and away without paying twice.
+  The store receives the total less `floor(total / 5)`; this outing's board reports what arrived and their pay.
+- Cues: `home.loot.on`, `home.loot.off`, `home.carters.go`, `home.carters.back`. OPEN-SOUND chooses their sounds.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.
