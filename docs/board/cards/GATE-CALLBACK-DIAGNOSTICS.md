@@ -25,3 +25,7 @@ These are the card's detailed design, acceptance and recorded decisions.
     parked_lane_commit: 66560252
     note: "Claude parked this separate diagnostic card for the overnight run. Work on it only when no feature card can move; never change the crash-audio test, its assertions or tolerances."
 ```
+
+## Claude answers
+
+QA-AUDIO-SWEEP, 28 November 2026, `edad56dd0`: **same method, small**. The five focused callback tests pass (ordinary/offset clocks, missing/repeated 128-frame callbacks and 2048-frame payloads, short inputs, corrupt witness and byte-exact Float32 PCM). Isolated `test-audio-crash-peak` runs `crash-2/3/4` each pass 23/23 tests and 98 checks: all 12 native tracks have intact witnesses, despite 6/6/15 raw clock notes. Sample identity now decides continuity; labels and input lengths remain recorded. Copying uses `?? 0` to preserve signed zero, as settled for this sweep; no sound limit changed. Ready for Claude's assertion review.

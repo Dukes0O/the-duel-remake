@@ -1,5 +1,7 @@
 # Wasteland run log
 
+28 November (QA-AUDIO-SWEEP lane sweep): repo audit reviewed; candidates remain advisory, with no runtime asset or branch removal; sizes and idle branches recorded in STATUS; this card's evidence, QA scratch and production build output recycled after the verdicts.
+
 27 November (HOME-GROUND-3B lane sweep): repo audit reviewed; no asset or branch removals in this card; sizes and idle branches recorded in STATUS; lane scratch and build output recycled after checks.
 
 27 November (OPEN-PEN-DRAIN-BANK lane sweep): repo audit reviewed; candidates advisory, no asset removals; generated build and scratch recycled; sizes and idle branches in STATUS.

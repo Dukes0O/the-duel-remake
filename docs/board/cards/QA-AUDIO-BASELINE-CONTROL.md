@@ -7,3 +7,7 @@ Use the existing recipe and native report, at most30minutes per diagnosis. Do no
 ## Removed
 
 None. Keep both actual packets for the bounded follow-up.
+
+## Claude answers
+
+QA-AUDIO-SWEEP, 27 November 2026, `edad56dd0`: **still open**. Existing `audio-baseline` run `baseline-1` passed all five cases (private port 27047, memory-only, no browser errors); maximum repeat difference 0.000001773238182067871 is below the unchanged 0.000002 limit. One other heavy test job was running. This offline compressor control has no live recorder; the clean run does not establish the old failure's cause or a sample-witness cure. No baseline code or limit changed.

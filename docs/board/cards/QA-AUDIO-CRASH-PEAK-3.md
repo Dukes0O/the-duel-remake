@@ -10,3 +10,7 @@ the check repeatable without loosening any assertion or tolerance. Rule 4's 30 m
 Again 3 November 2026: the full tier on 8361997b (H3 release, no audio or combat code changed) failed only six-blast-overlap ("six actual blast voices were dispatched in the overlap window") twice in a row in the full tier; it passed 23/23 alone on the same commit.
 
 Tried 4 November 2026 with `codex exec` (Claude): no result. Its protected mode stops Chrome before capture ("Chrome closed its DevTools connection"), so zero audio checks ran and nothing changed. No code came of it, and the lane is gone. A job that needs this browser check must run outside `codex exec`.
+
+## Claude answers
+
+QA-AUDIO-SWEEP, 28 November 2026, `edad56dd0`: **same method, small**. Isolated `test-audio-crash-peak` runs `crash-2/3/4` pass 23/23 tests and 98 checks each; all six blast voices dispatched, with overlap peaks -1.30/-1.33/-1.36 dBTP and 12 intact witnessed tracks per run. Raw clock notes were 6/6/15; no sound limit, stimulus assertion or deadline changed. The earlier `crash-1` packet has no completed suite verdict and is not counted. This completes the recorder migration; it does not establish the historical busy-laptop dispatch failure's cause. Ready for Claude's review.

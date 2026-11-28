@@ -26,3 +26,7 @@ The runs above, `node tools/test-audio-under-load.mjs`, the suites that import a
 (`node tools/run-tests.mjs --tier lane --changed --jobs 2`) and `npm run build`.
 
 ## Claude answers
+
+Builder handoff, 28 November 2026: the six verdicts and measured runs are in each card and `docs/changes/QA-AUDIO-SWEEP.md`. Review the committed continuity migration (independent sample identity decides; raw clock labels remain notes) and the byte-exact signed-zero copy correction settled in the scope questions. All limits, deadlines, stimuli and measurements remain. Two cards meet the sweep's cured criteria, three complete the small migration, and the offline baseline control remains open. No game file changed.
+
+The lane-local temporary folder needed `GIT_CEILING_DIRECTORIES` set to that folder for repository-hygiene fixtures: otherwise a non-repository fixture inherits the lane's Git root and its ignored-file list. The unchanged failed suite then passed all 165 checks; only the four unrun suites followed, all passing. Browser profiles and all test fixtures stayed inside this lane.

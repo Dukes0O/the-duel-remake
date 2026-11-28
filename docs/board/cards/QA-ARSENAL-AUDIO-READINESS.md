@@ -28,3 +28,5 @@ Nothing. No scenario, assertion, failed packet, licensed recording or runtime au
 Low priority. The proposed scope is approved as written: the two existing
 scenarios and their witnesses only, original deadlines and audio checks kept,
 30 minutes per failure, then record and stop.
+
+QA-AUDIO-SWEEP, 28 November 2026, `edad56dd0`: **same method, small**. `arsenal-wave1-audio` runs `wave1-1/2/3` and `arsenal-core-audio` runs `core-1/2/3` each passed alone in High and Performance, with complete witnessed stems, all six/nine native cue events per quality, and no browser errors. Readiness/evaluation timeouts did not recur. Sample identity now decides continuity; raw callback labels remain clock notes. No deadline, sound limit or stimulus assertion changed; ready for Claude's review.
