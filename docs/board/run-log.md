@@ -1851,3 +1851,5 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge HOME-GROUND-4 (Codex Astra, laptop lane): the watchtower, play-time raids, the unlosable first bike and raids on his fence; the bike's look goes to a second round (HOME-RAID-BIKE-LOOK)
 - Merge QA-AUDIO-SWEEP (Codex, laptop lane): the Arsenal and crash audio meters trust the sample witness; closed QA-AUDIO-CLOCK, QA-P4-AUDIO-FRAME-GAP, GATE-CALLBACK-DIAGNOSTICS, QA-ARSENAL-AUDIO-READINESS and QA-AUDIO-CRASH-PEAK-3; QA-AUDIO-BASELINE-CONTROL stays open
 - Merge HOME-GROUND-4B (Codex Astra, laptop lane): a won raid's wrecks and crates, fetched on the flatbed or by Tin Town's carters for a fifth; scrap in the store
+- Janitor HOME-RAID-BIKE-LOOK (28 November): 5,842 tracked files, 900.7 MiB; no unused module candidates. Uncertain assets left intact, generated build and QA scratch recycled; one 383 KB comparison sheet retained. Existing size overruns and idle branches remain on STATUS; lane retained for Claude review.
+- Merge HOME-RAID-BIKE-LOOK (Codex Astra, laptop lane): the raid bike, round 2, passes as a worn trail bike (bike-round-2.jpg)

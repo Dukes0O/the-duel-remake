@@ -1105,19 +1105,6 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
-  - id: HOME-RAID-BIKE-LOOK
-    title: "The Rats' raid bike, round 2: a real, worn trail bike, not a toy"
-    owner: "codex"
-    model: "astra"
-    lane: "ART"
-    size: "S"
-    status: "building"
-    claimed_by: "Codex Astra, laptop lane, 28 November 2026"
-    needs: []
-    locks: []
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-RAID-BIKE-LOOK.md"
-
   - id: HOME-GROUND-5
     title: "Home Ground step 5: the well he drills with Tin Town's rig, the hand pump and the tank"
     owner: "codex"
