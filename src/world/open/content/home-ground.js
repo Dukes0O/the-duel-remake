@@ -23,6 +23,12 @@ export const HOME_PIECES = Object.freeze({
 // up like a panel, and picked up again free.
 // Its size is HOME-GROUND-LOOK-1's crate on its side on two blocks (home-hens-look.js, HOME_NEST_SIZE), with room round it.
 export const HOME_BOX = Object.freeze({id: 'box', name: 'nest box', hammer: 2.5, size: .5, height: .55, upCue: 'home.box.up'});
+export const HOME_BUILDS = Object.freeze({
+  coop: Object.freeze({name: 'coop', width: 2, depth: 2, hammer: 6, hens: 6, kg: 320, cue: 'home.coop.stage'}),
+  shed: Object.freeze({name: 'shed', width: 2, depth: 3, hammer: 6, kg: 440, cue: 'home.shed.stage'}),
+});
+export const HOME_LOAD_STACK = Object.freeze({x: 5975, z: 76});
+export const HOME_STAGES = Object.freeze(['floor', 'frame', 'walls', 'roof']);
 // Auntie Solder has the panels stacked at the ground for him: 76 fence the edge round the gate, and four are over.
 export const HOME_PANELS = 80;
 // The lane runs from the gate straight across the ground to the far fence, as wide as the gate (section 6).
@@ -81,6 +87,8 @@ export const HOME_CUES = Object.freeze({
   // HOME-GROUND-2
   cluck: 'home.hen.cluck', lay: 'home.hen.lay', gather: 'home.egg.gather', boxFull: 'home.box.full',
   boardRead: 'home.board.read', boxUp: 'home.box.up', crateOpen: 'home.crate.open',
+  loadOn: 'home.load.on', loadOff: 'home.load.off', coopStage: 'home.coop.stage', shedStage: 'home.shed.stage',
+  roost: 'home.hens.roost', shedDoor: 'home.shed.door',
 });
 
 // What he reads. Every line is a whole sentence.
@@ -128,6 +136,19 @@ export const HOME_WORDS = Object.freeze({
   crateWaiting: 'Moss has brought two hens in a crate. Press F to talk to him.',
   firstBox: 'Your hens need somewhere to lay. Press B, then G until you hold an old crate, and hold B to make a nest box.',
   boardHint: 'Press F to read the board again.',
+  buildMark: 'Press B to mark the ground for your {piece}. Press R to turn it and G to change it.',
+  buildLift: 'Press B to pick up this mark before you raise the floor.',
+  buildLoad: 'Bring the tin for your {piece} to this mark on the flatbed.',
+  buildStage: 'Hold B to raise the {stage} of your {piece}.',
+  buildDone: 'Your {piece} is finished.',
+  buildExists: 'You have already marked a place for this building.',
+  loadOn: 'Press F to load the tin for the {piece} onto the flatbed.',
+  loadOff: 'Press F to set the tin for the {piece} down beside its mark.',
+  needsFlatbed: 'This needs a truck with a bed. Go out in Tin Town\'s flatbed to bring it home.',
+  gatherCoop: 'Press F to gather the eggs from the coop.',
+  shedDoor: 'Press F to see what your shed holds.',
+  shedStore: 'Your shed holds {count} eggs.',
+  shedStoreOne: 'Your shed holds one egg.',
 });
 
 // What the board at the gate says (src/world/open/home-rule.js, boardLines). Every line is a whole sentence.
@@ -147,6 +168,7 @@ export const BOARD_WORDS = Object.freeze({
   storeNone: 'Your store has no eggs in it yet.',
   fenceFirst: 'Close your fence all the way round, and Moss will bring you two hens.',
   crate: 'Moss has left two hens in a crate by your gate.',
+  firstBuildings: 'Your hens need a coop before the Rats find them. Auntie Solder has left tin for a coop and a shed at Tin Town\'s gate. Go out in Tin Town\'s flatbed to bring it home.',
 });
 
 // Auntie Solder's one talk. The choice gives him the ground (src/world/open/parts/home.js).

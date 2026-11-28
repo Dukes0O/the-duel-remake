@@ -8,9 +8,10 @@ export const OPEN_ROAM_ID = 'open-roam';
 
 // HOME-GROUND-2: `homeClock` is the laptop's clock in seconds since 1970, read once as the outing opens, only while the
 // switch `home-ground` is on; the ground's part takes the time since his last visit from it.
-export function openRoamJob(profile, seed = 0, {playerName, homeClock, ...routine} = {}) {
+export function openRoamJob(profile, seed = 0, {playerName, homeClock, vehicle, ...routine} = {}) {
   const world = {...worldForProfile(profile, seed), ...routine};
   return {id: OPEN_ROAM_ID, name: 'Out in the open', title: 'Out in the open', seed: world.seed,
+    ...(vehicle ? {vehicle} : {}),
     open: {world, dayClock: true, playerName, ...(Number.isFinite(homeClock) ? {homeClock} : {})},
     steps: [{kind: 'roam', carStart: NIGHT_2_SITES.car,
       footStart: {...NIGHT_2_SITES.hearthFront.position, heading: Math.PI}}]};

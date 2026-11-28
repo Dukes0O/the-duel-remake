@@ -220,8 +220,8 @@ function haulShedSentence(event) {
   const how = event.cause === 'rough' ? 'rattled loose and fell off' : event.cause === 'fall' ? 'flew off in the fall' : 'fell off the back';
   return `${what} ${how}. That is ${groupKg(event.kg)} kg lost.`;
 }
-function syncHaulVehicle(worldJob) {
-  const vehicle = worldJob.vehicle, loadKg = worldJob.job.stepState?.loadKg;
+function syncHaulVehicle(worldJob, loadKg = worldJob.job.stepState?.loadKg) {
+  const vehicle = worldJob.vehicle;
   if (!vehicle || !Number.isFinite(loadKg) || loadKg === vehicle.loadKg) return;
   worldJob.vehicle = loadKg > vehicle.loadKg ? loadWorkVehicle(vehicle, loadKg - vehicle.loadKg).vehicle
     : unloadWorkVehicle(vehicle, vehicle.loadKg - loadKg).vehicle;
@@ -380,7 +380,8 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
-  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true});
+  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true ||
+    (definition.id === 'open-roam' && definition.vehicle === 'flatbed' && duel.featureFlags?.enabled?.('home-ground') === true)});
   // SHIPS-DECKS: a car lent for this run (src/world/jobs/job-vehicle.js) is said as the job starts, and is never saved.
   if (definition.vehicleLent?.lineId) sayLine(duel, worldJob, definition.vehicleLent.lineId);
   if(townWorldJob(definition))duel.course.townLayout=definition.layout??null;
@@ -2268,8 +2269,9 @@ export function stepWorldJob(duel, dt) {
       onRoad: ground.id === 'road', ashHit: worldJob.ashHit, clockSec: worldJob.clockSec, jobEvents: worldJob.openJobEvents ?? [],
       // HOME-GROUND-1: the player's own ground reads its switch, the keys held this tick and a name typed in its box;
       // HOME-GROUND-2: and the clock read once as the outing opened (src/app.js).
-      ...(duel.featureFlags?.enabled('home-ground') === true ? {homeGround: true, homeKeys: homeKeysOf(state),
-        homeName: worldJob.homeNameInput ?? null, homeClock: worldJob.definition.open?.homeClock ?? null} : {})}, dt);
+      ...(openRoam && duel.featureFlags?.enabled('home-ground') === true ? {homeGround: true, homeKeys: homeKeysOf(state),
+        homeName: worldJob.homeNameInput ?? null, homeClock: worldJob.definition.open?.homeClock ?? null,
+        homeVehicle: worldJob.vehicle?.id ?? null, homeCarHeading: worldPose(duel, state).heading} : {})}, dt);
     if (worldJob.homeNameInput) worldJob.homeNameInput = null;
     worldJob.ashHit = false;
     const clearings = openStep.open.parts.sites?.clearings;
@@ -2289,6 +2291,10 @@ export function stepWorldJob(duel, dt) {
   worldJob.gasCarContacts = [];
   routeWorldNight2(duel, worldJob, previousStep, next);
   worldJob.job = next;
+  if (worldJob.open && currentStep?.kind === 'roam' && worldJob.vehicle?.id === 'flatbed' &&
+      duel.featureFlags?.enabled('home-ground') === true) {
+    syncHaulVehicle(worldJob, worldJob.open.parts.home?.loadKg ?? 0);
+  }
   if (currentStep?.kind === 'haul') {
     syncHaulVehicle(worldJob);
     for (const event of next.events) playHaulEvent(duel, worldJob, event, point);

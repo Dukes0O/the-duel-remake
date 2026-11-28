@@ -16,7 +16,7 @@ import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, DAY_SECONDS, HEN_SETTLE_SECONDS, H
   MOSS_HENS, MOSS_HENS_ID, MOSS_TALK} from '../src/world/open/content/home-ground.js';
 import {awayFor, boardLines, boxInLand, boxRefusal, boxSlotInFront, build, refusal, buildBox, crateSpot, cratesLeft, facedThing, fenceClosed,
   gatherBox, giveHens, groundPoint, hensWaiting, homeSolids, liftBox, nameHen, newHome, newsBoardSpot, readableHome, ripen,
-  upgradeHome} from '../src/world/open/home-rule.js';
+  upgradeHome, markBuild, raiseBuild, buildInLand, coopBoxes, gatherCoop, roostAt} from '../src/world/open/home-rule.js';
 import {selectFirstPersonPresentation} from '../src/first-person-presentation.js';
 import {hammerSwing} from '../src/first-person-gear.js';
 import {footActionPresentation} from '../src/combat-hud.js';
@@ -303,7 +303,7 @@ const partOf = open => open.parts.home;
   // The board shows itself as he comes to the gate, in three or four plain sentences.
   out = run(out.open, viewOf({x: news.x, z: news.z + 6, yaw: 0}, {}, {homeClock: seen + 1.5 * DAY_SECONDS}), DT);
   const lines = partOf(out.open).board?.lines;
-  equal(lines, ['You were away for 1 day and 12 hours.', 'Your hens laid 18 eggs while you were gone.', BOARD_WORDS.full, BOARD_WORDS.storeNone],
+  equal(lines, ['You were away for 1 day and 12 hours.', 'Your hens laid 18 eggs while you were gone.', BOARD_WORDS.full, BOARD_WORDS.storeNone, BOARD_WORDS.firstBuildings],
     'the board says how long he was away, what was laid, that the boxes are full and what is in his store');
   check(lines.every(line => /^[A-Z].*\.$/.test(line) && !line.includes('—')), 'every line is a plain sentence');
   check(cues(out.events).includes(HOME_CUES.boardRead), 'the board has its cue');
@@ -312,7 +312,7 @@ const partOf = open => open.parts.home;
   out = run(out.open, viewOf({x: news.x, z: news.z + .5, yaw: 0}), DT);
   equal(partOf(out.open).prompt, HOME_WORDS.boardHint, 'at the board he is told F reads it again');
   out = run(out.open, viewOf({x: news.x, z: news.z + .5, yaw: 0}, {}, {interact: true}), DT);
-  check(partOf(out.open).board?.lines.length === 4, 'F at the board shows it again');
+  equal(partOf(out.open).board?.lines, lines, 'F at the board shows all of the same news again');
   // The clock set back: nothing lost, nothing laid.
   out = run(landWith(opened), viewOf(far, {}, {homeClock: seen}), DT);
   equal(homeOf(out.open).boxes, opened.boxes, 'a clock set back loses no egg');
@@ -393,9 +393,9 @@ const memory = values => {
   const on = run(beginOpenLand({id: 'roam-on', steps: [{kind: 'roam'}], open: {world}}), viewOf({...groundPoint(10, 10), yaw: 0}, {}, {homeClock: 1_800_000_000}), DT);
   const upgraded = homeOf(on.open);
   equal({version: upgraded.version, pieces: upgraded.pieces, marks: upgraded.marks, name: upgraded.name},
-    {version: 2, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
+    {version: 3, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
   equal([upgraded.hens, upgraded.boxes, upgraded.eggs, upgraded.lastSeen], [[], [], 0, 1_800_000_000], 'and gains no hens yet, and the last visit');
-  equal(upgradeHome(stepOne), {...stepOne, version: 2, hens: [], boxes: [], eggs: 0, lastSeen: null}, 'the upgrade adds only step 2\'s fields');
+  equal(upgradeHome(stepOne), {...newHome('G-Town'), pieces: stepOne.pieces}, 'the upgrade adds the step 2 and 3 fields and keeps every old field');
 
   // A step 2 ground, through a real outing's opening, saved and read back from memory storage.
   const job = openRoamJob(oldProfile, 0, {playerName: 'Gratian', homeClock: 1_800_000_000});
@@ -425,6 +425,78 @@ const memory = values => {
     ['three hens', {...home, hens: [...home.hens, home.hens[0]]}],
   ]) check(!readableHome(bad), what + ' is not readable');
   check(readableHome({...home, lastSeen: null}) && readableHome({...home, lastSeen: 9e12}), 'a last visit unknown, or far ahead, is readable');
+}
+
+// Step 3: the coop's three nests use the same laying, gathering and saved egg records.
+{
+  let home = markBuild(withBoxes(giveHens(fenced()), [[3, 4]]), {kind: 'coop', i: 2, j: 8, turn: 1, stage: 0});
+  home = {...home, loads: {...home.loads, coop: {i: 2, j: 8}}};
+  for (let n = 0; n < 4; n++) home = raiseBuild(home, 'coop');
+  equal(coopBoxes(home).length, 3, 'a finished coop has three built-in nests');
+  equal(cratesLeft(home), 1, 'the coop uses no old crates');
+  const full = ripen(home, 12 * DAY_SECONDS).home;
+  equal(full.boxes.map(box => box.eggs), [18, 18, 18, 18], 'every standalone and built-in nest holds eighteen eggs');
+  const gathered = gatherCoop(full);
+  equal([gathered.eggs, gathered.boxes.map(box => box.eggs)], [54, [18, 0, 0, 0]], 'gathering the coop empties all three nests and leaves the old crate alone');
+  equal(liftBox(full, 1), full, 'a built-in nest cannot be picked up as a spare crate');
+  check(readableHome(full) && readableHome(gathered), 'full and gathered coop records can both be saved');
+  const split = ripen(ripen(home, DAY_SECONDS).home, DAY_SECONDS).home;
+  equal(split, ripen(home, 2 * DAY_SECONDS).home, 'the coop lays the same eggs over a split stretch');
+  check(roostAt(home, 0, 'dusk') && roostAt(home, 1, 'dark'), 'hens have a place inside at dusk and in the dark');
+  equal(roostAt(home, 0, 'dawn'), null, 'at dawn the hens come out');
+  equal(roostAt(home, 6, 'dusk'), null, 'the coop houses at most six hens');
+  const at = buildInLand(home.builds[0]);
+  let out = run(landWith(home), viewOf({...at, yaw: 0}, {}, {partOfDay: 'dusk'}), 100);
+  check(partOf(out.open).flock.every(hen => hen.mode === 'roost'), 'in play the hens walk into the coop at dusk');
+  equal(cues(out.events).filter(name => name === HOME_CUES.roost).length, 2, 'each hen has one roosting cue on arrival');
+  out = run(out.open, viewOf({...at, yaw: 0}, {}, {partOfDay: 'dawn'}), 1);
+  check(partOf(out.open).flock.every(hen => hen.mode !== 'roost'), 'at dawn both hens leave their roost');
+  const before = JSON.stringify(full);
+  out = run(landWith(full), viewOf({...at, yaw: 0}, {}, {interact: true}), DT);
+  equal(homeOf(out.open).eggs, 54, 'one press of F at the coop gathers its three nests');
+  equal(JSON.stringify(full), before, 'neither laying nor interaction mutates the input record');
+  // Save a completed coop, a half-raised shed, a named flock, both loads and the truck through real profile storage.
+  let kept = markBuild(full, {kind: 'shed', i: 13, j: 8, turn: 3, stage: 0});
+  kept = {...kept, loads: {...kept.loads, shed: {i: 13, j: 8}}, flatbed: {x: 5940, z: 90, yaw: .5}};
+  kept = raiseBuild(raiseBuild(kept, 'shed'), 'shed');
+  kept = nameHen(kept, 0, 'Pepper');
+  const store = memory(fixture), registry = loadPlayers(store), profile = activePlayer(registry).profile;
+  const original = worldForProfile(profile, 0);
+  const changed = applyEffects(original, {id: 'home-ground/buildings', effects: [{type: 'home', record: kept}]}).world;
+  const saved = settleOpenWorld(profile, changed, {atStart: original,
+    savedAtStart: {ledger: profile.story.ledger, open: savedOpenRecord(profile)}});
+  check(saved.ok && saved.changed, 'version 3 settles through the existing home effect');
+  check(savePlayers(replacePlayerProfile(registry, registry.activePlayerId, saved.profile), store), 'version 3 writes to memory-only storage');
+  const loaded = activePlayer(loadPlayers(store)).profile;
+  equal(savedOpenRecord(loaded).home, kept, 'reload keeps every building stage, load, truck pose, name, due and egg');
+  const withoutStory = value => { const {story, ...rest} = value; return rest; };
+  equal(withoutStory(loaded), withoutStory(profile), 'saving buildings changes no money, cars, records or other profile fields');
+}
+
+// A literal version 2 stays byte-for-byte intact when read or when the switch is off.
+{
+  const {builds, loads, flatbed, ...oldFields} = withBoxes(giveHens(fenced()), [[3, 4]]);
+  const old = {...oldFields, version: 2, eggs: 31, lastSeen: 1800000000};
+  old.hens[0] = {...old.hens[0], name: 'Pepper', due: 123}; old.boxes[0].eggs = 17;
+  const before = JSON.stringify(old), world = landWith(old).world;
+  check(readableHome(old), 'version 2 remains readable');
+  for (const builds of [{}, 'damaged', [null]]) {
+    const legacy = {...old, builds};
+    check(readableHome(legacy), 'a version 2 reader ignores an unknown step 3 field');
+    equal(savedOpenRecord({story: {version: 1, open: {...world.open, home: legacy}}}).home, legacy,
+      'unknown step 3 fields cannot throw or hide an older save');
+  }
+  equal(savedOpenRecord({story: {version: 1, open: world.open}}).home, old, 'reading a version 2 record adds nothing');
+  const off = run(landWith(old), {...viewOf({...groundPoint(2, 2), yaw: 0}), homeGround: false}, 1);
+  equal(JSON.stringify(homeOf(off.open)), before, 'the switch off preserves version 2 exactly');
+  const upgraded = upgradeHome(old);
+  equal({...upgraded, version: 2, builds: undefined, loads: undefined, flatbed: undefined},
+    {...old, builds: undefined, loads: undefined, flatbed: undefined}, 'upgrading preserves every version 2 field');
+  equal(upgradeHome(upgraded), upgraded, 'upgrading version 3 changes nothing');
+  equal(JSON.stringify(old), before, 'the old record is not changed in place');
+  for (const bad of [null, {}, {coop: 'bed', shed: 'bed'}, {coop: {i: -1, j: 1}, shed: 'stack'}])
+    check(!readableHome({...upgraded, loads: bad}), 'invalid load records are rejected');
+  check(!readableHome({...upgraded, flatbed: {x: NaN, z: 1, yaw: 0}}), 'a flatbed without a finite position is rejected');
 }
 
 console.log(`Home hens: ${checks} checks passed.`);

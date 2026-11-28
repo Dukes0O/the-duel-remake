@@ -272,6 +272,12 @@ test('the view draws the truck only for a work vehicle with the switch on, and l
   }
   assert.equal(loads.length, 0, 'nothing loads until a truck is driven');
   assert.equal(camera.layers.isEnabled(WORK_VEHICLE_LAYER), false);
+  // HOME-GROUND-3: with only Home Ground's switch on, Tin Town's flatbed on an open outing is drawn; nothing else is.
+  const home = {enabled:name => name === 'home-ground'}, flatbed = startWorkVehicle('flatbed', {enabled:true});
+  const openJob = (vehicle, id = 'open-roam') => ({arena:{mode:'world-job', worldJob:{vehicle, definition:{id}}}});
+  assert.equal(workVehicleToDraw(openJob(flatbed), home), flatbed, 'the flatbed outing draws the flatbed');
+  for (const [state, flags] of [[openJob(flatbed), off], [openJob(flatbed, 'night-2'), home], [openJob(fire), home]])
+    assert.equal(workVehicleToDraw(state, flags), null, 'only the flatbed on an open outing with Home Ground on');
   const state = jobState(fire), before = JSON.stringify(state);
   view.update({scene, player, camera, state, flags:on});
   assert.equal(player.visible, false, 'while the truck loads, no sports car is drawn');

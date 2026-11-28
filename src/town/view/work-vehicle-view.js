@@ -56,8 +56,13 @@ export function douseFiresToDraw(state) {
 export const truckStreamToDraw = state => state?.arena?.mode === 'world-job' && state.arena.worldJob?.truckStream?.to || null;
 
 export function workVehicleToDraw(state, flags) {
-  if (flags?.enabled?.('wasteland-town') !== true || state?.arena?.mode !== 'world-job') return null;
-  return state.arena.worldJob?.vehicle ?? null;
+  if (state?.arena?.mode !== 'world-job') return null;
+  const worldJob = state.arena.worldJob;
+  // HOME-GROUND-3: Tin Town's flatbed on an open outing is drawn with Home Ground's switch alone.
+  const homeFlatbed = flags?.enabled?.('home-ground') === true && worldJob?.definition?.id === 'open-roam' &&
+    worldJob?.vehicle?.id === 'flatbed';
+  if (flags?.enabled?.('wasteland-town') !== true && !homeFlatbed) return null;
+  return worldJob?.vehicle ?? null;
 }
 
 export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadAsync(url).then(result => result.scene)} = {}) {
