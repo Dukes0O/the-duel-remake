@@ -1717,7 +1717,7 @@ const memory = values => {
   check(homeFolkOffer(haven, 'slack'), 'Slack may come from a safe haven after his good road ending');
   check(!homeFolkOffer({...haven, ledger: {...haven.ledger, marks: [...haven.ledger.marks, 'runaway/told-where']}}, 'slack'),
     'telling Clinker where Slack went does not count as a safe road ending');
-  check(!homeFolkOffer({...haven, ledger: {...haven.ledger, marks: ['runaway/sent-alone']}}, 'slack'),
+  check(!homeFolkOffer({...haven, ledger: {...haven.ledger, marks: ['runaway/hidden', 'runaway/sent-alone']}}, 'slack'),
     'an uncertain road alone does not bring Slack');
   const bare = {...newHome('People', 1000), pieces: [{kind: 'gate', i: 8, j: 0, axis: 'x'}], builds: [hut]};
   for (const row of HOME_FOLK) {

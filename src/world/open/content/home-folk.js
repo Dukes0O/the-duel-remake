@@ -29,7 +29,8 @@ export const HOME_FOLK = Object.freeze([
 ]);
 export const homeFolkOffer = (world, id) => {
   const row = HOME_FOLK.find(row => row.id === id), story = row && world.open.threads[row.thread];
-  if (id === 'slack' && story?.end === 'sent-on' && world.ledger.marks.includes('runaway/told-where')) return false;
+  if (id === 'slack' && story?.end === 'sent-on') return world.ledger.marks.includes('runaway/sent-on') &&
+    !world.ledger.marks.includes('runaway/told-where');
   return !!story && row.ends.includes(story.end) && row.marks.some(mark => world.ledger.marks.includes(mark));
 };
 export const hasHomeFolk = (home, id) => !!home?.folk?.some(row => row.id === id && row.arrived &&
