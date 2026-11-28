@@ -31,3 +31,9 @@ each changed job; the replay and combat replay guards, with any moved Easy pin r
 numbers (rule 17).
 
 ## Claude answers
+
+**28 November 2026, the story-only hook** (the questions file, commit `75a091448`): approved. The Story card's job marker
+goes through the app's start hooks, is checked against the chapter's mode, venue and course, and changes numbers only on
+Easy with `water-road` on; warlord fights get the same context. Rule 18 review, written here: the rates check's old
+8-in-10 assertion is replaced by this card's target (about 5 to 7 in 10 assisted, never below 4, and at least 2 in 10 for
+a driver no better than an Easy computer car). That follows Kyle's ruling of 20 November 2026; it is not a loosening.
