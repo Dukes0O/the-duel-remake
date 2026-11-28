@@ -52,6 +52,13 @@ export const HAMMER_STRIKE_SECONDS = .6;
 export const HOME_REACH = 1.6;
 export const HOME_BOX_REACH = 3;
 export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60, tower: 45 * 60});
+export const HOME_LOOT = Object.freeze({
+  bike: Object.freeze({worth: 6, kg: 110}),
+  buggy: Object.freeze({worth: 15, kg: 480}),
+  crate: Object.freeze({worth: 4, kg: 60}),
+});
+export const HOME_CARTER_SECONDS = 60 * 60;
+export const HOME_LOOT_CAPACITY = 3;
 // The cursor from above moves this fast, in metres a second.
 export const HOME_CURSOR_SPEED = 12;
 // The camera from above: straight down over the middle of the ground, high enough to see all of it with room round it.
@@ -108,6 +115,7 @@ export const HOME_CUES = Object.freeze({
   raidCall: 'home.raid.call', raidBike: 'home.raid.bike', raidRam: 'home.raid.ram',
   fenceFall: 'home.fence.fall', fenceUp: 'home.fence.up', towerClimb: 'home.tower.climb',
   raidWon: 'home.raid.won', raidLost: 'home.raid.lost',
+  lootOn: 'home.loot.on', lootOff: 'home.loot.off', cartersGo: 'home.carters.go', cartersBack: 'home.carters.back',
 });
 
 // What he reads. Every line is a whole sentence.
@@ -168,8 +176,15 @@ export const HOME_WORDS = Object.freeze({
   needsFlatbed: 'This needs a truck with a bed. Go out in Tin Town\'s flatbed to bring it home.',
   gatherCoop: 'Press F to gather the eggs from the coop.',
   shedDoor: 'Press F to see what your shed holds.',
-  shedStore: 'Your shed holds {count} eggs.',
-  shedStoreOne: 'Your shed holds one egg.',
+  shedStore: 'Your shed holds {count} eggs and {scrap} scrap.',
+  shedStoreOne: 'Your shed holds one egg and {scrap} scrap.',
+  lootOn: 'Press F to load this {piece} onto the flatbed.',
+  lootOff: 'Press F to put all the loot in your shed.',
+  lootFull: 'The flatbed holds three pieces. Take them to your shed.',
+  lootStored: 'You put {count} scrap in your store.',
+  cartersOffer: 'Press F to send Tin Town\'s carters for the loot. They keep a fifth as their pay.',
+  cartersBusy: 'Tin Town\'s carters are fetching the loot. They will bring it home within an hour.',
+  cartersBack: 'Tin Town\'s carters brought in {scrap} scrap and kept {pay} as their pay.',
   crewHand: 'Press F to hand the {piece} to the builders.',
   crewBusy: 'Rook and Wren are raising your {piece}. You can help them by hammering a stage yourself.',
   towerUp: 'Press F to climb your watchtower.',

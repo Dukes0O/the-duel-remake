@@ -34,7 +34,8 @@ import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoo
   groundPoint, hensWaiting, homeSolids, lift, liftBox, markAt, nameHen, newHome, newsBoardSpot, outlineFor, outsideBy,
   panelsLeft, pieceInLand, readableHome, ripen, slotAt, slotInFront, toGrid, toggleMark, upgradeHome,
   buildBounds, buildInLand, buildingDoor, buildSlot, buildRefusal, markBuild, liftBuild, buildHasLoad, raiseBuild, gatherCoop, shedWords, roostAt,
-  homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome, standPanel} from '../home-rule.js';
+  homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome, standPanel,
+  lootOnBed, cartersBusy, cartersOffer, sendCarters, finishCarters} from '../home-rule.js';
 import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, raidInterval, towerAtLadder, stepHomeTower} from '../home-raid-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {makeRng} from '../../../rng.js';
@@ -227,12 +228,14 @@ export const homePart = {
       const moment = clock === null ? null : clock + now;
       const counted = awayFor(kept.lastSeen, moment);
       const ripe = ripenHome(kept, counted);
-      const opened = openHomeSitting({...ripe.home,
+      const returned = finishCarters(ripe.home, moment === null ? kept.lastSeen : Math.max(moment, kept.lastSeen ?? 0));
+      if (returned.receipt) events.push(cue(HOME_CUES.cartersBack));
+      const opened = openHomeSitting({...returned.home,
         lastSeen: moment === null ? ripe.home.lastSeen : Math.max(moment, ripe.home.lastSeen ?? 0)}, context.seed);
       next.clockBase = opened.lastSeen;
       next.openedAt = now;
       next.opened = {away: counted, long: Number.isFinite(kept.lastSeen) && moment !== null && moment - kept.lastSeen > AWAY_LONGEST,
-        finished: ripe.finished, laid: ripe.laid.length, hadHens: kept.hens.length > 0};
+        finished: ripe.finished, laid: ripe.laid.length, hadHens: kept.hens.length > 0, carters: returned.receipt};
       next.ripenedAt = now;
       if (JSON.stringify(opened) !== JSON.stringify(record)) { record = opened; choices.push(choice('opened', record)); }
     }
@@ -246,6 +249,13 @@ export const homePart = {
       if (ripe.finished) { next.opened = {...next.opened, finished: ripe.finished}; events.push(cue(HOME_CUES.crewDone)); }
       next.ripenedAt = now;
       record = {...ripe.home, lastSeen: next.clockBase === null ? ripe.home.lastSeen : next.clockBase + now - next.openedAt};
+      const returned = finishCarters(record, record.lastSeen);
+      record = returned.home;
+      if (returned.receipt) {
+        next.opened = {...next.opened, carters: returned.receipt};
+        events.push(cue(HOME_CUES.cartersBack));
+        requests.push(say('carters-back', words('cartersBack', returned.receipt)));
+      }
       return ripe.laid;
     };
     const gap = now - next.ripenedAt;
@@ -262,7 +272,7 @@ export const homePart = {
       choices.push(choice('laid', record));
     }
 
-    if (record.crew.job && now > next.ripenedAt) {
+    if ((record.crew.job || cartersBusy(record)) && now > next.ripenedAt) {
       catchUp();
       choices.push(choice('crew-clock', record));
     }
@@ -280,19 +290,26 @@ export const homePart = {
         choices.push(choice('flatbed', record));
       }
     }
-    if (record.boxes.length && !view.onFoot) {
+    if ((record.boxes.length || record.loot.length) && !view.onFoot) {
       const moved = transferHomeLoad(record, {vehicle: view.homeVehicle, position: view.carPosition, speedKmh: view.speedKmh});
       if (moved !== record) {
         const kind = Object.keys(HOME_BUILDS).find(key => moved.loads[key] !== record.loads[key]);
-        const loading = moved.loads[kind] === 'bed';
-        loadPrompt = words(loading ? 'loadOn' : 'loadOff', {piece: kind});
+        const loot = !kind;
+        const loading = loot ? moved.loot.length === record.loot.length : moved.loads[kind] === 'bed';
+        const piece = loot && loading ? record.loot.find((row, index) => row !== moved.loot[index]).kind : kind;
+        loadPrompt = words(loot ? loading ? 'lootOn' : 'lootOff' : loading ? 'loadOn' : 'loadOff', {piece});
         if (loadTap) {
+          if (loot && !loading) requests.push(say('loot-stored', words('lootStored', {count: moved.scrap - record.scrap})));
           record = moved;
           choices.push(choice('load', record));
-          events.push(cue(loading ? HOME_CUES.loadOn : HOME_CUES.loadOff));
+          events.push(cue(loot ? loading ? HOME_CUES.lootOn : HOME_CUES.lootOff : loading ? HOME_CUES.loadOn : HOME_CUES.loadOff));
           loadPrompt = '';
         }
-      } else if (view.homeVehicle !== 'flatbed' && view.carPosition && Object.keys(HOME_BUILDS).some(kind => {
+      } else if (drivingFlatbed && cartersBusy(record)) loadPrompt = HOME_WORDS.cartersBusy;
+      else if (drivingFlatbed && lootOnBed(record).length === 3) loadPrompt = HOME_WORDS.lootFull;
+      else if (view.homeVehicle !== 'flatbed' && view.carPosition && record.loot.some(row => row.position !== 'bed' &&
+        distance(view.carPosition, row.position) <= 4)) loadPrompt = HOME_WORDS.needsFlatbed;
+      else if (view.homeVehicle !== 'flatbed' && view.carPosition && Object.keys(HOME_BUILDS).some(kind => {
         if (record.builds.some(row => row.kind === kind && row.stage > 0 && row.stage < 4)) return false;
         const location = record.loads[kind];
         const at = location === 'stack' ? HOME_LOAD_STACK : typeof location === 'object' ? groundPoint(location.i, location.j) : null;
@@ -391,11 +408,16 @@ export const homePart = {
       .filter(row => row.far <= HEN_LOOK && row.angle <= .5).sort((a, b) => a.far - b.far)[0] ?? null) : null;
 
     const offer = crewOffer(record);
-    const newsPrompt = offer ? words('crewHand', {piece: offer.kind}) : record.crew.job ? words('crewBusy', {piece: record.crew.job.kind}) : HOME_WORDS.boardHint;
+    const collect = cartersOffer(record);
+    const newsPrompt = collect ? HOME_WORDS.cartersOffer : offer ? words('crewHand', {piece: offer.kind}) :
+      cartersBusy(record) ? HOME_WORDS.cartersBusy : record.crew.job ? words('crewBusy', {piece: record.crew.job.kind}) : HOME_WORDS.boardHint;
     let note = '';
     if (fighter && !next.naming && !next.tower && !state.tower && !ladder && pressed('interact')) {
       if (atNews) {
-        if (offer) {
+        if (collect) {
+          catchUp(); record = sendCarters(record, record.lastSeen);
+          choices.push(choice('carters-go', record)); events.push(cue(HOME_CUES.cartersGo));
+        } else if (offer) {
           catchUp(); record = handToCrew(record, offer, record.lastSeen);
           choices.push(choice('crew-hand', record)); events.push(cue(HOME_CUES.crewArrive));
         }

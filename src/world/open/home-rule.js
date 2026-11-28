@@ -7,6 +7,8 @@
 // A panel covers one step; the gate covers four, and must stand in the outside fence.
 //
 // THE RECORD kept in the save (world.open.home):
+//   version 6 adds loot: [{kind, position: {x, z, yaw} | 'bed', worth}], scrap, carters: {began: seconds | null}.
+//   version 5 adds raids, a tower load and fallen panels. Only the enabled part upgrades older records.
 //   version 4 adds crew: {job: {kind, i, j} | null, began: real seconds | null, done: work seconds}.
 //   version 3 adds builds: [{kind, i, j, turn, stage}], loads: {coop, shed}, flatbed: {x, z, yaw}.
 //   A load is 'stack', 'bed', or a grid point {i, j}. Once its floor stands, the load is part of that building.
@@ -14,7 +16,7 @@
 //   version 2 (HOME-GROUND-2): {version: 2, name, pieces, marks, hens: [{name, breed, due}], boxes: [{i, j, eggs}], eggs,
 //     lastSeen}
 //   version 1 (HOME-GROUND-1): {version: 1, name, pieces: [{kind, i, j, axis}], marks: [{kind, i, j, axis}]}
-// A version 1, 2 or 3 record is read as it is; the enabled part turns it into version 4 the first time it runs
+// An older record is read as it is; the enabled part turns it into the current version the first time it runs
 // with its switch on (upgradeHome). The panels and the gate he still carries are worked out from it: HOME_PANELS less
 // the panels standing, and one gate less the gate standing; the old crates likewise, HOME_CRATES less the nest boxes.
 //   hens      each hen's name, breed and `due`: the seconds until her next egg, 0 while she waits for room in a box
@@ -24,15 +26,16 @@
 //             until a clock has been handed to the part. The clock is read once, when an outing opens.
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, HEN_BREEDS, HEN_SETTLE_SECONDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_CRATES,
   HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, MOSS_HENS, layInterval,
-  HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS, HOME_BOX_REACH, HOME_CREW_SECONDS, HOME_TOWER} from './content/home-ground.js';
+  HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS, HOME_BOX_REACH, HOME_CREW_SECONDS, HOME_TOWER,
+  HOME_LOOT, HOME_LOOT_CAPACITY, HOME_CARTER_SECONDS} from './content/home-ground.js';
 
-export const HOME_RECORD_VERSION = 5;
+export const HOME_RECORD_VERSION = 6;
 const AXES = ['x', 'z'];
 const whole = value => Number.isSafeInteger(value);
 
 export const newHome = (name, lastSeen = null) => ({version: HOME_RECORD_VERSION, name, pieces: [], marks: [], hens: [], boxes: [],
   eggs: 0, lastSeen, builds: [], loads: {coop: 'stack', shed: 'stack', tower: 'stack'}, flatbed: firstFlatbed(),
-  crew: {job: null, began: null, done: 0}, raids: newRaids()});
+  crew: {job: null, began: null, done: 0}, raids: newRaids(), loot: [], scrap: 0, carters: {began: null}});
 export const newRaids = () => ({played: 0, sittings: 0, nextDue: null, testDone: false, won: 0, lost: 0});
 function firstFlatbed() { return {...groundPoint(15, -3), yaw: 0}; }
 // Reading an older record does not upgrade it. Only the enabled part calls this.
@@ -41,7 +44,8 @@ export function upgradeHome(home) {
   let kept = home.version === 1 ? {...home, hens: [], boxes: [], eggs: 0, lastSeen: null} : home;
   if (home.version < 3) kept = {...kept, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed()};
   if (home.version < 4) kept = {...kept, crew: {job: null, began: null, done: 0}};
-  return {...kept, version: HOME_RECORD_VERSION, loads: {...kept.loads, tower: 'stack'}, raids: newRaids()};
+  if (home.version < 5) kept = {...kept, loads: {...kept.loads, tower: 'stack'}, raids: newRaids()};
+  return {...kept, version: HOME_RECORD_VERSION, loot: [], scrap: 0, carters: {began: null}};
 }
 
 // A name he may write: 1 to 24 letters, numbers, spaces and the marks a place name uses.
@@ -206,7 +210,8 @@ export function coopBoxes(home) {
 export function gatherCoop(home) {
   return home.boxes.reduce((kept, box, index) => coopBoxes(home).some(cell => sameCell(box, cell)) ? gatherBox(kept, index) : kept, home);
 }
-export const shedWords = home => home.eggs === 1 ? HOME_WORDS.shedStoreOne : HOME_WORDS.shedStore.replace('{count}', home.eggs);
+export const shedWords = home => (home.eggs === 1 ? HOME_WORDS.shedStoreOne : HOME_WORDS.shedStore.replace('{count}', home.eggs))
+  .replace('{scrap}', home.scrap ?? 0);
 export function roostAt(home, index, partOfDay) {
   const row = home.builds?.find(item => item.kind === 'coop' && item.stage === 4);
   if (!row || index >= HOME_BUILDS.coop.hens || !['dusk', 'dark'].includes(partOfDay)) return null;
@@ -214,7 +219,31 @@ export function roostAt(home, index, partOfDay) {
   return {x: at.x + x * Math.cos(at.heading) + z * Math.sin(at.heading),
     z: at.z - x * Math.sin(at.heading) + z * Math.cos(at.heading)};
 }
-export const homeLoadKg = home => Object.keys(HOME_BUILDS).reduce((kg, kind) => kg + (home.loads[kind] === 'bed' ? HOME_BUILDS[kind].kg : 0), 0);
+export const lootOnBed = home => (home.loot ?? []).filter(row => row?.position === 'bed');
+export const homeLoadKg = home => Object.keys(HOME_BUILDS).reduce((kg, kind) => kg + (home.loads[kind] === 'bed' ? HOME_BUILDS[kind].kg : 0),
+  lootOnBed(home).reduce((kg, row) => kg + HOME_LOOT[row.kind].kg, 0));
+export const cartersBusy = home => home.carters?.began !== null && Number.isFinite(home.carters?.began);
+export const cartersOffer = home => !cartersBusy(home) && home.loot?.length > 0 && Number.isFinite(home.lastSeen);
+export function sendCarters(home, now) {
+  if (!cartersOffer(home) || !Number.isFinite(now) || now < 0) return home;
+  return {...home, carters: {began: Math.max(now, home.lastSeen)}};
+}
+// Use the same supplied, monotonic moment as the builders. No wall clock is read here.
+export function finishCarters(home, now) {
+  if (!cartersBusy(home) || !Number.isFinite(now) || now - home.carters.began < HOME_CARTER_SECONDS) return {home, receipt: null};
+  const worth = home.loot.reduce((sum, row) => sum + row.worth, 0), pay = Math.floor(worth / 5), scrap = worth - pay;
+  return {home: {...home, loot: [], scrap: home.scrap + scrap, carters: {began: null}}, receipt: {scrap, pay}};
+}
+function readableLoot(home) {
+  if (!Array.isArray(home.loot) || !count(home.scrap) || !home.carters || Object.keys(home.carters).length !== 1 ||
+      !(home.carters.began === null || Number.isFinite(home.carters.began) && home.carters.began >= 0)) return false;
+  if (cartersBusy(home) && (!home.loot.length || !Number.isFinite(home.lastSeen) || home.carters.began > home.lastSeen)) return false;
+  const bed = lootOnBed(home);
+  if (bed.length > HOME_LOOT_CAPACITY || bed.length && Object.values(home.loads).includes('bed')) return false;
+  return home.loot.every(row => row && Object.keys(row).length === 3 && Object.hasOwn(HOME_LOOT, row.kind) &&
+    row.worth === HOME_LOOT[row.kind].worth && (row.position === 'bed' || row.position && Object.keys(row.position).length === 3 &&
+      ['x', 'z', 'yaw'].every(key => Number.isFinite(row.position[key]))));
+}
 // A single interaction from the enabled home part, only for a stopped, driven flatbed.
 export function transferHomeLoad(home, {vehicle, position, speedKmh}) {
   if (vehicle !== 'flatbed' || !position || !Number.isFinite(speedKmh) || Math.abs(speedKmh) >= 1.5) return home;
@@ -224,6 +253,19 @@ export function transferHomeLoad(home, {vehicle, position, speedKmh}) {
     if (!mark || Math.hypot(position.x - buildInLand(mark).x, position.z - buildInLand(mark).z) > 4) return home;
     return {...home, loads: {...home.loads, [bed]: {i: mark.i, j: mark.j}}};
   }
+  const cargo = lootOnBed(home);
+  if (!cartersBusy(home)) {
+    if (cargo.length && home.builds.some(row => row.kind === 'shed' && row.stage === 4 &&
+        Math.hypot(position.x - buildingDoor(row).x, position.z - buildingDoor(row).z) <= 4)) {
+      return {...home, loot: home.loot.filter(row => row.position !== 'bed'),
+        scrap: home.scrap + cargo.reduce((sum, row) => sum + row.worth, 0)};
+    }
+    const piece = home.loot?.find(row => row.position !== 'bed' &&
+      Math.hypot(position.x - row.position.x, position.z - row.position.z) <= 4);
+    if (piece && cargo.length < HOME_LOOT_CAPACITY)
+      return {...home, loot: home.loot.map(row => row === piece ? {...row, position: 'bed'} : row)};
+  }
+  if (cargo.length) return home;
   const kind = Object.keys(HOME_BUILDS).find(key => {
     if (home.crew?.job?.kind === key) return false;
     if (!home.builds.some(row => row.kind === key && row.stage === 0) && home.builds.some(row => row.kind === key && row.stage > 0)) return false;
@@ -260,7 +302,7 @@ function readableBox(box) {
     box.i >= 0 && box.i < HOME_CELLS && box.j >= 0 && box.j < HOME_CELLS && count(box.eggs) && box.eggs <= BOX_HOLDS;
 }
 export function readableHome(home) {
-  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, 4, HOME_RECORD_VERSION].includes(home.version)) return false;
+  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, 4, 5, HOME_RECORD_VERSION].includes(home.version)) return false;
   const built = cleanHomeName(home.name) === home.name && Array.isArray(home.pieces) && home.pieces.every(readablePiece) &&
     Array.isArray(home.marks) && home.marks.every(readablePiece) && home.marks.length <= 4 * HOME_CELLS * (HOME_CELLS + 1) &&
     home.pieces.filter(piece => piece.kind === 'gate').length <= 1 &&
@@ -269,6 +311,7 @@ export function readableHome(home) {
   if (home.version >= 3 && !readableBuildings(home)) return false;
   if (home.version >= 4 && !readableCrew(home)) return false;
   if (home.version >= 5 && !readableRaids(home.raids)) return false;
+  if (home.version >= 6 && !readableLoot(home)) return false;
   const builtIn = coopBoxes(home);
   return Array.isArray(home.hens) && home.hens.length <= (builtIn.length ? HOME_BUILDS.coop.hens * builtIn.length / 3 : MOSS_HENS.length) && home.hens.every(readableHen) &&
     Array.isArray(home.boxes) && home.boxes.length <= HOME_CRATES + builtIn.length && home.boxes.every(readableBox) &&
@@ -616,6 +659,9 @@ export function awayWords(seconds) {
 // the outing found when it opened: {away (seconds counted), long (the clock said more than AWAY_LONGEST), laid}.
 export function boardLines(opened, home) {
   const lines = [];
+  if (opened?.carters) lines.push(fill(HOME_WORDS.cartersBack, opened.carters));
+  if (cartersBusy(home)) lines.push(HOME_WORDS.cartersBusy);
+  else if (cartersOffer(home)) lines.push(HOME_WORDS.cartersOffer);
   if (opened?.raid) lines.push(opened.raid);
   const down = home?.pieces.filter(piece => piece.down).length ?? 0;
   if (down) lines.push(down === 1 ? HOME_WORDS.panelDown : fill(HOME_WORDS.panelsDown, {count: down === 2 ? 'Two' : down}));
