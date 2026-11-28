@@ -12,12 +12,5 @@
     "since": "2026-11-05",
     "card": "QA-STANDING-BROWSER",
     "cause": "The original simple frame stage failed; no second measurement is allowed."
-  },
-  {
-    "stage": "browser",
-    "name": "audio-baseline",
-    "since": "2026-11-25",
-    "card": "QA-AUDIO-BASELINE-CONTROL",
-    "cause": "Baseline control is not repeatable at the unchanged threshold."
   }
 ]
