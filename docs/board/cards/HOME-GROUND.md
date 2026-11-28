@@ -43,3 +43,6 @@ from a load on Tin Town's flatbed, Codex Astra) and then HOME-GROUND-3B (Rook an
 **27 November 2026, Claude's drive of step 3 and the builders** (docs/board/looks/home-ground/drive-4.md): the
 flatbed loop and the coop work; eight fixes are card HOME-GROUND-3-DRIVE (Codex Sol), the two that matter most being
 that getting out of the truck reloads the tin and that Rook and Wren stop outside the fence.
+
+**27 November 2026, step 4 cut ahead of the try (Kyle):** HOME-GROUND-4 (the watchtower, the raid clock, the test raid
+and raids on his fence, Codex Astra), then HOME-GROUND-4B (the loot, Codex Sol).

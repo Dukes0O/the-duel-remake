@@ -1817,3 +1817,6 @@ Kyle: "go ahead with the first four audit changes".
 - **27 November 2026. Home Ground: step 3 to Codex now.** Kyle: "yes, cut step 3 and give it to codex", ahead of his and
   Gratian's try of step 2, so that Codex has building work while they play. Cards HOME-GROUND-3 (coop, shed, flatbed)
   and HOME-GROUND-3B (builders). To reverse: Kyle says so.
+- **27 November 2026. Home Ground: step 4 to Codex overnight.** Asked whether to cut step 4 (the first raids, the
+  watchtower and the loot) for Codex tonight, ahead of his and Gratian's try of steps 2 and 3, Kyle said "Yes". Cards
+  HOME-GROUND-4 and HOME-GROUND-4B. To reverse: Kyle says so.

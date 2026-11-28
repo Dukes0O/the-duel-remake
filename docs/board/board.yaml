@@ -1154,6 +1154,43 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
+  - id: HOME-GROUND-4
+    title: "Home Ground step 4: the watchtower, the raid clock, the test raid and raids on his fence"
+    owner: "codex"
+    model: "astra"
+    lane: "SIM"
+    size: "M"
+    status: "building"
+    claimed_by: "Codex Astra, laptop lane, 27 November 2026"
+    needs: []
+    locks: ["home-ground"]
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-GROUND-4.md"
+
+  - id: HOME-GROUND-4B
+    title: "Home Ground step 4: the loot a won raid leaves, fetched by flatbed or by carters"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["HOME-GROUND-4"]
+    locks: ["home-ground"]
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-GROUND-4B.md"
+
+  - id: QA-AUDIO-SWEEP
+    title: "Six older audio cards: cured by the sample witness, given it, or still open"
+    owner: "codex"
+    model: "sol"
+    lane: "QA"
+    size: "S"
+    status: "building"
+    claimed_by: "Codex Sol, laptop lane, 27 November 2026"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-AUDIO-SWEEP.md"
+
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"
