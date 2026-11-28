@@ -65,3 +65,9 @@ verified backup (`needsCareerMigration` already asks for one below `HOME_RECORD_
 - No browser scenario or frame check; Claude drives it by hand.
 
 ## Claude answers
+
+**27 November 2026, the three choices** (the questions file, commit `ccf8aa197`): all three picks approved. A sitting is
+one opened Home Ground outing, resumed ones included; pauses, talks and time away add no play. The bikes are built from
+the existing wheel, frame and Rat parts with the existing combat hits: gritty and real, never toy-like (dented tanks,
+mismatched wheels, rust and tape, a rider who leans), judged against photographs of dirt bikes in the change note. The
+tower is the old town's, cut to the 4 m footprint with a 4.4 m platform; level 1 poles and tin.
