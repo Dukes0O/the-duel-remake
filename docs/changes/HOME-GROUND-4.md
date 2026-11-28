@@ -1,0 +1,15 @@
+# HOME-GROUND-4
+- Built the four-stage tower, two-second climb, raised launcher and 25% rocket reach; reused the town tower and Rat figures.
+- Added seeded play-only raids, first-three-sitting protection, harmless first bike, fence ramming/repair, bounded egg loss and harmless exit.
+- Home v5 preserves v1–4 after verified backup; active raids remain outing-only. No released switch or real save changed.
+- Tested code: `64fe25220`, after lane base `16d3a700e` and integration `6433e7d00`; later changes are docs, board and look evidence only.
+- Focused: home-ground 450 checks; home-hens 1,256; save fixtures 27 historical shapes, 1 forged and 1,145 checks; final production build passed.
+- Lane: original 132 suites completed after correcting the sheet name; post-fix 32 passed; final 47 passed. All 20 backup-naming suites passed.
+- Combat balance passed (51 policy runs, 90 baselines, no flags); career backup, career budget and storage budget passed.
+- Independent save/code review approved pursuit, projectile expiry, retreat damage thresholds and breach routing fixes, including waypoint arrival tolerance.
+- Easy controlled sample: 15/20 ground, 18/20 tower; recipe in HOME_GROUND section 16. Ground exceeds the roughly 6/10 aim; Claude's child-pace drive is still owed.
+- Assertions changed: home version 4 to 5; historical fixtures omit added fields; migration expects the added tower load. No tolerance loosened; Claude review owed.
+- Fingerprints unchanged: 306 race checks/34 cases, 12 combat checks/4 encounters, 65 world checks/32 events. None regenerated; no browser/frame scenario required.
+- Look: round-1.jpg and review under docs/board/looks/home-ground; actual loaded assets on private port 5197, compared with the Suzuki TC90 photo in HOME_GROUND.
+- Cues: home.raid.call/bike/ram/won/lost, home.fence.fall/up, home.tower.climb/stage; OPEN-SOUND selects sounds. Claude judges the final moving look.
+- **Removed:** nothing released; HOME-GROUND-4B supplies won-raid loot. No existing browser scenario changed its job; no shared core file changed.

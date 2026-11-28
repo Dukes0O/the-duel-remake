@@ -2,6 +2,8 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
+Cockpit task: `pers-the-duel` / `T-120` (Board card HOME-GROUND-4).
+
 Codex's card (Astra: rules, combat and the tower's look), Home Ground's step 4, first half: the watchtower, the raid
 clock, the first test raid and real raids on his fence. The loot that a won raid leaves is the second half, card
 HOME-GROUND-4B. Kyle cut it on 27 November 2026, before his and Gratian's try of steps 2 and 3. Design:
@@ -71,3 +73,18 @@ one opened Home Ground outing, resumed ones included; pauses, talks and time awa
 the existing wheel, frame and Rat parts with the existing combat hits: gritty and real, never toy-like (dented tanks,
 mismatched wheels, rust and tape, a rider who leans), judged against photographs of dirt bikes in the change note. The
 tower is the old town's, cut to the 4 m footprint with a 4.4 m platform; level 1 poles and tin.
+
+## Builder's assertion review request
+
+`test-home-ground`, `test-home-hens` and `test-career-backup` now expect version 5 rather than 4. Historical version
+2/3 fixtures omit the added fields; backup checks include literal version 4 with active crew. Migration still
+compares every old field and expects only the new tower load alongside the old loads. No tolerance or gameplay
+assertion is loosened. Claude's written review under rule 18 is owed before integration because this card changes
+saves and does not qualify for rule 23. Current facts and checks are in `docs/changes/HOME-GROUND-4.md`.
+
+## Builder handoff for Claude
+
+The independent save/code review approved the final retreat routing and Easy threshold. The 20-seed controlled
+sample won 15/20 on the ground and 18/20 from the tower; the repeatable recipe is in HOME_GROUND section 16.
+Ground success is above the roughly six-in-ten design aim. Please judge child difficulty and the moving bike pose
+in the hand drive, alongside the version assertion review above. This card is not release approval.
