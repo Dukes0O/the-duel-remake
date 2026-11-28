@@ -52,3 +52,8 @@ Older versions load unchanged after the verified backup.
   rule changes, and `npm run build`. One independent review of the save. Claude drives it by hand.
 
 ## Claude answers
+
+**28 November 2026, the three picks** (the questions file, commit `3abfda25d`): all approved. Version 10, keeping every
+version 9 field, behind the verified backup. `cellar.dug` counts 0 to 4 scoops and the pond keeps its scoops, so half-dug
+work survives leaving; a pile keeps its building and the greenhouse's plants through carrying and rebuilding. The drill
+rig's hooks, with shared-file changes kept to the outing check and the excavator's keys. Checks after 06:30.
