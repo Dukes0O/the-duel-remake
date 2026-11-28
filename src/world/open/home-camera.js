@@ -13,6 +13,15 @@ export function stepHomeLift(lift, above, dt) {
   return above ? Math.min(1, lift + step) : Math.max(0, lift - step);
 }
 
+export function homeBuildCameraPose(pose) {
+  const dx = pose.target.x - pose.position.x, dz = pose.target.z - pose.position.z;
+  const horizontal = Math.hypot(dx, dz), dy = pose.target.y - pose.position.y;
+  const reach = Math.hypot(horizontal, dy), pitch = Math.atan2(dy, horizontal) - Math.PI / 12;
+  if (!horizontal) return pose;
+  return {...pose, target: {x: pose.position.x + dx / horizontal * Math.cos(pitch) * reach,
+    y: pose.position.y + Math.sin(pitch) * reach, z: pose.position.z + dz / horizontal * Math.cos(pitch) * reach}};
+}
+
 // North is at the top of the screen, as on the map: the camera looks down with a hair of tilt toward the north, so that
 // its up is never the same as the way it looks.
 export function homeCameraPose(footPose, lift, groundHeight = 0) {

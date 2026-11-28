@@ -19,12 +19,13 @@ import {FOOT_BURST, HOME_CELLS, HOME_CORNER, HOME_CUES, HOME_OFFER_ID, HOME_PANE
   defaultHomeName} from '../src/world/open/content/home-ground.js';
 import {boardSpot, build, cleanHomeName, groundPoint, homeSolids, lift, newHome, outlineFor, panelsLeft, pieceInLand,
   readableHome, refusal, slotInFront, toggleMark, markBuild, buildRefusal, liftBuild, raiseBuild, buildInLand,
-  homeLoadKg, transferHomeLoad, buildBox, giveHens, buildingDoor, boardLines} from '../src/world/open/home-rule.js';
+  homeLoadKg, transferHomeLoad, buildBox, giveHens, buildingDoor, boardLines, crewOffer, handToCrew, advanceCrew, upgradeHome, newsBoardSpot, boxSlotInFront, boxInLand, facedThing, ripenHome} from '../src/world/open/home-rule.js';
 import {HOME_LOAD_STACK, HOME_BUILDS} from '../src/world/open/content/home-ground.js';
 import {createHomeGroundView} from '../src/world/open/looks/home-ground-look.js';
+import {PerspectiveCamera, Vector3} from 'three';
 import {CARS} from '../src/config.js';
 import {ARENA_FIELD} from '../src/arena/arena-event.js';
-import {homeCameraPose, stepHomeLift} from '../src/world/open/home-camera.js';
+import {homeCameraPose, homeBuildCameraPose, stepHomeLift} from '../src/world/open/home-camera.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
 import {worldHudModel} from '../src/world/world-hud.js';
 
@@ -485,7 +486,7 @@ const memory = values => {
   const out = run(open, viewOf(me, {build: true}), 24.2);
   equal(homeOf(out.open).builds[0].stage, 4, 'holding B raises all four six-second stages');
   equal(cues(out.events).filter(name => name === HOME_CUES.coopStage).length, 4, 'each coop stage has its cue');
-  check(readableHome(homeOf(out.open)), 'the part writes a valid version 3 record');
+  check(readableHome(homeOf(out.open)), 'the part writes a valid version 4 record');
 }
 
 // Four quarter turns still alternate a panel's two axes in the overhead view.
@@ -499,6 +500,114 @@ const memory = values => {
     open = run(open, viewOf(me), DT).open;
   }
   equal(axes, ['z', 'x', 'z', 'x'], 'R alternates panel axes after building turns expand to four');
+}
+
+// Step 3B: the second building, two clocks, helping, one job and older records.
+{
+  let home = newHome('Crew', 1000);
+  const first = {kind: 'coop', i: 2, j: 8, turn: 0, stage: 0};
+  home = markBuild(home, first);
+  home = {...home, loads: {...home.loads, coop: {i: 2, j: 8}}};
+  equal(crewOffer(home), null, 'the first coop must be raised by hand');
+  equal(handToCrew(home, first, 1000), home, 'the crew refuses an untaught kind');
+  for (let n = 0; n < 4; n++) home = raiseBuild(home, first);
+  const legacy = {...home, version: 3}; delete legacy.crew;
+  const original = JSON.stringify(legacy);
+  check(readableHome(legacy), 'a completed version 3 coop remains readable');
+  const upgraded = upgradeHome(legacy), {crew: _crew, ...oldFields} = upgraded;
+  equal({...oldFields, version: 3}, legacy, 'version 3 loses no field, nest or stored egg when upgraded');
+  equal(JSON.stringify(legacy), original, 'upgrading leaves the old record unchanged');
+  const second = {...first, i: 5};
+  home = markBuild(home, second);
+  equal(crewOffer(home), null, 'a mark without its load cannot be handed over');
+  home = transferHomeLoad(home, {vehicle: 'flatbed', position: HOME_LOAD_STACK, speedKmh: 0});
+  home = transferHomeLoad(home, {vehicle: 'flatbed', position: buildInLand(second), speedKmh: 0});
+  equal(crewOffer(home), second, 'after teaching and delivery the second coop is offered');
+  const ready = home;
+  home = handToCrew(home, second, 1000);
+  check(readableHome(home), 'the assigned job is a readable version 4 record');
+  equal(transferHomeLoad(home, {vehicle: 'flatbed', position: groundPoint(second.i, second.j), speedKmh: 0}), home,
+    'a stage-zero crew job keeps the delivered load it needs');
+  const carried = transferHomeLoad(ready, {vehicle: 'flatbed', position: groundPoint(second.i, second.j), speedKmh: 0});
+  const remarked = markBuild(liftBuild(carried, second), {...second, j: 13});
+  equal(remarked.loads.coop, 'bed', 'moving an unassigned mark keeps the carried tin');
+  equal(handToCrew(home, second, 1001), home, 'the crew accepts only one job at a time');
+  equal(advanceCrew(home, -60).home, home, 'a clock set back loses no work');
+  const quarter = advanceCrew(home, 450).home;
+  equal(quarter.builds[1].stage, 1, 'one quarter hour of work raises one coop stage');
+  const helped = raiseBuild(advanceCrew(home, 200).home, second);
+  equal(helped.builds[1].stage, 1, 'his hammer finishes a stage at once');
+  equal(advanceCrew(helped, 1150).home.builds[1].stage, 4, 'his stage saves a full stage of waiting');
+  equal(advanceCrew(home, 1799).home.builds[1].stage, 3, 'the crew does not finish early');
+  const complete = advanceCrew(home, 1800);
+  equal(complete.home.builds.map(row => row.stage), [4, 4], 'thirty minutes finishes the next coop and keeps the first');
+  equal(complete.home.boxes.length, 6, 'both coops keep their three nests');
+  check(readableHome(complete.home), 'two complete coops remain readable');
+  const view = createHomeGroundView();
+  const before = JSON.stringify(complete.home);
+  view.update({open: {parts: {home: {on: true}}, world: {open: {home: complete.home}}}}, {}, 0);
+  equal(view.group.children.filter(node => node.name === 'home-coop' && node.visible).length, 2, 'both coops are drawn');
+  equal(JSON.stringify(complete.home), before, 'drawing the next coop changes no record'); view.dispose();
+  const full = {...home, hens: [{name: 'Clover', breed: 'tin-town-brown', due: 0}],
+    boxes: home.boxes.map(box => ({...box, eggs: 18}))};
+  const afterAway = ripenHome(full, 1800 + 14400);
+  check(afterAway.laid.length > 0 && afterAway.home.boxes.slice(3).some(box => box.eggs > 0),
+    'hens use the new nests for the time remaining after the crew finishes while away');
+  const world = newWorld({seed: 5, night: 2});
+  const land = record => openLand({...world, open: {...world.open, home: record}});
+  const me = {...groundPoint(16, 14), yaw: 0};
+  const returned = run(land(home), viewOf(me, {}, {homeClock: 2800}), DT);
+  equal(homeOf(returned.open).builds[1].stage, 4, 'a coop finishes across a closed game');
+  check(boardLines(returned.open.parts.home.opened, homeOf(returned.open)).includes('Rook and Wren finished your second coop.'), 'the board reports the completed second coop');
+  const reloaded = run(land(JSON.parse(JSON.stringify(homeOf(returned.open)))), viewOf(me, {}, {homeClock: 2800}), DT);
+  equal(homeOf(reloaded.open).boxes, homeOf(returned.open).boxes, 'a second load cannot add duplicate nests');
+  // A real gate is needed for the board handoff.
+  const withGate = build(ready, {kind: 'gate', i: 8, j: 0, axis: 'x'});
+  const board = newsBoardSpot(withGate.pieces.find(row => row.kind === 'gate'));
+  const at = {...board, x: board.x - 5, yaw: 0};
+  let out = run(land(withGate), viewOf(at, {}, {homeClock: 1000}), DT);
+  equal(out.open.parts.home.prompt, 'Press F to hand the coop to the builders.', 'the board offers the job within six metres');
+  out = run(out.open, viewOf(at, {}, {homeClock: 1000, interact: true}), DT);
+  check(homeOf(out.open).crew.job && cues(out.events).includes(HOME_CUES.crewArrive), 'F hands the job over and names the arrival cue');
+  check(out.open.parts.home.crewPeople.length === 2, 'Rook and Wren walk from town in the rule state');
+  const saved = JSON.parse(JSON.stringify(homeOf(out.open)));
+  out = run(out.open, viewOf(at, {}, {homeClock: 1000}), 600);
+  const active = homeOf(out.open);
+  const offline = run(land(saved), viewOf(at, {}, {homeClock: saved.lastSeen + 600 - DT}), DT);
+  check(Math.abs(active.crew.done - homeOf(offline.open).crew.done) < 1e-6, 'outing seconds and closed-game seconds count the same work');
+  const delayed = {...land(newHome('Late ground')), seconds: 600};
+  const late = run(delayed, viewOf(me, {}, {homeClock: 1000}), DT);
+  equal(homeOf(late.open).lastSeen, 1600 + DT, 'ground acquired later uses the current outing moment');
+  const delayedJob = {...land(ready), seconds: 600};
+  let lateJob = run(delayedJob, viewOf(me, {}, {homeClock: 1000}), DT);
+  const assignedLate = handToCrew(homeOf(lateJob.open), second, homeOf(lateJob.open).lastSeen);
+  lateJob = {...lateJob.open, world: {...lateJob.open.world, open: {...lateJob.open.world.open, home: assignedLate}}};
+  const immediate = run(land(assignedLate), viewOf(me, {}, {homeClock: assignedLate.lastSeen - DT}), DT);
+  equal(homeOf(immediate.open).crew.done, 0, 'reopening immediately cannot credit play before a delayed handoff');
+  const oldOff = run(land(legacy), {...viewOf(me), homeGround: false}, 30);
+  equal(JSON.stringify(homeOf(oldOff.open)), original, 'the switch off preserves version 3 byte for byte');
+  let shed = markBuild(complete.home, {kind: 'shed', i: 13, j: 8, turn: 0, stage: 0});
+  shed = {...shed, loads: {...shed.loads, shed: {i: 13, j: 8}}};
+  for (let n = 0; n < 4; n++) shed = raiseBuild(shed, 'shed');
+  const nextShed = {kind: 'shed', i: 16, j: 8, turn: 0, stage: 0};
+  shed = markBuild(shed, nextShed); shed = {...shed, loads: {...shed.loads, shed: {i: 16, j: 8}}};
+  shed = handToCrew(shed, nextShed, 1000);
+  equal(advanceCrew(shed, 3599).home.builds.at(-1).stage, 3, 'a shed needs the full hour');
+  check(advanceCrew(shed, 3600).finished?.kind === 'shed', 'a shed finishes in one real hour');
+  for (const crew of [null, {}, {job: {kind: 'coop', i: 19, j: 19}, began: 1000, done: 0}, {...home.crew, done: NaN}])
+    check(!readableHome({...home, crew}), 'a damaged crew cannot hide inside a valid home record');
+}
+// The small box lies above the prompt in the standing camera, and can be gathered without moving.
+{
+  const me = {...groundPoint(4.5, 6.3), yaw: Math.PI};
+  const box = boxSlotInFront(me, me.yaw), at = boxInLand(box);
+  const pose = homeBuildCameraPose({position: {x: me.x, y: 1.62, z: me.z}, target: {x: me.x, y: 1.62, z: me.z - 8}, fov: 72});
+  const camera = new PerspectiveCamera(pose.fov, 16 / 9, .1, 100);
+  camera.position.set(pose.position.x, pose.position.y, pose.position.z); camera.lookAt(pose.target.x, pose.target.y, pose.target.z); camera.updateMatrixWorld();
+  const projected = new Vector3(at.x, .34, at.z).project(camera);
+  check(Math.abs(projected.x) < 1 && projected.y > -.45 && projected.y < 1, 'the box top is inside the standing camera above the prompt');
+  const home = {...newHome('Box'), boxes: [{i: box.i, j: box.j, eggs: 1}]};
+  check(facedThing(home, me, me.yaw)?.kind === 'box', 'F and B still reach the box at its new distance');
 }
 
 console.log(`Home ground: ${checks} checks passed.`);

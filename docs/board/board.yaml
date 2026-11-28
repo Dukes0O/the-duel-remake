@@ -1154,19 +1154,6 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
-  - id: HOME-GROUND-3B
-    title: "Home Ground step 3: the builders raise the next coop and shed on the real clock"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Codex Sol, laptop lane, 27 November 2026"
-    needs: []
-    locks: ["home-ground"]
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-3B.md"
-
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"

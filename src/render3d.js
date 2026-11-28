@@ -32,7 +32,7 @@ import {BUILDINGS} from './world/open/content/buildings.js';
 import {roomCamera} from './world/open/building-view.js';
 import {DRIVE as DUST_GROUNDS} from './world/scablands-regions.js';
 import {onFootCameraPose, projectOnFootAim} from './onfoot-camera.js';
-import {homeCameraPose, stepHomeLift} from './world/open/home-camera.js';
+import {homeCameraPose, homeBuildCameraPose, stepHomeLift} from './world/open/home-camera.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {hiddenRoadPresentation,hiddenRoadDrivingCamera} from './hidden-road-ui.js';
 import { CARS, DRIVE } from './config.js';
@@ -967,6 +967,7 @@ export function attachRenderer(host, app) {
       const footMode=wastelandRulesActive(st)?app.footCameraMode:'first-person';
       firstPersonView=footMode!=='overhead';
       let pose=onFootCameraPose(course,st.fighter,footMode);
+      if(firstPersonView && st.arena?.worldJob?.open?.parts.home?.outline && !pose.insidePipe)pose=homeBuildCameraPose(pose);
       if(pose.insidePipe)firstPersonView=true;
       // HOME-GROUND-1: one key lifts the camera straight above his ground and the same key brings it back.
       homeLift=pose.insidePipe?0:stepHomeLift(homeLift,st.arena?.worldJob?.open?.parts.home?.above===true,dt);

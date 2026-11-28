@@ -38,10 +38,12 @@ function memoryBackups(){
 }
 
 // Home records live at profile.story.open.home; world.open.home is their outing copy.
-for (const version of [1, 2]) {
+for (const version of [1, 2, 3]) {
   const home = {version, name: 'Old ground', pieces: [{kind: 'panel', i: 2, j: 0, axis: 'x'}], marks: []};
-  if (version === 2) Object.assign(home, {hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}],
+  if (version >= 2) Object.assign(home, {hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}],
     boxes: [{i: 2, j: 3, eggs: 7}], eggs: 31, lastSeen: 1000});
+  if (version === 3) Object.assign(home, {builds: [{kind: 'shed', i: 2, j: 8, turn: 0, stage: 2}],
+    loads: {coop: 'stack', shed: {i: 2, j: 8}}, flatbed: {x: 1, z: 2, yaw: .3}});
   const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}, story: {version: 1, open: {home}}};
   const source = memoryStorage({[PLAYERS_KEY]: JSON.stringify({version: 2, activePlayerId: 'home',
     players: [{id: 'home', name: 'Home', profile}]})});

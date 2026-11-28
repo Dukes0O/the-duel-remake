@@ -1,5 +1,7 @@
 # Wasteland run log
 
+27 November (HOME-GROUND-3B lane sweep): repo audit reviewed; no asset or branch removals in this card; sizes and idle branches recorded in STATUS; lane scratch and build output recycled after checks.
+
 27 November (OPEN-PEN-DRAIN-BANK lane sweep): repo audit reviewed; candidates advisory, no asset removals; generated build and scratch recycled; sizes and idle branches in STATUS.
 
 17 November, evening (Claude; Codex built, a Claude reviewer reviewed, Claude cured): EVERBURN-REMAKE slice 12 merged, hidden: job 4, Slow Ride (Big Bess on the Tin Road with her gas, three blocks, four raids); the review found six faults, the worst that it stopped job 3's knocks from counting, all cured; also merged before it: the Boneyard's wrecks solid only where they are drawn; lane tier 180 of 180, build and browser scenarios pass.
@@ -1841,3 +1843,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Claude's drive of Home Ground step 2 with its fixes (drive-3.md): six fixes seen in play, four carried to HOME-GROUND-3B. Closed MAP-NO-WAY-WRAP (seen on one line), QA-WAVE1-AUDIO-FLIGHT (passes alone), QA-NIGHT-19-NOV and QA-NIGHT-20-NOV (all sorted; wildlife-view cured 19 November)
 - Janitor HOME-GROUND-3 (27 November): 5,840 tracked files, 900.4 MiB, no unused module candidates; no binary additions or target changes. Generated QA output recycled; unfinished lane kept, with idle branches and existing size overruns on STATUS.
 - Merge HOME-GROUND-3 (Codex Astra, laptop lane, two rounds): the first coop and shed, raised by hand in four stages from a load brought on Tin Town's flatbed; Claude added the flatbed's drawing gate at the merge
+- Merge HOME-GROUND-3B (Codex Sol, laptop lane): Rook and Wren raise the next coop or shed on the real clock, with the step 2 drive's four fixes

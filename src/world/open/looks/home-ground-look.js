@@ -138,6 +138,9 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const moss = createStoryPeopleView(loadAsset);
   group.add(moss.group);
   let mossCast = [], mossKey = '';
+  const crew = createStoryPeopleView(loadAsset);
+  group.add(crew.group);
+  let crewCast = [], crewKey = '';
   const wear = tinTexture();
   const std = (name, color, extra = {}) => new THREE.MeshStandardMaterial({name, color, roughness: .82, metalness: .18, ...extra});
   const materials = {
@@ -169,8 +172,23 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const buildings = new Map(), haul = createHaulLoadLook(), loadDraws = new Map();
   materials.building = yardSurface();
   materials.chalk = new THREE.LineBasicMaterial({color: 0xe8e2cf});
-  function buildingDraw(kind) {
-    if (buildings.has(kind)) return buildings.get(kind);
+  const crewProps = ['rook', 'wren'].map(id => {
+    const prop = new THREE.Group(); prop.name = 'home-tool-' + id;
+    if (id === 'rook') {
+      for (let n = 0; n < 3; n++) {
+        const sheet = new THREE.Mesh(keep(buildingTin(.8, 1.2, {seed: n + 90})), materials.tin);
+        sheet.position.z = n * .03; prop.add(sheet);
+      }
+    } else {
+      const handle = new THREE.Mesh(keep(new THREE.BoxGeometry(.035, .32, .035)), materials.post);
+      handle.position.y = .13; prop.add(handle);
+      const head = new THREE.Mesh(keep(new THREE.BoxGeometry(.18, .075, .075)), materials.tin);
+      head.position.y = .3; prop.add(head);
+    }
+    group.add(prop); return prop;
+  });
+  function buildingDraw(kind, key) {
+    if (buildings.has(key)) return buildings.get(key);
     const drawn = new THREE.Group(); drawn.name = 'home-' + kind; group.add(drawn);
     const w = HOME_BUILDS[kind].width * HOME_STEP, d = HOME_BUILDS[kind].depth * HOME_STEP;
     const stages = Array.from({length: 4}, (_, index) => { const part = new THREE.Group(); part.name = kind + '-stage-' + (index + 1); drawn.add(part); return part; });
@@ -217,7 +235,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     tin(3, w + .3, run, 0, 2.03, d / 2 + .15, 0, -Math.PI / 2 + slope, 31);
     const mark = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, .03, d))), materials.chalk);
     mark.name = kind + '-footprint'; mark.position.y = .07; drawn.add(mark);
-    const result = {drawn, stages, mark}; buildings.set(kind, result); return result;
+    const result = {drawn, stages, mark}; buildings.set(key, result); return result;
   }
 
   // ---- The bare ground: four stakes with rag flags, pegs every 8 m and a rope between them, 0.35 m up. ----------
@@ -389,21 +407,21 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       group.visible = state?.on === true;
       if (!group.visible) return;
       const record = worldJob.open.world.open.home ?? null;
+      for (const drawing of buildings.values()) drawing.drawn.visible = false;
+      for (const row of record?.builds ?? []) {
+        const key = `${row.kind}/${row.i}/${row.j}`, drawing = buildingDraw(row.kind, key);
+        const at = buildInLand(row), shape = state.outline;
+        const progress = shape?.piece?.kind === row.kind && shape.piece.i === row.i && shape.piece.j === row.j ? shape.progress : 0;
+        drawing.drawn.visible = true;
+        drawing.drawn.position.set(at.x, ground(at.x, at.z, drawnShift), at.z); drawing.drawn.rotation.y = at.heading;
+        drawing.mark.visible = row.stage === 0;
+        drawing.stages.forEach((stage, index) => {
+          stage.visible = index < row.stage || (index === row.stage && progress > 0);
+          stage.scale.y = index === row.stage ? Math.max(.01, progress) : 1;
+        });
+      }
       for (const kind of Object.keys(HOME_BUILDS)) {
-        const row = record?.builds?.find(item => item.kind === kind);
-        const drawing = row ? buildingDraw(kind) : buildings.get(kind);
-        if (drawing) {
-          drawing.drawn.visible = !!row;
-          if (row) {
-            const at = buildInLand(row), progress = state.outline?.piece?.kind === kind ? state.outline.progress : 0;
-            drawing.drawn.position.set(at.x, ground(at.x, at.z, drawnShift), at.z); drawing.drawn.rotation.y = at.heading;
-            drawing.mark.visible = row.stage === 0;
-            drawing.stages.forEach((stage, index) => {
-              stage.visible = index < row.stage || (index === row.stage && progress > 0);
-              stage.scale.y = index === row.stage ? Math.max(.01, progress) : 1;
-            });
-          }
-        }
+        const row = record?.builds?.find(item => item.kind === kind && item.stage < 4) ?? record?.builds?.find(item => item.kind === kind);
         const location = record?.loads?.[kind];
         const onBed = location === 'bed' && state.flatbedOuting;
         const show = !!record?.boxes?.length && location && (location !== 'bed' || onBed) && !(row?.stage > 0);
@@ -458,7 +476,41 @@ export function createHomeGroundView({course, loadAsset} = {}) {
             yaw: Math.atan2(gateAt.x - x, gateAt.z - z)}]);
         }
       }
-      moss.update({open: worldJob.open, storyPeople: mossCast}, here, seconds, drawnShift);
+      moss.update({open: worldJob.open, storyPeople: mossCast, storySpeaker: state.crateTalk ? 'moss' : null}, here, seconds, drawnShift);
+      const people = state.crewPeople ?? [], nextCrewKey = people.map(person => person.id).join('/');
+      if (nextCrewKey !== crewKey) {
+        crewKey = nextCrewKey;
+        crewCast = createStoryPeople(people.map(person => ({id: person.id,
+          figure: person.id === 'rook' ? 'clinker' : 'dace',
+          position: {x: person.x, y: ground(person.x, person.z), z: person.z}, yaw: person.yaw})));
+      }
+      crewCast.forEach((person, index) => {
+        const at = people[index];
+        person.position = {x: at.x, y: ground(at.x, at.z), z: at.z};
+        person.yaw = at.yaw; person.distance = at.walked;
+        person.action = at.working || state.crewTalk ? 'stand' : 'walk';
+      });
+      crew.update({open: worldJob.open, storyPeople: crewCast, storySpeaker: state.crewTalk ? 'wren' : null}, here, seconds, drawnShift);
+      crewProps.forEach((prop, index) => {
+        const person = crewCast[index], at = people[index];
+        prop.visible = !!person && !state.crewTalk;
+        if (!person) return;
+        // The figures and their implements are presentation only. No work is counted by this stroke.
+        const root = crew.group.getObjectByName('home-person-' + person.id) ??
+          crew.group.getObjectByName('story-person-' + person.figure);
+        if (root) {
+          root.name = 'home-person-' + person.id;
+          root.scale.set(person.id === 'rook' ? 1.08 : 1, person.id === 'rook' ? 1.05 : 1, 1);
+        }
+        const yaw = person.yaw, swing = at.working && index === 1 ? Math.sin(seconds * Math.PI * 2 / .6) : 0;
+        prop.position.set(person.position.x + Math.sin(yaw) * .5 + Math.cos(yaw) * .3,
+          person.position.y + (index ? 1.05 + swing * .12 : .65) + (drawnShift?.(at.x, at.z) ?? 0),
+          person.position.z + Math.cos(yaw) * .5 - Math.sin(yaw) * .3);
+        prop.rotation.set(swing * .7, yaw, 0);
+        if (root && at.working && index === 1 && !state.crewTalk) {
+          root.traverse(node => { if (node.isBone && node.name.replace(/_\d+$/, '').replace(/\./g, '') === 'upper_armR') node.rotateX(-.8 + swing * .35); });
+        }
+      });
       // The bounds and the stack: drawn once, again when the drawn ground moves.
       const shiftKey = String(drawnShift?.(HOME_CORNER.x, HOME_CORNER.z) ?? 0);
       if (boundsKey !== shiftKey) {
@@ -651,6 +703,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     },
     dispose() {
       moss.dispose();
+      crew.dispose();
       for (const load of loadDraws.values()) for (const mesh of [...load.children]) if (mesh.name.startsWith('haul-piece:')) haul.release(mesh);
       haul.dispose();
       for (const geometry of geometries) geometry.dispose();

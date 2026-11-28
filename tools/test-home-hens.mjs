@@ -194,13 +194,13 @@ const partOf = open => open.parts.home;
   out = run(out.open, viewOf(me, {piece: true}), DT);
   out = run(out.open, viewOf(me), DT);
   equal(partOf(out.open).kind, 'box', 'with the gate hung, G goes from the panel to an old crate');
-  equal(partOf(out.open).outline.piece, {kind: 'box', i: 4, j: 5}, 'the nest box stands in the cell in front of him');
+  equal(partOf(out.open).outline.piece, {kind: 'box', i: 4, j: 4}, 'the nest box stands in the cell in front of him');
   check(partOf(out.open).prompt.startsWith(HOME_WORDS.holdBox), 'the sentence tells him to hold B to make the nest box');
   out = run(out.open, viewOf(me, {build: true}), 1.2);
   check(partOf(out.open).strike !== null && partOf(out.open).outline.progress > .4, 'each strike is in the hammer\'s swing, and the box rises');
   check(cues(out.events).filter(name => name === HOME_CUES.hammer).length >= 2, 'each strike has its cue');
   out = run(out.open, viewOf(me, {build: true}), 1.4);
-  equal(homeOf(out.open).boxes, [{i: 4, j: 5, eggs: 0}], 'two and a half seconds of hammering make the nest box');
+  equal(homeOf(out.open).boxes, [{i: 4, j: 4, eggs: 0}], 'two and a half seconds of hammering make the nest box');
   check(cues(out.events).includes(HOME_CUES.boxUp), 'the box going up has its cue');
   // The first egg comes within a few minutes, before he leaves.
   const stand = {...groundPoint(8, 12), yaw: 0};
@@ -217,7 +217,7 @@ const partOf = open => open.parts.home;
     return at.x > 1 && at.x < 39 && at.z > 1 && at.z < 39;
   }), 'the hens stay on his ground');
   // Gathering: F at the box.
-  const box = boxInLand({i: 4, j: 5});
+  const box = boxInLand({i: 4, j: 4});
   const atBox = {x: box.x, z: box.z + 1.2, yaw: Math.PI};
   out = run(out.open, viewOf(atBox), DT);
   const inBox = homeOf(out.open).boxes[0].eggs;
@@ -298,7 +298,7 @@ const partOf = open => open.parts.home;
   let out = run(landWith(home), viewOf(far, {}, {homeClock: seen + 1.5 * DAY_SECONDS}), DT);
   const opened = homeOf(out.open);
   equal(opened.boxes[0].eggs, 18, 'a day and a half away fills the one box');
-  equal(opened.lastSeen, seen + 1.5 * DAY_SECONDS, 'the last visit is now');
+  equal(opened.lastSeen, seen + 1.5 * DAY_SECONDS + DT, 'the last visit includes the outing clock at its first tick');
   equal(partOf(out.open).opened.laid, 18, 'the outing knows what was laid while he was away');
   // The board shows itself as he comes to the gate, in three or four plain sentences.
   out = run(out.open, viewOf({x: news.x, z: news.z + 6, yaw: 0}, {}, {homeClock: seen + 1.5 * DAY_SECONDS}), DT);
@@ -317,7 +317,7 @@ const partOf = open => open.parts.home;
   out = run(landWith(opened), viewOf(far, {}, {homeClock: seen}), DT);
   equal(homeOf(out.open).boxes, opened.boxes, 'a clock set back loses no egg');
   equal(partOf(out.open).opened.away, 0, 'and counts as no time away');
-  equal(homeOf(out.open).lastSeen, seen, 'the last visit follows the clock, so that time counts again once it is put right');
+  equal(homeOf(out.open).lastSeen, opened.lastSeen, 'a clock set back keeps the saved moment so returning to the correct clock cannot count time twice');
   // The clock far ahead: no more than three days, and a box full is full.
   const empty = {...withBoxes(giveHens(fenced()), [[3, 4], [5, 4]]), lastSeen: seen};
   out = run(landWith(empty), viewOf(far, {}, {homeClock: seen + 400 * DAY_SECONDS}), DT);
@@ -393,8 +393,8 @@ const memory = values => {
   const on = run(beginOpenLand({id: 'roam-on', steps: [{kind: 'roam'}], open: {world}}), viewOf({...groundPoint(10, 10), yaw: 0}, {}, {homeClock: 1_800_000_000}), DT);
   const upgraded = homeOf(on.open);
   equal({version: upgraded.version, pieces: upgraded.pieces, marks: upgraded.marks, name: upgraded.name},
-    {version: 3, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
-  equal([upgraded.hens, upgraded.boxes, upgraded.eggs, upgraded.lastSeen], [[], [], 0, 1_800_000_000], 'and gains no hens yet, and the last visit');
+    {version: 4, pieces: stepOne.pieces, marks: [], name: 'G-Town'}, 'with the switch on the step 1 ground keeps every piece');
+  equal([upgraded.hens, upgraded.boxes, upgraded.eggs, upgraded.lastSeen], [[], [], 0, 1_800_000_000 + DT], 'and gains no hens yet, and the last visit');
   equal(upgradeHome(stepOne), {...newHome('G-Town'), pieces: stepOne.pieces}, 'the upgrade adds the step 2 and 3 fields and keeps every old field');
 
   // A step 2 ground, through a real outing's opening, saved and read back from memory storage.
@@ -465,8 +465,8 @@ const memory = values => {
   const changed = applyEffects(original, {id: 'home-ground/buildings', effects: [{type: 'home', record: kept}]}).world;
   const saved = settleOpenWorld(profile, changed, {atStart: original,
     savedAtStart: {ledger: profile.story.ledger, open: savedOpenRecord(profile)}});
-  check(saved.ok && saved.changed, 'version 3 settles through the existing home effect');
-  check(savePlayers(replacePlayerProfile(registry, registry.activePlayerId, saved.profile), store), 'version 3 writes to memory-only storage');
+  check(saved.ok && saved.changed, 'version 4 settles through the existing home effect');
+  check(savePlayers(replacePlayerProfile(registry, registry.activePlayerId, saved.profile), store), 'version 4 writes to memory-only storage');
   const loaded = activePlayer(loadPlayers(store)).profile;
   equal(savedOpenRecord(loaded).home, kept, 'reload keeps every building stage, load, truck pose, name, due and egg');
   const withoutStory = value => { const {story, ...rest} = value; return rest; };
@@ -475,7 +475,7 @@ const memory = values => {
 
 // A literal version 2 stays byte-for-byte intact when read or when the switch is off.
 {
-  const {builds, loads, flatbed, ...oldFields} = withBoxes(giveHens(fenced()), [[3, 4]]);
+  const {builds, loads, flatbed, crew, ...oldFields} = withBoxes(giveHens(fenced()), [[3, 4]]);
   const old = {...oldFields, version: 2, eggs: 31, lastSeen: 1800000000};
   old.hens[0] = {...old.hens[0], name: 'Pepper', due: 123}; old.boxes[0].eggs = 17;
   const before = JSON.stringify(old), world = landWith(old).world;
@@ -490,9 +490,9 @@ const memory = values => {
   const off = run(landWith(old), {...viewOf({...groundPoint(2, 2), yaw: 0}), homeGround: false}, 1);
   equal(JSON.stringify(homeOf(off.open)), before, 'the switch off preserves version 2 exactly');
   const upgraded = upgradeHome(old);
-  equal({...upgraded, version: 2, builds: undefined, loads: undefined, flatbed: undefined},
-    {...old, builds: undefined, loads: undefined, flatbed: undefined}, 'upgrading preserves every version 2 field');
-  equal(upgradeHome(upgraded), upgraded, 'upgrading version 3 changes nothing');
+  equal({...upgraded, version: 2, builds: undefined, loads: undefined, flatbed: undefined, crew: undefined},
+    {...old, builds: undefined, loads: undefined, flatbed: undefined, crew: undefined}, 'upgrading preserves every version 2 field');
+  equal(upgradeHome(upgraded), upgraded, 'upgrading version 4 changes nothing');
   equal(JSON.stringify(old), before, 'the old record is not changed in place');
   for (const bad of [null, {}, {coop: 'bed', shed: 'bed'}, {coop: {i: -1, j: 1}, shed: 'stack'}])
     check(!readableHome({...upgraded, loads: bad}), 'invalid load records are rejected');

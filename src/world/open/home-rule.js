@@ -7,13 +7,14 @@
 // A panel covers one step; the gate covers four, and must stand in the outside fence.
 //
 // THE RECORD kept in the save (world.open.home):
+//   version 4 adds crew: {job: {kind, i, j} | null, began: real seconds | null, done: work seconds}.
 //   version 3 adds builds: [{kind, i, j, turn, stage}], loads: {coop, shed}, flatbed: {x, z, yaw}.
 //   A load is 'stack', 'bed', or a grid point {i, j}. Once its floor stands, the load is part of that building.
 //   A completed coop adds three ordinary {i, j, eggs} entries to boxes; coopBoxes identifies its fixed nests.
 //   version 2 (HOME-GROUND-2): {version: 2, name, pieces, marks, hens: [{name, breed, due}], boxes: [{i, j, eggs}], eggs,
 //     lastSeen}
 //   version 1 (HOME-GROUND-1): {version: 1, name, pieces: [{kind, i, j, axis}], marks: [{kind, i, j, axis}]}
-// A version 1 or 2 record is read as it is; the ground's part turns it into version 3 the first time it runs
+// A version 1, 2 or 3 record is read as it is; the enabled part turns it into version 4 the first time it runs
 // with its switch on (upgradeHome). The panels and the gate he still carries are worked out from it: HOME_PANELS less
 // the panels standing, and one gate less the gate standing; the old crates likewise, HOME_CRATES less the nest boxes.
 //   hens      each hen's name, breed and `due`: the seconds until her next egg, 0 while she waits for room in a box
@@ -23,20 +24,21 @@
 //             until a clock has been handed to the part. The clock is read once, when an outing opens.
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, HEN_BREEDS, HEN_SETTLE_SECONDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_CRATES,
   HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, MOSS_HENS, layInterval,
-  HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS} from './content/home-ground.js';
+  HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS, HOME_BOX_REACH, HOME_CREW_SECONDS} from './content/home-ground.js';
 
-export const HOME_RECORD_VERSION = 3;
+export const HOME_RECORD_VERSION = 4;
 const AXES = ['x', 'z'];
 const whole = value => Number.isSafeInteger(value);
 
 export const newHome = (name, lastSeen = null) => ({version: HOME_RECORD_VERSION, name, pieces: [], marks: [], hens: [], boxes: [],
-  eggs: 0, lastSeen, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed()});
+  eggs: 0, lastSeen, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed(), crew: {job: null, began: null, done: 0}});
 function firstFlatbed() { return {...groundPoint(15, -3), yaw: 0}; }
 // Reading an older record does not upgrade it. Only the enabled part calls this.
 export function upgradeHome(home) {
-  if (home.version === 3) return home;
-  const kept = home.version === 1 ? {...home, hens: [], boxes: [], eggs: 0, lastSeen: null} : home;
-  return {...kept, version: 3, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed()};
+  if (home.version === HOME_RECORD_VERSION) return home;
+  let kept = home.version === 1 ? {...home, hens: [], boxes: [], eggs: 0, lastSeen: null} : home;
+  if (home.version < 3) kept = {...kept, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed()};
+  return {...kept, version: HOME_RECORD_VERSION, crew: {job: null, began: null, done: 0}};
 }
 
 // A name he may write: 1 to 24 letters, numbers, spaces and the marks a place name uses.
@@ -46,7 +48,7 @@ export function cleanHomeName(text) {
   return name.length >= 1 && name.length <= HOME_NAME_LONGEST && /^[\p{L}\p{N} '&.,!?-]+$/u.test(name) ? name : null;
 }
 
-// Step 3 keeps one first building of each kind. Stage 0 is its movable chalk mark.
+// Stage 0 is a movable chalk mark. One unfinished building of each kind can stand beside the completed ones.
 const sameCell = (a, b) => a.i === b.i && a.j === b.j;
 export function buildBounds(row) {
   const size = HOME_BUILDS[row.kind], turned = row.turn % 2;
@@ -69,14 +71,17 @@ function readableBuild(row) {
 const loadPoint = row => row && Object.keys(row).length === 2 && whole(row.i) && whole(row.j) &&
   row.i >= 0 && row.j >= 0 && row.i < HOME_CELLS && row.j < HOME_CELLS;
 function readableBuildings(home) {
-  if (!Array.isArray(home.builds) || home.builds.length > 2 || !home.builds.every(readableBuild) ||
-      new Set(home.builds.map(row => row.kind)).size !== home.builds.length ||
+  if (!Array.isArray(home.builds) || home.builds.length > (home.version === 3 ? 2 : HOME_CELLS * HOME_CELLS) || !home.builds.every(readableBuild) ||
+      (home.version >= 4 && new Set(home.builds.map(row => row.i + ':' + row.j)).size !== home.builds.length) ||
+      (home.version === 3 && new Set(home.builds.map(row => row.kind)).size !== home.builds.length) ||
+      ['coop', 'shed'].some(kind => home.builds.filter(row => row.kind === kind && row.stage < 4).length > 1) ||
       !home.loads || Object.keys(home.loads).length !== 2 ||
       !['coop', 'shed'].every(kind => ['stack', 'bed'].includes(home.loads[kind]) || loadPoint(home.loads[kind])) ||
       Object.values(home.loads).filter(row => row === 'bed').length > 1 ||
       !home.flatbed || Object.keys(home.flatbed).length !== 3 ||
       !['x', 'z', 'yaw'].every(key => Number.isFinite(home.flatbed[key]))) return false;
-  return home.builds.every(row => row.stage === 0 || loadPoint(home.loads[row.kind]));
+  return home.builds.every(row => row.stage === 0 || (home.version >= 4 && row.stage === 4) || loadPoint(home.loads[row.kind])) &&
+    (home.version === 3 || home.builds.every((row, index) => !home.builds.slice(index + 1).some(other => rectanglesOverlap(buildBounds(row), buildBounds(other)))));
 }
 export function buildInLand(row) {
   const b = buildBounds(row), at = groundPoint((b.i0 + b.i1) / 2, (b.j0 + b.j1) / 2);
@@ -94,7 +99,7 @@ export function buildSlot(kind, position, yaw, turn = 0) {
 }
 export function buildRefusal(home, row) {
   if (!readableBuild(row)) return 'offGround';
-  if (home.builds.some(other => other.kind === row.kind)) return 'buildExists';
+  if (home.builds.some(other => other.kind === row.kind && other.stage < 4)) return 'buildExists';
   const bounds = buildBounds(row);
   if (rectanglesOverlap(bounds, laneOf(gateOf(home)))) return 'lane';
   if (home.builds.some(other => rectanglesOverlap(bounds, buildBounds(other))) ||
@@ -104,31 +109,94 @@ export function buildRefusal(home, row) {
 }
 export function markBuild(home, row) {
   if (row.stage !== 0 || buildRefusal(home, row)) return home;
-  return {...home, builds: [...home.builds, {...row}]};
+  const fresh = home.builds.some(other => other.kind === row.kind && other.stage === 4 && sameCell(other, home.loads[row.kind] ?? {}));
+  return {...home, builds: [...home.builds, {...row}], loads: fresh ? {...home.loads, [row.kind]: 'stack'} : home.loads};
 }
-export function liftBuild(home, kind) {
-  return {...home, builds: home.builds.filter(row => row.kind !== kind || row.stage > 0)};
+export function liftBuild(home, target) {
+  return {...home, builds: home.builds.filter(row => !matchesBuild(row, target) || row.stage > 0 || matchesBuild(row, home.crew?.job))};
 }
 export function buildHasLoad(home, row) {
   const at = home.loads[row.kind];
   return loadPoint(at) && Math.hypot(at.i - row.i, at.j - row.j) * HOME_STEP <= 4;
 }
-export function raiseBuild(home, kind) {
-  const row = home.builds.find(item => item.kind === kind);
-  if (!row || row.stage >= 4 || !buildHasLoad(home, row)) return home;
+export const matchesBuild = (row, target) => !!target && (typeof target === 'string' ? row.kind === target :
+  row.kind === target.kind && sameCell(row, target));
+export function raiseBuild(home, target, byCrew = false) {
+  const row = home.builds.find(item => matchesBuild(item, target) && item.stage < 4);
+  const kind = row?.kind;
+  if (!row || !buildHasLoad(home, row)) return home;
   const next = {...home, builds: home.builds.map(item => item === row ? {...row, stage: row.stage + 1} : item)};
-  if (kind === 'coop' && row.stage === 3) next.boxes = [...home.boxes, ...coopBoxes(next).map(cell => ({...cell, eggs: 0}))];
+  if (kind === 'coop' && row.stage === 3) next.boxes = [...home.boxes, ...coopBoxes(next).filter(cell =>
+    !home.boxes.some(box => sameCell(cell, box))).map(cell => ({...cell, eggs: 0}))];
+  if (!byCrew && matchesBuild(row, home.crew?.job)) {
+    next.crew = {...home.crew, done: Math.min(HOME_CREW_SECONDS[kind], home.crew.done + HOME_CREW_SECONDS[kind] / 4)};
+    if (row.stage === 3) next.crew = {job: null, began: null, done: 0};
+  }
   return settle(next);
+}
+
+// Only the next building of a kind he has raised himself can be handed over. Completed buildings are never removed.
+export function crewOffer(home) {
+  if (home.crew?.job) return null;
+  return home.builds.find(row => row.stage < 4 && buildHasLoad(home, row) &&
+    home.builds.some(other => other.kind === row.kind && other.stage === 4)) ?? null;
+}
+export function handToCrew(home, row, now = null) {
+  const offer = crewOffer(home);
+  if (!offer || !matchesBuild(offer, row)) return home;
+  return {...home, crew: {job: {kind: row.kind, i: row.i, j: row.j},
+    began: Number.isFinite(now) && now >= 0 ? now : null, done: row.stage * HOME_CREW_SECONDS[row.kind] / 4}};
+}
+function readableCrew(home) {
+  const crew = home.crew;
+  if (!crew || Object.keys(crew).length !== 3 || !Number.isFinite(crew.done) || crew.done < 0 ||
+      !(crew.began === null || Number.isFinite(crew.began) && crew.began >= 0)) return false;
+  if (crew.job === null) return crew.began === null && crew.done === 0;
+  const job = crew.job;
+  if (!job || Object.keys(job).length !== 3 || !Object.hasOwn(HOME_BUILDS, job.kind) || !whole(job.i) || !whole(job.j)) return false;
+  const row = home.builds.find(item => matchesBuild(item, job));
+  const stageSeconds = HOME_CREW_SECONDS[job.kind] / 4;
+  return !!row && row.stage < 4 && buildHasLoad(home, row) &&
+    home.builds.some(other => other.kind === row.kind && other.stage === 4) &&
+    crew.done >= row.stage * stageSeconds && crew.done < (row.stage + 1) * stageSeconds;
+}
+// `seconds` is supplied by the outing. Never read the real clock here or charge for time twice.
+export function advanceCrew(home, seconds) {
+  if (!home.crew?.job || !Number.isFinite(seconds) || seconds <= 0) return {home, finished: null};
+  const job = home.crew.job, duration = HOME_CREW_SECONDS[job.kind];
+  const done = Math.min(duration, home.crew.done + seconds);
+  let next = {...home, crew: {...home.crew, done}};
+  const stage = Math.min(4, Math.floor(done / (duration / 4)));
+  let row = next.builds.find(item => matchesBuild(item, job));
+  while (row.stage < stage) {
+    next = raiseBuild(next, job, true);
+    row = next.builds.find(item => matchesBuild(item, job));
+  }
+  const finished = row.stage === 4 ? row : null;
+  if (finished) next = {...next, crew: {job: null, began: null, done: 0}};
+  return {home: next, finished};
+}
+export function crewFinishedWords(home, row) {
+  const number = home.builds.filter(item => item.kind === row.kind).findIndex(item => matchesBuild(item, row)) + 1;
+  const ordinal = ['first', 'second', 'third', 'fourth', 'fifth'][number - 1] ?? `number ${number}`;
+  return `Rook and Wren finished your ${ordinal} ${row.kind}.`;
+}
+
+// A finished coop makes room for eggs for the remaining time away, just as it does during an outing.
+export function ripenHome(home, seconds) {
+  const elapsed = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  const untilRoof = home.crew?.job ? HOME_CREW_SECONDS[home.crew.job.kind] - home.crew.done : elapsed;
+  const first = Math.min(elapsed, untilRoof), ripe = ripen(home, first);
+  const worked = advanceCrew(ripe.home, first), rest = ripen(worked.home, elapsed - first);
+  return {home: rest.home, laid: [...ripe.laid, ...rest.laid], finished: worked.finished};
 }
 // Built-in nests use the existing egg record and laying rules. Their cells cannot be lifted as crates.
 export function coopBoxes(home) {
-  if (home?.version !== 3 || !Array.isArray(home.builds)) return [];
-  const row = home.builds.find(item => item?.kind === 'coop' && item.stage === 4);
-  if (!row) return [];
-  return [[0, 0], [1, 0], [0, 1]].map(([x, z]) => {
+  if (!home || home.version < 3 || !Array.isArray(home.builds)) return [];
+  return home.builds.filter(item => item?.kind === 'coop' && item.stage === 4).flatMap(row => [[0, 0], [1, 0], [0, 1]].map(([x, z]) => {
     for (let n = 0; n < row.turn; n++) [x, z] = [z, 1 - x];
     return {i: row.i + x, j: row.j + z};
-  });
+  }));
 }
 export function gatherCoop(home) {
   return home.boxes.reduce((kept, box, index) => coopBoxes(home).some(cell => sameCell(box, cell)) ? gatherBox(kept, index) : kept, home);
@@ -152,7 +220,9 @@ export function transferHomeLoad(home, {vehicle, position, speedKmh}) {
     return {...home, loads: {...home.loads, [bed]: {i: mark.i, j: mark.j}}};
   }
   const kind = Object.keys(HOME_BUILDS).find(key => {
-    if (home.builds.some(row => row.kind === key && row.stage > 0)) return false;
+    if (home.crew?.job?.kind === key) return false;
+    if (!home.builds.some(row => row.kind === key && row.stage === 0) && home.builds.some(row => row.kind === key && row.stage > 0)) return false;
+    if (home.builds.some(row => row.kind === key && row.stage > 0 && row.stage < 4)) return false;
     const location = home.loads[key];
     const at = location === 'stack' ? HOME_LOAD_STACK : loadPoint(location) ? groundPoint(location.i, location.j) : null;
     return at && Math.hypot(position.x - at.x, position.z - at.z) <= 4;
@@ -184,15 +254,16 @@ function readableBox(box) {
     box.i >= 0 && box.i < HOME_CELLS && box.j >= 0 && box.j < HOME_CELLS && count(box.eggs) && box.eggs <= BOX_HOLDS;
 }
 export function readableHome(home) {
-  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, HOME_RECORD_VERSION].includes(home.version)) return false;
+  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, HOME_RECORD_VERSION].includes(home.version)) return false;
   const built = cleanHomeName(home.name) === home.name && Array.isArray(home.pieces) && home.pieces.every(readablePiece) &&
     Array.isArray(home.marks) && home.marks.every(readablePiece) && home.marks.length <= 4 * HOME_CELLS * (HOME_CELLS + 1) &&
     home.pieces.filter(piece => piece.kind === 'gate').length <= 1 &&
     home.pieces.filter(piece => piece.kind === 'panel').length <= HOME_PANELS;
   if (!built || home.version === 1) return built;
-  if (home.version === 3 && !readableBuildings(home)) return false;
+  if (home.version >= 3 && !readableBuildings(home)) return false;
+  if (home.version === 4 && !readableCrew(home)) return false;
   const builtIn = coopBoxes(home);
-  return Array.isArray(home.hens) && home.hens.length <= (builtIn.length ? HOME_BUILDS.coop.hens : MOSS_HENS.length) && home.hens.every(readableHen) &&
+  return Array.isArray(home.hens) && home.hens.length <= (builtIn.length ? HOME_BUILDS.coop.hens * builtIn.length / 3 : MOSS_HENS.length) && home.hens.every(readableHen) &&
     Array.isArray(home.boxes) && home.boxes.length <= HOME_CRATES + builtIn.length && home.boxes.every(readableBox) &&
     builtIn.every(cell => home.boxes.some(box => sameCell(box, cell))) &&
     new Set(home.boxes.map(box => box.i + ':' + box.j)).size === home.boxes.length &&
@@ -324,7 +395,7 @@ export function homeSolids(home, {gateOpen = false, heightAt}) {
     const add = (key, x, z, halfX, halfZ, height) => {
       const px = at.x + x * Math.cos(at.heading) + z * Math.sin(at.heading);
       const pz = at.z - x * Math.sin(at.heading) + z * Math.cos(at.heading);
-      rows.push({id: `home/${row.kind}/${key}`, kind: 'wall', x: px, z: pz, halfX, halfZ, heading: at.heading,
+      rows.push({id: `home/${row.kind}/${row.i}/${row.j}/${key}`, kind: 'wall', x: px, z: pz, halfX, halfZ, heading: at.heading,
         height, base: heightAt(at.x, at.z)});
     };
     for (const x of [-w / 2, w / 2]) for (const z of [-d / 2, d / 2]) add(`post/${x}/${z}`, x, z, .09, .09, 2.1);
@@ -424,7 +495,7 @@ const BOX_AIM = .6;
 // The cell in front of him, for a nest box.
 export function boxSlotInFront(position, yaw) {
   const ahead = {x: Math.sin(yaw), z: Math.cos(yaw)};
-  const {a, b} = toGrid(position.x + ahead.x * HOME_REACH, position.z + ahead.z * HOME_REACH);
+  const {a, b} = toGrid(position.x + ahead.x * HOME_BOX_REACH, position.z + ahead.z * HOME_BOX_REACH);
   let best = null;
   // Snapping to a two-metre cell must not bring the box back under his feet. Choose the nearest cell whose centre
   // is at least a step ahead and inside his forward view.
@@ -432,8 +503,8 @@ export function boxSlotInFront(position, yaw) {
     for (let j = Math.floor(b) - 1; j <= Math.floor(b) + 1; j++) {
       const at = boxInLand({i, j}), dx = at.x - position.x, dz = at.z - position.z;
       const along = dx * ahead.x + dz * ahead.z, across = dx * ahead.z - dz * ahead.x;
-      if (along < HOME_STEP / 2 || Math.abs(across) > along * Math.tan(BOX_AIM)) continue;
-      const score = (along - HOME_REACH) ** 2 + across ** 2;
+      if (along < HOME_BOX_REACH - .5 || Math.abs(across) > along * Math.tan(BOX_AIM)) continue;
+      const score = (along - HOME_BOX_REACH) ** 2 + across ** 2;
       if (!best || score < best.score) best = {i, j, score};
     }
   }
@@ -522,6 +593,7 @@ export function awayWords(seconds) {
 // the outing found when it opened: {away (seconds counted), long (the clock said more than AWAY_LONGEST), laid}.
 export function boardLines(opened, home) {
   const lines = [];
+  if (opened?.finished) lines.push(crewFinishedWords(home, opened.finished));
   const away = opened?.away ?? 0;
   if (opened?.long) lines.push(BOARD_WORDS.awayLong);
   else if (away >= 3600) lines.push(fill(BOARD_WORDS.away, {time: awayWords(away)}));
@@ -553,7 +625,7 @@ export function facedThing(home, position, yaw) {
     if (coopBoxes(home).some(cell => sameCell(cell, box))) return;
     const at = boxInLand(box), dx = at.x - position.x, dz = at.z - position.z;
     const along = dx * ahead.x + dz * ahead.z, across = dx * ahead.z - dz * ahead.x;
-    if (along >= .3 && Math.hypot(dx, dz) <= HOME_REACH + HOME_STEP && Math.abs(across) <= along * Math.tan(BOX_AIM))
+    if (along >= .3 && Math.hypot(dx, dz) <= HOME_BOX_REACH + HOME_STEP && Math.abs(across) <= along * Math.tan(BOX_AIM))
       offer({kind: 'box', index, box}, along);
   });
   for (let step = 3; step <= 20; step++) {

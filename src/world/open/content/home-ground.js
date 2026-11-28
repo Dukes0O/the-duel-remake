@@ -37,6 +37,8 @@ export const HOME_LANE_CELLS = HOME_PIECES.gate.cells;
 export const HAMMER_STRIKE_SECONDS = .6;
 // The outline stands this far in front of him.
 export const HOME_REACH = 1.6;
+export const HOME_BOX_REACH = 3;
+export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60});
 // The cursor from above moves this fast, in metres a second.
 export const HOME_CURSOR_SPEED = 12;
 // The camera from above: straight down over the middle of the ground, high enough to see all of it with room round it.
@@ -89,6 +91,7 @@ export const HOME_CUES = Object.freeze({
   boardRead: 'home.board.read', boxUp: 'home.box.up', crateOpen: 'home.crate.open',
   loadOn: 'home.load.on', loadOff: 'home.load.off', coopStage: 'home.coop.stage', shedStage: 'home.shed.stage',
   roost: 'home.hens.roost', shedDoor: 'home.shed.door',
+  crewArrive: 'home.crew.arrive', crewHammer: 'home.crew.hammer', crewDone: 'home.crew.done',
 });
 
 // What he reads. Every line is a whole sentence.
@@ -149,6 +152,8 @@ export const HOME_WORDS = Object.freeze({
   shedDoor: 'Press F to see what your shed holds.',
   shedStore: 'Your shed holds {count} eggs.',
   shedStoreOne: 'Your shed holds one egg.',
+  crewHand: 'Press F to hand the {piece} to the builders.',
+  crewBusy: 'Rook and Wren are raising your {piece}. You can help them by hammering a stage yourself.',
 });
 
 // What the board at the gate says (src/world/open/home-rule.js, boardLines). Every line is a whole sentence.
@@ -197,11 +202,17 @@ export const MOSS_TALK = Object.freeze({
   choices: [{id: 'take', words: "I'll look after them."}],
 });
 validateTalkScene(MOSS_TALK);
+export const HOME_CREW_TALK = Object.freeze({
+  id: 'home-ground/builders',
+  lines: [{speaker: 'wren', words: "You've shown us how you like it done. Mark the next one, bring the tin, and we'll put it up while you're away."}],
+  choices: [{id: 'thanks', words: "I'll mark the next one."}],
+});
+validateTalkScene(HOME_CREW_TALK);
 // The same test as checkSentence (src/world/open/check-tables.js), written here so that this table imports no rules.
 const checkSentence = text => [...(text.includes('—') ? ['"' + text + '" has an em dash.'] : []),
   ...(/[.!?]["')\]*]*$/.test(text.trim()) ? [] : ['"' + text + '" does not end as a sentence.'])];
 const wrongWords = [...Object.values(HOME_WORDS), ...Object.values(BOARD_WORDS),
-  ...[HOME_OFFER, MOSS_TALK].flatMap(scene => [...scene.lines.map(line => line.words), ...scene.choices.map(choice => choice.words)])]
+  ...[HOME_OFFER, MOSS_TALK, HOME_CREW_TALK].flatMap(scene => [...scene.lines.map(line => line.words), ...scene.choices.map(choice => choice.words)])]
   .flatMap(checkSentence);
 if (wrongWords.length) throw new Error('Home ground words:\n  ' + wrongWords.join('\n  '));
 

@@ -372,6 +372,24 @@ go into the real game after step 4.
 - The real-key scenario marks a coop, returns to the yard, chooses the flatbed and attempts its delivery. It is
   syntax-checked here and runs at night; Claude drives the merged step by hand.
 
+### Step 3B as built (HOME-GROUND-3B, behind the switch `home-ground`)
+
+- Version 4 keeps all earlier fields and adds `crew: {job, began, done}`. The job is a building's `{kind, i, j}`,
+  `began` is its supplied real start time or null, and `done` is counted work in seconds. Idle is `{job: null,
+  began: null, done: 0}`. Versions 1 to 3 load unchanged; only the enabled part upgrades them after the career backup.
+- After the first coop or shed is raised by hand, Wren explains the handoff. Mark the next and deliver its tin,
+  then press F at the news board. Rook carries sheets and Wren hammers, using existing people figures. Their walk
+  belongs to the outing's rules; the drawing counts no work. One crew job runs at a time, with no scrap shortcut.
+- A coop takes 1,800 seconds and a shed 3,600, in four stages. Each stage hammered by hand saves a full stage's wait.
+  The supplied clock plus outing seconds counts time once; a backward clock preserves the last counted moment.
+  When a coop finishes offline, hens use its new nests for the remaining time away. The board reports completion.
+- Completed buildings and all their nests stay. One unfinished building per kind can stand beside them. Its load
+  is replenished at Tin Town after the previous load is built in; moving an unused mark keeps its tin.
+- Nest boxes are placed about 3 m ahead, with matching reach. Build outlines tilt the first-person view down 15
+  degrees. The big map hides the home prompts, board, burst bar and weapon panel. Moss and Wren face the player
+  during talk. F reads the news board within 6 m; nearby naming, Moss and box interactions keep their own reach.
+- Cues: `home.crew.arrive`, `home.crew.hammer`, `home.crew.done`. Claude drives this step by hand before release.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.
