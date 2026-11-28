@@ -37,8 +37,9 @@ import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoo
   homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome, standPanel,
   lootOnBed, cartersBusy, cartersOffer, sendCarters, finishCarters,
   canBorrowDrill, wellInLand, wellRefusal, markWell, homeDrillHole, drillHomeWell, fitHomePump, fillHomeTanks, tankWords, buildBed, bedRefusal, cropInLand, nextCrop, plantCrop, harvestCrop, cropWaterSeconds,
-  packTin, eatFromTin, stepHomePowers, powerStrength, pairHomePowers, proteinHomePower, tinWords, awayWords} from '../home-rule.js';
-import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, raidInterval, towerAtLadder, stepHomeTower} from '../home-raid-rule.js';
+  packTin, eatFromTin, stepHomePowers, powerStrength, pairHomePowers, proteinHomePower, tinWords, awayWords, homeFenceStack, outsideGarlic} from '../home-rule.js';
+import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, raidInterval, towerAtLadder, stepHomeTower,
+  ramHomePanels, useHomeFightPowers} from '../home-raid-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {makeRng} from '../../../rng.js';
 import {createDrillRigState, stepDrillRig, drillYardControls, drillMaterialAt} from '../../../machines/drill.js';
@@ -278,7 +279,8 @@ export const homePart = {
         const eaten = eatFromTin(record, slot, next.powers);
         record = eaten.home; next.powers = eaten.powers;
         if (eaten.eaten) {
-          next.meals = {...next.meals, [eaten.eaten]: {at: now, protein: false}};
+          next.mealCount = (next.mealCount ?? 0) + 1;
+          next.meals = {...next.meals, [eaten.eaten]: {at: now, order: next.mealCount, protein: false}};
           events.push(cue(HOME_CUES.eat));
           if (HOME_CROPS[eaten.eaten].cue) events.push(cue(HOME_CROPS[eaten.eaten].cue));
           choices.push(choice('eat', record));
@@ -292,12 +294,38 @@ export const homePart = {
         requests.push(say('protein', egg.eaten ? HOME_WORDS.protein : HOME_WORDS.noProtein));
       }
     }
-    next.pairs = pairHomePowers(next.powers, next.meals);
+    next.pairs = pairHomePowers(next.powers, next.meals, stepHomePowers(state.pairs ?? {}, dt));
     for (const id of Object.keys(next.pairs)) if (next.pairs[id] > 0 && !(state.pairs?.[id] > 0)) {
       events.push(cue(HOME_CUES.pair)); requests.push(say('pair-' + id, HOME_WORDS[id]));
     }
     if (next.powers.firePeppers > 0) next.burst = {charge: 1, spent: false,
       active: !!fighter && !next.above && !!keys.forward, shown: true, strength: powerStrength(next.powers.firePeppers)};
+    const canUsePower = fighter && !fighter.knockedDown && !next.naming && !view.homeTalking && !next.above && !next.tower;
+    let powerUsed = false;
+    const landed = state.lastFoot?.air > 1e-6 && (fighter?.airHeight ?? 0) <= 1e-6;
+    if (canUsePower && next.pairs.ram > 0 && keys.forward && (fighter.airHeight ?? 0) < .1) {
+      const p = fighter.position, step = .45 * powerStrength(next.pairs.ram);
+      const ram = ramHomePanels(record, state.lastFoot?.position ?? p,
+        {x: p.x + Math.sin(fighter.yaw) * step, z: p.z + Math.cos(fighter.yaw) * step}, 31, 'buggy');
+      record = ram.home;
+      for (const panel of ram.fallen) events.push(cue(HOME_CUES.fenceFall));
+    }
+    if (canUsePower && next.raid) {
+      const used = useHomeFightPowers(next.raid, fighter, next.powers, next.pairs,
+        {shove: pressed('interact'), landed, now});
+      next.raid = used.raid; powerUsed = used.used;
+      if (used.used) events.push(cue(landed ? HOME_CUES.pair : HOME_CROPS.superSpinach.cue));
+    }
+    if (next.fenceBundle && (!canUsePower || next.powers.superSpinach <= 0)) {
+      next.fenceBundle = false; next.bundleAt = fighter ? {...fighter.position} : state.lastFoot?.position ?? homeFenceStack();
+    }
+    if (canUsePower && !powerUsed && pressed('interact') &&
+        (next.fenceBundle || next.powers.superSpinach > 0 && panelsLeft(record) > 0 &&
+          distance(fighter.position, next.bundleAt ?? homeFenceStack()) <= 3)) {
+      next.bundleAt = {...fighter.position}; next.fenceBundle = !next.fenceBundle; powerUsed = true;
+      events.push(cue(next.fenceBundle ? HOME_CUES.loadOn : HOME_CUES.loadOff));
+    }
+    next.lastFoot = fighter ? {position: {...fighter.position}, air: fighter.airHeight ?? 0} : null;
     const gap = now - next.ripenedAt;
     if (record.hens.some(hen => hen.due <= gap) && boxRoom(record) > 0) {
       const laid = catchUp();
@@ -387,7 +415,7 @@ export const homePart = {
       events.push(cue(HOME_CUES.raidCall), cue(HOME_CUES.raidBike));
     }
     if (next.raid) {
-      const stepped = stepHomeRaid(record, next.raid, {...view, gateOpen: next.gateOpen, leaving: !!context.leave}, dt, context.seed);
+      const stepped = stepHomeRaid(record, next.raid, {...view, homePowers: next.powers, gateOpen: next.gateOpen, leaving: !!context.leave}, dt, context.seed);
       record = stepped.home; next.raid = stepped.raid;
       events.push(...stepped.events);
       if (stepped.news) {
@@ -459,7 +487,7 @@ export const homePart = {
     const newsPrompt = collect ? HOME_WORDS.cartersOffer : offer ? words('crewHand', {piece: offer.kind}) :
       cartersBusy(record) ? HOME_WORDS.cartersBusy : record.crew.job ? words('crewBusy', {piece: record.crew.job.kind}) : HOME_WORDS.boardHint;
     let note = '';
-    if (fighter && !next.naming && !next.tower && !state.tower && !ladder && pressed('interact')) {
+    if (fighter && !powerUsed && !next.naming && !next.tower && !state.tower && !ladder && pressed('interact')) {
       if (atNews) {
         if (collect) {
           catchUp(); record = sendCarters(record, record.lastSeen);
@@ -481,6 +509,7 @@ export const homePart = {
         const id = row.crop ?? nextCrop(record, cropAt.pot);
         const changed = row.crop ? harvestCrop(record, cropAt.index, cropAt.pot) : plantCrop(record, cropAt.index, cropAt.pot);
         if (changed !== record) {
+          if (changed.moreSeeds && !record.moreSeeds) requests.push(say('more-seeds', HOME_WORDS.moreSeeds));
           record = changed; choices.push(choice('crop', record));
           events.push(cue(row.crop ? HOME_CUES.harvest : HOME_CUES.plant));
           note = words(row.crop ? 'cropGathered' : 'cropPlanted', {crop: HOME_CROPS[id].name});
@@ -681,6 +710,8 @@ export const homePart = {
     if (cropAt && !next.naming && !next.above && !keys.build) next.prompt = note || cropPrompt(record, cropAt);
     // The news board keeps its full six-metre reach even when he stands beside a building.
     if (atNews && !next.naming && !next.above) next.prompt = newsPrompt;
+    if (canUsePower && next.powers.superSpinach > 0 && !next.building)
+      next.prompt = next.fenceBundle ? HOME_WORDS.fenceCarry : HOME_WORDS.spinachUse;
     for (const event of view.jobEvents ?? []) {
       if (event.scene === HOME_CREW_TALK.id && ['openTalkClosed', 'openTalkSkipped'].includes(event.type)) {
         next.crewTalk = false;
@@ -710,6 +741,12 @@ export const homePart = {
     next.crewWalk = crewKey === state.crewKey ? state.crewWalk + dt : next.opened.away > 0 && record.crew.done > 0 ? 1000 : 0;
     next.crewKey = crewKey;
     next.crewPeople = crewPlaces(record, next.crewWalk, next.crewLesson);
+    if (canUsePower && next.powers.stinkGarlic > 0) next.crewPeople = next.crewPeople.map(person => {
+      const from = state.crewPeople.find(old => old.id === person.id) ?? person;
+      const at = outsideGarlic(from, person, fighter.position, powerStrength(next.powers.stinkGarlic), 3, dt);
+      return at === person ? person : {...person, ...at, working: false,
+        yaw: Math.atan2(at.x - fighter.position.x, at.z - fighter.position.z)};
+    });
     next.gateOpen ||= !!gateMiddle && next.crewPeople.some(person => distance(person, gateMiddle) < GATE_OPENS);
     // He holds a hammer while he builds, a wrench for the gate's hinges; the strike is how far through a blow he is.
     const building = near && next.building && !next.above && !next.naming;

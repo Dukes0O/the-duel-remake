@@ -91,6 +91,28 @@ for (const home of [undefined, newHome('Current'), {...newHome('Future'), versio
     players: [{id: 'home', name: 'Home', profile}]})});
   assert.equal(needsCareerMigration(source), false, 'absent, current and future homes are not old-home migrations');
 }
+// HOME-GROUND-5C: a genuine 5B tin and garden must survive the verified backup unchanged.
+{
+  const home = {...newHome('5B garden', 1000), version: 8, eggs: 31,
+    seeds: {spinach: 2, carrots: 4, beans: 6, firePeppers: 1, jumpingBeans: 2},
+    foods: {firePeppers: 3, jumpingBeans: 4}, tin: ['jumpingBeans', 'firePeppers', null]};
+  delete home.moreSeeds;
+  const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}, story: {version: 1, open: {home}}};
+  const source = memoryStorage({[PLAYERS_KEY]: JSON.stringify({version: 2, activePlayerId: 'home',
+    players: [{id: 'home', name: 'Home', profile}]})});
+  const before = captureCareer(source), store = memoryBackups();
+  assert.equal(needsCareerMigration(source), true, 'a version 8 garden requires its verified backup');
+  await assert.rejects(backupBeforeMigration(source, {save: async () => {}, load: async () => null}), /could not be verified/);
+  assert.deepEqual(captureCareer(source), before, 'an unverified 5B backup leaves all original bytes intact');
+  const saved = await backupBeforeMigration(source, store);
+  assert.deepEqual((await store.load(saved.id)).entries, before, 'the 5B backup verifies every original byte');
+  assert.deepEqual(loadPlayers(source).players[0].profile.story.open.home, home, 'loading 5B does not upgrade or lose food');
+  const upgraded = upgradeHome(home);
+  for (const key of ['seeds', 'foods']) for (const [id, count] of Object.entries(home[key]))
+    assert.equal(upgraded[key][id], count, 'migration keeps every older food and seed count');
+  for (const [key, value] of Object.entries(home)) if (!['version', 'seeds', 'foods'].includes(key))
+    assert.deepEqual(upgraded[key], value, 'migration keeps every other 5B field');
+}
 const dir=new URL('./fixtures/saves/',import.meta.url);
 const fixtures=readdirSync(fileURLToPath(dir)).filter(name=>name.endsWith('.json')).sort();
 // The exact roster is pinned once, in test-save-fixtures; here every fixture must back up.

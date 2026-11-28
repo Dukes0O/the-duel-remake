@@ -6,7 +6,10 @@ import {HOME_CROPS, HOME_EXTRA_FOODS} from '../src/world/open/content/home-groun
 import {buildBed, bedRefusal, cropInLand, plantCrop, harvestCrop, packTin, eatFromTin, stepHomePowers, powerStrength,
   homeFootPlatforms, newGarden, tinWords, pairHomePowers, proteinHomePower} from '../src/world/open/home-rule.js';
 import {footControlInput} from '../src/input-contexts.js';
-import {createFighter, stepFighter, FIGHTER_STEP_SECONDS, FIGHTER_RULES} from '../src/onfoot.js';
+import {createFighter, stepFighter, damageFighter, strikeFighterWithCar, FIGHTER_STEP_SECONDS, FIGHTER_RULES} from '../src/onfoot.js';
+import {homeFenceStack, outsideGarlic} from '../src/world/open/home-rule.js';
+import {useHomeFightPowers} from '../src/world/open/home-raid-rule.js';
+import {strikeFighterFromVehicles} from '../src/onfoot-race.js';
 import {readFileSync} from 'node:fs';
 import {PLAYERS_KEY, activePlayer, loadPlayers, replacePlayerProfile, savePlayers} from '../src/progression.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
@@ -1366,6 +1369,10 @@ const memory = values => {
   game.course = course; game.state.fighter = createFighter(course, car, {s: 0, lateral: 0});
   Object.assign(game.state, {s: 0, lateral: 0, arena: {mode: 'world-job', worldJob: {job: {steps: [{kind: 'roam'}], stepIndex: 0}, open: {parts: {home}, world: {...newWorld({seed: 5, night: 2}), open: {...newWorld({seed: 5, night: 2}).open, home: newHome('Power')}}}}, participants: []}, opponents: []});
   game.state.fighterInput = {forward: true, jump: true};
+  game.setFighterInput({homeEat1: true, homeEat2: true, homeEat3: true, homeProtein: true});
+  check(game.state.fighterInput.homeEat1 && game.state.fighterInput.homeEat2 && game.state.fighterInput.homeEat3 && game.state.fighterInput.homeProtein,
+    'the real game input method forwards all food keys to the home part');
+  game.setFighterInput({homeEat1: false, homeEat2: false, homeEat3: false, homeProtein: false});
   let peak = 0;
   for (let n = 0; n < 150; n++) { stepFootTransition(game, DT); peak = Math.max(peak, game.state.fighter.y); }
   check(peak > 5.9 && game.state.fighter.z > 37, 'the actual foot adapter applies both the pepper speed and bean jump');
@@ -1399,6 +1406,8 @@ const memory = values => {
   const powers = {superSpinach: 110, firePeppers: 90, jumpingBeans: 120};
   equal(pairHomePowers(powers, meals), {ram: 90, leap: 90, thump: 0}, 'ten seconds includes the boundary and excludes a late pair');
   equal(pairHomePowers(stepHomePowers(powers, 90), meals), {ram: 0, leap: 0, thump: 0}, 'pairs stop with their shorter food');
+  equal(pairHomePowers({superSpinach: 120, firePeppers: 79}, {superSpinach: {at: 20}, firePeppers: {at: 9}}, {ram: 79}).ram,
+    79, 'another spinach meal cannot cancel an existing ram');
   const egg = proteinHomePower(upgraded, powers, {firePeppers: {at: 5, protein: false}}, 10);
   equal([egg.home.eggs, egg.powers.firePeppers], [16, 135], 'an egg at five seconds adds half the original food duration');
   equal(proteinHomePower(egg.home, egg.powers, egg.meals, 10).home.eggs, 16, 'one meal cannot spend two eggs');
@@ -1410,5 +1419,96 @@ const memory = values => {
     equal(ate.powers[id], HOME_CROPS[id].lasts, id + ' starts its settled duration');
     equal(stepHomePowers(ate.powers, HOME_CROPS[id].lasts)[id], 0, id + ' ends on time');
   }
+  const world = newWorld({seed: 42, night: 2});
+  const land = saved => openLand({...world, open: {...world.open, home: saved}});
+  const me = {...groundPoint(10, 10), yaw: 0};
+  equal(homeOf(stepOpenLand(land(old), viewOf(me, {}, {homeGround: false}), 10, parts).open), old,
+    '5C never upgrades a 5B save behind a disabled switch');
+  const pots = Array.from({length: 6}, (_, slot) => ({i: 3, j: 3, slot, crop: null, grown: 0}));
+  const glass = {...newHome('All six', 1000), builds: [
+    {kind: 'greenhouse', i: 3, j: 3, turn: 0, stage: 4},
+    {kind: 'tank', i: 7, j: 4, turn: 0, stage: 4, litres: 20, filled: 1000}], pots};
+  const first = {...glass, pots: pots.map((row, n) => n ? row : {...row, crop: 'firePeppers', grown: 43200})};
+  const gift = harvestCrop(first, 0, true);
+  check(gift.moreSeeds && HOME_EXTRA_FOODS.every(id => gift.seeds[id] === 3), 'the first picked greenhouse crop grants the four seed packets');
+  equal(harvestCrop(gift, 0, true), gift, 'the gift cannot repeat by gathering an empty pot');
+  for (const id of HOME_EXTRA_FOODS) {
+    const planted = plantCrop(gift, 0, true, id);
+    const ripe = ripenHome(planted, HOME_CROPS[id].seconds).home;
+    equal(ripe.pots[0].grown, HOME_CROPS[id].seconds, id + ' grows for its settled watered hours');
+    const picked = harvestCrop(ripe, 0, true);
+    equal([picked.foods[id], picked.seeds[id]], [1, 3], id + ' harvest keeps one seed without another gift');
+    const settled = settleOpenWorld({}, {...world, open: {...world.open, home: picked}});
+    check(settled.ok, id + ' passes the real save writer');
+    equal(savedOpenRecord(settled.profile).home, picked, id + ' saves and loads exactly');
+  }
+  let out = stepOpenLand(land({...gift, eggs: 2, tin: ['superSpinach', 'firePeppers', 'jumpingBeans']}), viewOf(me, {eat1: true}), 0, parts);
+  check(cues(out.events).includes('home.power.spinach'), 'spinach names its sound cue');
+  out = stepOpenLand(out.open, viewOf(me, {eat2: true}), 10, parts);
+  equal(out.open.parts.home.pairs.ram, 90, 'the actual home part starts the ram at exactly ten seconds');
+  check(cues(out.events).includes(HOME_CUES.pair), 'the pair names its sound cue');
+  out = stepOpenLand(out.open, viewOf(me, {protein: true}), 5, parts);
+  equal([homeOf(out.open).eggs, out.open.parts.home.powers.firePeppers], [1, 130], 'T in the real part spends one egg and extends the last food');
+  out = run(out.open, viewOf(me, {protein: true}), .1);
+  equal(homeOf(out.open).eggs, 1, 'holding T cannot spend a second egg');
+  const carry = stepOpenLand(land({...gift, tin: ['superSpinach', null, null]}), viewOf({...homeFenceStack(), yaw: 0}, {eat1: true}, {interact: true}), 0, parts);
+  check(carry.open.parts.home.fenceBundle, 'spinach lifts the whole unused fence stack on F');
+  const carrying = run(carry.open, viewOf(me, {forward: true, sprint: true}), 1);
+  check(carrying.open.parts.home.fenceBundle && carrying.open.parts.home.sprinting, 'a whole fence bundle can be carried at a run');
+  const ended = run(carrying.open, viewOf(me), 120);
+  check(!ended.open.parts.home.fenceBundle && ended.open.parts.home.bundleAt.x === me.x, 'the bundle is set down safely when strength ends');
+  const at = groundPoint(5.5, 0), panel = {kind: 'panel', i: 5, j: 0, axis: 'x'};
+  const fenced = build({...gift, tin: ['superSpinach', 'firePeppers', null]}, panel);
+  let ram = stepOpenLand(land(fenced), viewOf({...at, z: at.z - .5, yaw: 0}, {eat1: true, eat2: true, forward: true}), 0, parts);
+  check(homeOf(ram.open).pieces[0].down, 'the running pair knocks down its own contacted fence');
+  ram = run(ram.open, viewOf({...at, z: at.z - .5, yaw: 0}, {build: true}), DT);
+  check(!homeOf(ram.open).pieces[0].down, 'the player can stand his rammed fence up with the existing hammer');
+  const raid = startHomeRaid(gift, 42, false, 'easy'), p = {...me, y: scablandsSurfaceHeightAt(me.x, me.z)};
+  const closeRaid = {...raid, riders: raid.riders.map((row, n) => ({...row,
+    position: {x: p.x + (n === 2 ? 1 : n === 1 ? 5.9 : 2), z: p.z}}))};
+  const fighter = {position: p, yaw: 0};
+  const shoved = useHomeFightPowers(closeRaid, fighter, {superSpinach: 120}, {}, {shove: true});
+  equal(shoved.raid.riders.filter(row => row.health === 0).map(row => row.kind), ['buggy'], 'spinach tips the nearest buggy with an intentional shove');
+  const bike = useHomeFightPowers({...closeRaid, riders: closeRaid.riders.slice(0, 2)}, fighter, {superSpinach: 120}, {}, {shove: true});
+  check(bike.raid.riders[0].health === 0 && bike.raid.riders[0].position.x === p.x + 6, 'spinach really throws the nearby bike four metres');
+  const thumped = useHomeFightPowers(closeRaid, fighter, {}, {thump: 120}, {landed: true});
+  equal(thumped.raid.riders.map(row => row.health === 0), [true, true, false], 'one landing tips every bike within six metres and keeps the buggy');
+  equal(useHomeFightPowers(closeRaid, fighter, {}, {thump: 120}).raid, closeRaid, 'a held jump cannot thump before a landing');
+  equal(useHomeFightPowers(closeRaid, fighter, {}, {}, {landed: true, shove: true}).raid, closeRaid, 'expired food cannot shove or thump');
+  const garlic = outsideGarlic({x: 6, z: 0}, {x: 4, z: 0}, {x: 0, z: 0}, 1, 3, 1);
+  equal(garlic, {x: 5, z: 0}, 'garlic stops an approaching person five metres away');
+  check(outsideGarlic({x: 2, z: 0}, {x: 2, z: 0}, {x: 0, z: 0}, 1, 3, 1).x > 2, 'a person already near turns away from garlic');
+  equal(outsideGarlic({x: 6, z: 0}, {x: 4, z: 0}, {x: 0, z: 0}, 0, 3, 1), {x: 4, z: 0}, 'expired garlic restores ordinary movement');
+  const tough = {health: 100, maxHealth: 100, homeIronStrength: 1};
+  damageFighter(tough, 40); equal(tough.health, 80, 'iron beets halve damage through the existing fighter path');
+  tough.homeIronStrength = .5; damageFighter(tough, 40); equal(tough.health, 50, 'iron eases off during its last twenty seconds');
+  tough.homeIronStrength = 0; damageFighter(tough, 20); equal(tough.health, 30, 'expired iron restores full damage');
+  const knocked = {health: 100, maxHealth: 100, homeIronStrength: 1};
+  strikeFighterWithCar(knocked, 60); equal(knocked.health, 50, 'iron also absorbs a car knock through the same damage path');
+  const car = {s: 0, lateral: 0, speedMph: 40};
+  const hitFighter = {x: 0, y: 0, z: 0, health: 100, maxHealth: 100, homeIronStrength: 1};
+  const collision = {state: {onFoot: true, fighter: hitFighter, opponents: [car], traffic: []},
+    course: {groundAt: (s, lateral) => ({x: lateral, y: 0, z: s})},
+    _vehicleSpec: () => ({height: 2, halfWidth: 1, halfLength: 2}), emit() {}, _callout() {}};
+  strikeFighterFromVehicles(collision); strikeFighterFromVehicles(collision);
+  equal(hitFighter.health, 50, 'one physical car overlap deals one beet-reduced knock');
+  car.s = 100; strikeFighterFromVehicles(collision); car.s = 0; strikeFighterFromVehicles(collision);
+  check(hitFighter.knockedDown, 'a separate second car contact still deals damage');
+  const sightHome = {on: true, powers: {nightCarrots: 180, ironBeets: 120}};
+  const sightJob = {actors: [{id: 'rat', x: p.x + 100, y: p.y, z: p.z, health: 40}],
+    open: {world, parts: {home: sightHome}}};
+  const sightDuel = {state: {onFoot: true, fighter: {x: p.x, y: p.y, z: p.z}, arena: {markers: []}}};
+  syncHomeGround(sightDuel, sightJob);
+  check(sightDuel.state.arena.markers.some(row => row.id === 'home-sight/rat' && row.kind === 'light'), 'night carrots mark a living raider far away');
+  check(sightDuel.state.arena.markers.some(row => !row.id.endsWith('/rat')), 'night carrots also mark far-off places');
+  sightHome.powers = {}; syncHomeGround(sightDuel, sightJob);
+  equal(sightDuel.state.arena.markers, [], 'expired carrots remove their marks');
+  equal(sightDuel.state.fighter.homeIronStrength, 0, 'expired beets remove protection in the real adapter');
+  const course = {def: {}, groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0}),
+    nearest: (x, z) => ({s: z, lateral: x}), obstaclesNear: () => []};
+  const jumper = createFighter(course, {s: 0, lateral: 0}, {s: 0, lateral: 0});
+  for (let n = 0; n < 240; n++) stepFighter(course, {s: 0, lateral: 0}, jumper,
+    {forward: true, jump: n === 0, homeJumpMeters: 6, homeLeapStrength: 1});
+  check(jumper.z > 39, 'peppers with beans carry a real running jump over a forty-metre gap');
 }
 console.log(`Home ground: ${checks} checks passed.`);

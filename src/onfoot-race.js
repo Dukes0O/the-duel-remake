@@ -75,6 +75,8 @@ export function strikeCpuCrewFighterFromVehicles(duel, owner) {
 export function strikeFighterFromVehicles(duel) {
   const state = duel.state, fighter = state.onFoot && state.fighter;
   if (!fighter || fighter.knockedDown || state.boarding?.phase === 'roof') return false;
+  const previous = fighter.homeIronContacts ?? [], contacts = [];
+  let struck = false;
   for (const actor of [...state.opponents, ...state.traffic]) {
     if (!actor || actor.alive === false || actor.finished || actor.crushed ||
         actor.combatWrecking || actor.roadsideMotion || actor.wrecked) continue;
@@ -87,12 +89,19 @@ export function strikeFighterFromVehicles(duel) {
     if (fighter.y > Math.max(from.y, to.y) + spec.height + .25) continue;
     if (distanceToSweep(fighter, from, to) >
         Math.max(spec.halfWidth, spec.halfLength * .55) + .34) continue;
+    if (fighter.homeIronStrength > 0) {
+      contacts.push(actor);
+      if (previous.includes(actor) || struck) continue;
+    }
     if (!strikeFighterWithCar(fighter, speedKph)) continue;
-    duel.emit({fighterKnockdown: true,
+    duel.emit({fighterKnockdown: !!fighter.knockedDown,
       source: state.opponents.includes(actor) ? 'opponent' : 'traffic',
       speedKph, hitPosition: {x: fighter.x, y: fighter.y, z: fighter.z}});
-    duel._callout('FIGHTER HIT / RECOVERING', 2);
-    return true;
+    duel._callout(fighter.knockedDown ? 'FIGHTER HIT / RECOVERING' : 'Your iron beets absorbed the knock.', 2);
+    struck = true;
+    if (!(fighter.homeIronStrength > 0)) return true;
   }
-  return false;
+  if (fighter.homeIronStrength > 0) fighter.homeIronContacts = contacts;
+  else delete fighter.homeIronContacts;
+  return struck;
 }

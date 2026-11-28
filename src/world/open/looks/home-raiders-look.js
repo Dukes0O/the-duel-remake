@@ -336,6 +336,15 @@ export function createHomeRaidersLook(loadAsset) {
         const groundX = row.bed ? record.flatbed.x : x, groundZ = row.bed ? record.flatbed.z : z;
         root.position.set(x, scablandsSurfaceHeightAt(groundX, groundZ) + (shift?.(groundX, groundZ) ?? 0) + (row.bed ? 1.5125 : 0), z);
         root.rotation.set(0, row.yaw, wreck ? row.kind === 'bike' ? 1.2 : .18 : 0);
+        if (row.toppled) {
+          const t = Math.max(0, Math.min(1, seconds - row.toppled.at));
+          root.rotation.z = t * (row.kind === 'bike' ? 1.5 : 2.6);
+          if (row.toppled.thrown) {
+            root.position.x = row.toppled.from.x + (row.position.x - row.toppled.from.x) * t;
+            root.position.z = row.toppled.from.z + (row.position.z - row.toppled.from.z) * t;
+            root.position.y += Math.sin(t * Math.PI) * 2;
+          }
+        }
         body.material = row.kind === 'bike' ? (wreck ? wreckBikeSteel : bikeSteel) : (wreck ? darkSteel : steel);
         body.scale.set(1, wreck ? .72 : 1, wreck ? .92 : 1);
         for (const {spin} of wheels) spin.traverse(mesh => { if (mesh.isMesh && (mesh.material === rim || mesh.material === darkRim)) mesh.material = wreck ? darkRim : rim; });

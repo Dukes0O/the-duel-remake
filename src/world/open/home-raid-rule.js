@@ -7,7 +7,7 @@ import {stepMover, TRUCK_GRADE} from '../scablands-movers.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {ratsGiveUpSeconds} from '../jobs/town-rats.js';
 import {HOME_RAID as R, HOME_CUES, HOME_WORDS, HOME_CELLS, HOME_TOWER, HOME_LOOT} from './content/home-ground.js';
-import {groundPoint, groundCentre, outsideBy, buildInLand, buildingDoor, pieceInLand, homeSolids} from './home-rule.js';
+import {groundPoint, groundCentre, outsideBy, buildInLand, buildingDoor, pieceInLand, homeSolids, powerStrength, outsideGarlic} from './home-rule.js';
 
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const cue = name => ({type: 'homeCue', cue: name});
@@ -88,7 +88,9 @@ function moveRider(raid, rider, home, dt, view) {
     return {home, rider: raid.test ? {...rider, corner: ((rider.corner ?? raid.side) + 1) % 4} : rider, events: []};
   }
   const yaw = Math.atan2(target.x - from.x, target.z - from.z);
-  const to = {x: from.x + Math.sin(yaw) * travel, z: from.z + Math.cos(yaw) * travel};
+  const aimed = {x: from.x + Math.sin(yaw) * travel, z: from.z + Math.cos(yaw) * travel};
+  const to = outsideGarlic(from, aimed, view.onFoot ? view.fighter?.position : null,
+    powerStrength(view.homePowers?.stinkGarlic), speed, dt);
   const ram = !raid.test && !rider.retreat ? ramHomePanels(home, from, to, speed * 3.6, rider.kind) : {home, fallen: []};
   home = ram.home;
   const solids = homeSolids(home, {gateOpen: view.gateOpen, heightAt: scablandsSurfaceHeightAt});
@@ -113,6 +115,27 @@ function moveRider(raid, rider, home, dt, view) {
     retreat: rider.retreat || gaveUp, travel: rider.travel + covered,
     fled: rider.retreat && outsideBy(moved.x, moved.z) >= R.fled},
   events: ram.fallen.length ? [cue(HOME_CUES.raidRam), ...ram.fallen.map(() => cue(HOME_CUES.fenceFall))] : []};
+}
+
+// Spinach uses an intentional shove; the bean pair uses one real landing, not a held jump key.
+export function useHomeFightPowers(raid, fighter, powers, pairs, {shove = false, landed = false, now = 0} = {}) {
+  if (!raid || raid.outcome || !fighter || fighter.knockedDown) return {raid, used: false};
+  const strength = powerStrength(powers.superSpinach), thump = landed && powerStrength(pairs.thump);
+  const p = fighter.position, eyeY = p.y ?? 0;
+  const close = raid.riders.filter(row => row.health > 0 && !row.fled &&
+    Math.abs(eyeY - scablandsSurfaceHeightAt(row.position.x, row.position.z)) < 2.2 &&
+    (shove && strength > 0 && gap(p, row.position) <= 2.8 * strength ||
+      thump > 0 && row.kind === 'bike' && gap(p, row.position) <= 6 * thump));
+  const touched = thump ? close : close.sort((a, b) => gap(p, a.position) - gap(p, b.position)).slice(0, 1);
+  if (!touched.length) return {raid, used: false};
+  return {raid: {...raid, riders: raid.riders.map(row => {
+    if (!touched.includes(row)) return row;
+    const thrown = row.kind === 'bike' && !thump;
+    const yaw = Math.atan2(row.position.x - p.x, row.position.z - p.z);
+    const position = thrown ? {x: row.position.x + Math.sin(yaw) * 4 * strength,
+      z: row.position.z + Math.cos(yaw) * 4 * strength} : row.position;
+    return {...row, position, health: 0, toppled: {at: now, thrown, from: row.position}};
+  })}, used: true};
 }
 
 export function finishHomeRaid(home, raid, outcome, seed) {

@@ -7,6 +7,8 @@
 // A panel covers one step; the gate covers four, and must stand in the outside fence.
 //
 // THE RECORD kept in the save (world.open.home):
+//   version 9 adds four power-food counts to seeds and foods, and moreSeeds for the once-only growers' gift.
+//   version 8 adds beds, pots, seeds, vegetables, foods and the three-slot tin. Meal and pair clocks are never saved.
 //   version 7 adds well: {i, j, depth, water, pump} | null and tank builds with litres and filled (real seconds | null).
 //   version 6 adds loot: [{kind, position: {x, z, yaw} | 'bed', worth}], scrap, carters: {began: seconds | null}.
 //   version 5 adds raids, a tower load and fallen panels. Only the enabled part upgrades older records.
@@ -26,7 +28,7 @@
 //   lastSeen  the real moment, in seconds since 1970 by the laptop's clock, at which the hens' `due` was true; null
 //             until a clock has been handed to the part. The clock is read once, when an outing opens.
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, HEN_BREEDS, HEN_SETTLE_SECONDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_CRATES,
-  HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, MOSS_HENS, layInterval,
+  HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, HOME_SIZE, MOSS_HENS, layInterval,
   HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS, HOME_BOX_REACH, HOME_CREW_SECONDS, HOME_TOWER,
   HOME_LOOT, HOME_LOOT_CAPACITY, HOME_CARTER_SECONDS, HOME_TANK, HOME_WELL, HOME_BED, HOME_CROPS, HOME_EXTRA_FOODS, HOME_PAIRS} from './content/home-ground.js';
 import {drillSite, stepDrill} from '../../machines/drill.js';
@@ -158,17 +160,27 @@ export function stepHomePowers(powers, seconds) {
 }
 export const powerStrength = left => Math.max(0, Math.min(1, (left ?? 0) / 20));
 // Meal times and pair clocks belong to this outing. They are never saved.
-export function pairHomePowers(powers, meals) {
+export function pairHomePowers(powers, meals, pairs = {}) {
   return Object.fromEntries(Object.entries(HOME_PAIRS).map(([pair, ids]) => [pair,
-    ids.every(id => meals[id]) && Math.abs(meals[ids[0]].at - meals[ids[1]].at) <= 10
+    pairs[pair] > 0 || ids.every(id => meals[id]) && Math.abs(meals[ids[0]].at - meals[ids[1]].at) <= 10
       ? Math.min(...ids.map(id => powers[id] ?? 0)) : 0]));
 }
 export function proteinHomePower(home, powers, meals, now) {
-  const id = Object.keys(meals).sort((a, b) => meals[b].at - meals[a].at).find(key =>
-    !meals[key].protein && now >= meals[key].at && now - meals[key].at <= 5 && powers[key] > 0);
-  if (!id || home.eggs < 1) return {home, powers, meals, eaten: null};
+  const id = Object.keys(meals).sort((a, b) => meals[b].at - meals[a].at || (meals[b].order ?? 0) - (meals[a].order ?? 0))[0];
+  if (!id || meals[id].protein || now < meals[id].at || now - meals[id].at > 5 || !(powers[id] > 0) || home.eggs < 1)
+    return {home, powers, meals, eaten: null};
   return {home: {...home, eggs: home.eggs - 1}, powers: {...powers, [id]: powers[id] + HOME_CROPS[id].lasts / 2},
     meals: {...meals, [id]: {...meals[id], protein: true}}, eaten: id};
+}
+export const homeFenceStack = () => ({x: HOME_CORNER.x + HOME_SIZE + 1.6, z: HOME_CORNER.z + 2.5});
+// The garlic makes an approaching person stop at its edge, or step away if he walks into their space.
+export function outsideGarlic(from, to, player, strength, pace, seconds) {
+  if (!player || !(strength > 0)) return to;
+  const radius = 5 * strength, dx = to.x - player.x, dz = to.z - player.z, far = Math.hypot(dx, dz);
+  if (far >= radius) return to;
+  const oldFar = Math.hypot(from.x - player.x, from.z - player.z);
+  const reach = Math.min(radius, oldFar + pace * Math.max(0, seconds));
+  return {x: player.x + (far ? dx / far : 1) * reach, z: player.z + (far ? dz / far : 0) * reach};
 }
 export function homeFootPlatforms(home, heightAt) {
   if (!home) return [];

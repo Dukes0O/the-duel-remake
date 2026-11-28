@@ -311,12 +311,13 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   footHealth.className = 'combat-foot-health';
   footHealth.hidden = true;
   footHealth.innerHTML = `<span><b>FIGHTER HEALTH</b><strong></strong></span><div class="combat-armor-track"><i></i></div>
-    <div class="combat-home-powers" hidden><span class="combat-home-leaf" data-home-power="firePeppers" hidden><i></i></span>
-    <span class="combat-home-leaf" data-home-power="jumpingBeans" hidden><i></i></span></div>`;
+    <div class="combat-home-powers" hidden></div>`;
   root.querySelector('.race-health').append(footHealth);
   const powerLeaves = footHealth.querySelector('.combat-home-powers');
-  const leaves = ['firePeppers', 'jumpingBeans'].map(id => {
-    const leaf = powerLeaves.querySelector(`[data-home-power="${id}"]`);
+  const leaves = Object.keys(HOME_CROPS).filter(id => HOME_CROPS[id].power).map(id => {
+    const leaf = document.createElement('span');
+    leaf.className = 'combat-home-leaf'; leaf.dataset.homePower = id; leaf.hidden = true;
+    leaf.innerHTML = '<i></i>'; powerLeaves.append(leaf);
     return {id, leaf, fill: leaf.querySelector('i')};
   });
 
@@ -446,7 +447,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
         const left = powers?.[id] ?? 0; leaf.hidden = left <= 0;
         leaf.title = `${HOME_CROPS[id].name}: ${Math.ceil(left)} seconds left.`;
         leaf.setAttribute('aria-label', leaf.title);
-        fill.style.height = `${Math.max(0, Math.min(1, left / HOME_CROPS[id].lasts)) * 100}%`;
+        const protein = worldJob.open.parts.home.meals?.[id]?.protein;
+        fill.style.height = `${Math.max(0, Math.min(1, left / (HOME_CROPS[id].lasts * (protein ? 1.5 : 1)))) * 100}%`;
         leaf.classList.toggle('is-ending', left > 0 && left <= 20);
       }
       footHealth.classList.toggle('is-critical', health <= maxHealth*.25);
