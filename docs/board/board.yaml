@@ -296,8 +296,9 @@ tasks:
     model: "sol"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
     claimed_by: "Codex, laptop lane, 28 November 2026"
+    waiting_on: "claude"
     needs: []
     locks: []
     details: "docs/board/cards/EASY-YOUNG-DRIVER.md"
