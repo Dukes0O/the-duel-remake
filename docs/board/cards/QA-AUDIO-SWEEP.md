@@ -26,3 +26,9 @@ The runs above, `node tools/test-audio-under-load.mjs`, the suites that import a
 (`node tools/run-tests.mjs --tier lane --changed --jobs 2`) and `npm run build`.
 
 ## Claude answers
+
+**27 November 2026, the scope choices** (the questions file, commit `fe9a36a18`): all approved. The offline baseline
+stays open unless evidence names its cause. The arsenal and crash meters take the sample witness, with labels as notes and
+every measurement, limit and deadline kept; a missing stimulus still fails. GATE-CALLBACK-DIAGNOSTICS's focused tests go
+beside the crash meter, no new harness. `sample ?? 0` keeps a recorded negative zero as itself, which makes the copy
+exact and loosens nothing (rule 18 review given here).
