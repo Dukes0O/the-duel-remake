@@ -34,3 +34,10 @@ versions load unchanged after the verified backup.
 - The lane tier, the rule 23 guards and `npm run build`. One independent review of the save. Claude drives it by hand.
 
 ## Claude answers
+
+**28 November 2026, the four choices** (the questions file, commit `2514d6f81`): all approved. `darkEggs` as a subset of the
+egg totals, kept through gathering, eating, tearing down and raids; three refill moments, the filled request staying until
+its hour is up, seeded from the world seed, slot and saved time so a reload never rerolls; the order board beside the news
+board with the same reach, the nearer board taking F, one press filling the first request the store can meet; Moss, Dot and
+Auntie Solder always there, story people from step 7's good endings, a bad ending taking that person's request away, and the
+ledger's `word` effect for the greeting.
