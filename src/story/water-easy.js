@@ -1,5 +1,5 @@
 import {makeRng} from '../rng.js';
-import {WATER_CHAPTERS} from './water-save.js';
+import {WATER_CHAPTERS} from './water-chapters.js';
 
 export const WATER_EASY_RACES = Object.freeze({paceMin: .65, paceMax: 1.6});
 
