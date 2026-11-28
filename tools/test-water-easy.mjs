@@ -15,8 +15,8 @@
 // - drives at where a car was seen, never where it will be; brakes, late, when a car's tell points at it;
 // - on foot walks and turns with the keys, each rocket with the same 10-degree error, fired inside 40 m;
 // - no boost, shield, UFO hop, arsenal specials, pickups chased or shortcuts.
-// EASY-YOUNG-DRIVER: the settled card targets 5?7 assisted wins in 10 (never below 4),
-// with at least 2 child wins. The driver remains unchanged; only story Easy rules are tuned.
+// EASY-YOUNG-DRIVER: the settled card targets 5 to 7 assisted wins in 10 (never below 4),
+// with at least 2 child wins. The corrected driver keeps its original latency, aim error, ammo and controls.
 import assert from 'node:assert/strict';
 import {CHILD, STARTER_CAR, childFor, playArena, playRace} from './water-easy-driver.mjs';
 import {BRAIN_DIFFICULTY} from '../src/arena/arena-brains.js';

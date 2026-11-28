@@ -176,7 +176,8 @@ export function _rival(dt, opponent = this.state.rival) {
   // CPU pace is independent of the player's manual/automatic gearbox.
   const skill = CPU_DIFFICULTY[s.cpuDifficulty], car = this.rivalSpec || CARS[s.car];
   // On Wasteland's long circuit, Easy needs enough road speed to stay in
-  // combat range. It remains below Medium's cruise and corner pace.
+  // combat range. Ordinary Easy stays below Medium; Story races have their
+  // own seeded pace range, leaving every other course and event unchanged.
   const easyWasteland = s.mode === 'wasteland' && s.cpuDifficulty === 'easy';
   const storyPace = waterEasy(this) ? this.waterRoadPace ?? 1 : 1;
   const cruiseSkill = (easyWasteland ? .875 : skill.skill) * storyPace;

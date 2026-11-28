@@ -93,8 +93,9 @@ from a separate `rng.js` stream. The two drivers are measured with
 `node tools/test-water-easy.mjs --rates` and `--rates --player assisted`.
 
 The foot driver walks into firing range and around the native pile with its
-usual keys and turn rate. Its corrected baseline must be measured before any
-comparison; its latency, aim error, ammo and attack clock stay unchanged.
+usual keys and turn rate, and waits for the selected crew's real RPG lock
+time. Ambush is untimed; its rates observation cap is 900 seconds. Its
+corrected baseline must be measured before any comparison; its latency, aim error, ammo and attack clock stay unchanged.
 
 ## 5. Every line
 
@@ -178,8 +179,8 @@ He can change any of it later. The build rules are in `docs/SCRAPDOME.md`,
    it yet; scrap; and his card on the Story Wall.
 
 He opens for everyone who has beaten Baron Blackiron, story or not. On Easy a
-young driver must beat him at least 8 times in 10 (section 4), using his own
-Easy numbers only.
+young driver uses the same settled target as section 4: 5 to 7 assisted wins
+in 10 (floor 4), with a child-pace floor of 2, using his own Easy numbers only.
 
 ## 7. What changes for a player with progress
 

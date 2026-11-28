@@ -1,7 +1,7 @@
 import {makeRng} from '../rng.js';
 import {WATER_CHAPTERS} from './water-save.js';
 
-export const WATER_EASY_RACES = Object.freeze({paceMin: .73, paceMax: 1.3});
+export const WATER_EASY_RACES = Object.freeze({paceMin: .65, paceMax: 1.6});
 
 export function waterRacePace(duel) {
   return waterEasy(duel) && !duel.state.arena
