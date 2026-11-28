@@ -232,8 +232,11 @@ export function stepHomeRaid(home, raid, view, dt, seed) {
   let next = {...raid, seconds, riders}, events = [];
   // Finch uses the same raid hit bodies through the adapter. Only this rule changes their health.
   const tower = hasHomeFolk(home, 'finch') && home.builds.find(row => row.kind === 'tower' && row.stage === 4);
-  if (tower && !raid.test && !(view.homeTower && view.homeTower.row.i === tower.i && view.homeTower.row.j === tower.j)) {
-    const post = buildInLand(tower);
+  const post = tower && buildInLand(tower), player = view.onFoot && view.fighter?.position;
+  const occupied = tower && (view.homeTower && view.homeTower.row.i === tower.i && view.homeTower.row.j === tower.j ||
+    player && Math.abs(player.x - post.x) <= post.width / 2 && Math.abs(player.z - post.z) <= post.depth / 2 &&
+      player.y >= scablandsSurfaceHeightAt(post.x, post.z) + HOME_TOWER.platform - .3);
+  if (tower && !raid.test && !occupied) {
     const shots = Math.floor(seconds / HOME_CROSSBOW.seconds) - Math.floor(raid.seconds / HOME_CROSSBOW.seconds);
     for (let n = 0; n < shots; n++) {
       const target = next.riders.filter(row => row.health > 0 && !row.fled && !row.retreat && gap(post, row.position) <= HOME_CROSSBOW.reach)

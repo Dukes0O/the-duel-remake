@@ -1794,6 +1794,8 @@ const memory = values => {
     'Finch fires at a raider within twenty-five metres');
   check(!stepHomeRaid(defended, raid, {...view, homeTower: {row: tower}}, 4, seed).events.some(row => row.cue === 'home.crossbow'),
     'Finch leaves the occupied tower to Gratian');
+  check(!stepHomeRaid(defended, raid, {...view, fighter: {position: {...top, y: scablandsSurfaceHeightAt(top.x, top.z) + 4.4}}}, 4, seed)
+    .events.some(row => row.cue === 'home.crossbow'), 'Finch also yields when Gratian jumps onto the tower');
   const distant = {...raid, riders: raid.riders.map(row => ({...row, position: {x: top.x + 30, z: top.z}}))};
   check(!stepHomeRaid(defended, distant, view, 4, seed).events.some(row => row.cue === 'home.crossbow'), 'the crossbow cannot reach beyond twenty-five metres');
   check(!stepHomeRaid(defended, {...raid, test: true}, view, 4, seed).events.some(row => row.cue === 'home.crossbow'), 'the harmless lesson stays harmless');
