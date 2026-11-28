@@ -7,3 +7,5 @@ The Arsenal and crash meters still use callback labels to judge PCM continuity. 
 GATE-CALLBACK-DIAGNOSTICS names a test file absent from current integration. Pick: add its requested focused PCM/callback tests alongside the existing crash meter migration; no new harness or framework.
 
 Temporary browser profiles stay inside this lane's evidence folder. The QA build clears .qa-dist, so profiles cannot live inside that build output.
+
+The requested byte-exact worklet test exposed existing `sample || 0` changing negative zero to positive zero. Pick: use `sample ?? 0` in the crash check's PCM copy so actual Float32 bits survive; missing inputs still become silence. No game sample, sound limit or assertion is relaxed. Claude reviews this narrow departure from the old card's instruction to leave copying unchanged.
