@@ -441,13 +441,14 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const health = Math.max(0, Math.min(maxHealth, Number(state.fighter.health) || 0));
       setText(footHealthValue, `${Math.round(health)} / ${Math.round(maxHealth)}`);
       setFraction(footHealthFill, health / maxHealth);
-      const powers = worldJob?.open?.parts.home?.on ? worldJob.open.parts.home.powers : null;
+      const home = worldJob?.open?.parts.home;
+      const powers = home?.on ? home.powers : null;
       powerLeaves.hidden = !leaves.some(({id}) => powers?.[id] > 0);
       for (const {id, leaf, fill} of leaves) {
         const left = powers?.[id] ?? 0; leaf.hidden = left <= 0;
         leaf.title = `${HOME_CROPS[id].name}: ${Math.ceil(left)} seconds left.`;
         leaf.setAttribute('aria-label', leaf.title);
-        const protein = worldJob.open.parts.home.meals?.[id]?.protein;
+        const protein = home?.meals?.[id]?.protein;
         fill.style.height = `${Math.max(0, Math.min(1, left / (HOME_CROPS[id].lasts * (protein ? 1.5 : 1)))) * 100}%`;
         leaf.classList.toggle('is-ending', left > 0 && left <= 20);
       }
