@@ -37,7 +37,7 @@ import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoo
   homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome, standPanel,
   lootOnBed, cartersBusy, cartersOffer, sendCarters, finishCarters,
   canBorrowDrill, wellInLand, wellRefusal, markWell, homeDrillHole, drillHomeWell, fitHomePump, fillHomeTanks, tankWords, buildBed, bedRefusal, cropInLand, nextCrop, plantCrop, harvestCrop, cropWaterSeconds,
-  packTin, eatFromTin, stepHomePowers, powerStrength, tinWords, awayWords} from '../home-rule.js';
+  packTin, eatFromTin, stepHomePowers, powerStrength, pairHomePowers, proteinHomePower, tinWords, awayWords} from '../home-rule.js';
 import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, raidInterval, towerAtLadder, stepHomeTower} from '../home-raid-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {makeRng} from '../../../rng.js';
@@ -49,7 +49,7 @@ import {stepMover} from '../../scablands-movers.js';
 const BUILD_NEAR = 4, GATE_OPENS = 7, PROMPT_NEAR = 14, BOARD_REACH = 2.5, CRATE_REACH = 3;
 // From above, a mark may be made where only the missing piece stops the building.
 const MARK_ANYWAY = ['noPanels', 'noGate'];
-const KEY_NAMES = ['build', 'turn', 'piece', 'view', 'burst', 'sprint', 'fire', 'interact', 'eat1', 'eat2', 'eat3'];
+const KEY_NAMES = ['build', 'turn', 'piece', 'view', 'burst', 'sprint', 'fire', 'interact', 'eat1', 'eat2', 'eat3', 'protein'];
 const say = (key, text) => ({type: 'say', lineId: 'open/home-ground/' + key, text});
 const words = (key, fill = {}) => {
   const values = {...fill, storeEggs: fill.store === 1 ? 'egg' : 'eggs'};
@@ -62,7 +62,9 @@ const HEN_HEADS_TO_BOX = 25, HEN_WALK = .55, HEN_KEEP_IN = 1.2;
 
 function begin() {
   return {held: {}, kind: 'panel', turns: 0, hammer: null, above: false, cursor: null, outline: null, prompt: '',
-    powers: {firePeppers: 0, jumpingBeans: 0}, burst: {charge: 1, active: false, spent: false, shown: false}, gateOpen: false, solidsKey: '', naming: false,
+    powers: Object.fromEntries(Object.keys(HOME_CROPS).filter(id => HOME_CROPS[id].power).map(id => [id, 0])),
+    meals: {}, pairs: {}, fenceBundle: false, bundleAt: null, lastFoot: null,
+    burst: {charge: 1, active: false, spent: false, shown: false}, gateOpen: false, solidsKey: '', naming: false,
     namingHen: null, namingKey: '', namingChain: false, offerOpen: false, given: false, opened: null, ripenedAt: 0,
     building: false, idle: 0, tool: null, strike: null, armed: false, onGround: false, flock: [], flockSeed: 1,
     board: null, boardShown: false, crateTalk: false, crewTalk: false, crewLesson: null, crewWalk: 0, crewKey: '', crewPeople: [],
@@ -275,9 +277,24 @@ export const homePart = {
       for (let slot = 0; slot < 3; slot++) if (pressed('eat' + (slot + 1))) {
         const eaten = eatFromTin(record, slot, next.powers);
         record = eaten.home; next.powers = eaten.powers;
-        if (eaten.eaten) { events.push(cue(HOME_CUES.eat)); choices.push(choice('eat', record)); }
+        if (eaten.eaten) {
+          next.meals = {...next.meals, [eaten.eaten]: {at: now, protein: false}};
+          events.push(cue(HOME_CUES.eat));
+          if (HOME_CROPS[eaten.eaten].cue) events.push(cue(HOME_CROPS[eaten.eaten].cue));
+          choices.push(choice('eat', record));
+        }
         requests.push(say('eat', eaten.eaten ? words('tinEat', {crop: HOME_CROPS[eaten.eaten].name}) : HOME_WORDS.tinSlotEmpty));
       }
+      if (pressed('protein')) {
+        const egg = proteinHomePower(record, next.powers, next.meals, now);
+        record = egg.home; next.powers = egg.powers; next.meals = egg.meals;
+        if (egg.eaten) { events.push(cue(HOME_CUES.protein)); choices.push(choice('protein', record)); }
+        requests.push(say('protein', egg.eaten ? HOME_WORDS.protein : HOME_WORDS.noProtein));
+      }
+    }
+    next.pairs = pairHomePowers(next.powers, next.meals);
+    for (const id of Object.keys(next.pairs)) if (next.pairs[id] > 0 && !(state.pairs?.[id] > 0)) {
+      events.push(cue(HOME_CUES.pair)); requests.push(say('pair-' + id, HOME_WORDS[id]));
     }
     if (next.powers.firePeppers > 0) next.burst = {charge: 1, spent: false,
       active: !!fighter && !next.above && !!keys.forward, shown: true, strength: powerStrength(next.powers.firePeppers)};

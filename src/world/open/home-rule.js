@@ -28,10 +28,10 @@
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, HEN_BREEDS, HEN_SETTLE_SECONDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_CRATES,
   HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, MOSS_HENS, layInterval,
   HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS, HOME_BOX_REACH, HOME_CREW_SECONDS, HOME_TOWER,
-  HOME_LOOT, HOME_LOOT_CAPACITY, HOME_CARTER_SECONDS, HOME_TANK, HOME_WELL, HOME_BED, HOME_CROPS} from './content/home-ground.js';
+  HOME_LOOT, HOME_LOOT_CAPACITY, HOME_CARTER_SECONDS, HOME_TANK, HOME_WELL, HOME_BED, HOME_CROPS, HOME_EXTRA_FOODS, HOME_PAIRS} from './content/home-ground.js';
 import {drillSite, stepDrill} from '../../machines/drill.js';
 
-export const HOME_RECORD_VERSION = 8;
+export const HOME_RECORD_VERSION = 9;
 const AXES = ['x', 'z'];
 const whole = value => Number.isSafeInteger(value);
 
@@ -40,8 +40,9 @@ export const newHome = (name, lastSeen = null) => ({version: HOME_RECORD_VERSION
   crew: {job: null, began: null, done: 0}, raids: newRaids(), loot: [], scrap: 0, carters: {began: null}, well: null, ...newGarden()});
 export const newRaids = () => ({played: 0, sittings: 0, nextDue: null, testDone: false, won: 0, lost: 0});
 export function newGarden() {
-  return {beds: [], pots: [], seeds: Object.fromEntries(Object.entries(HOME_CROPS).map(([id, row]) => [id, row.seeds])),
-    vegetables: {spinach: 0, carrots: 0, beans: 0}, foods: {firePeppers: 0, jumpingBeans: 0}, tin: [null, null, null]};
+  return {beds: [], pots: [], seeds: Object.fromEntries(Object.entries(HOME_CROPS).map(([id, row]) => [id, HOME_EXTRA_FOODS.includes(id) ? 0 : row.seeds])),
+    vegetables: {spinach: 0, carrots: 0, beans: 0}, foods: Object.fromEntries(Object.keys(HOME_CROPS).filter(id => HOME_CROPS[id].power).map(id => [id, 0])),
+    tin: [null, null, null], moreSeeds: false};
 }
 export function greenhousePots(row) {
   return Array.from({length: 6}, (_, slot) => ({i: row.i, j: row.j, slot, crop: null, grown: 0}));
@@ -56,11 +57,13 @@ export function cropInLand(home, row, pot = false) {
 }
 function readableGarden(home) {
   const amounts = (value, ids) => value && Object.keys(value).length === ids.length && ids.every(id => count(value[id]));
-  if (!amounts(home.seeds, Object.keys(HOME_CROPS)) || !amounts(home.vegetables, ['spinach', 'carrots', 'beans']) ||
-      !amounts(home.foods, ['firePeppers', 'jumpingBeans']) || !Array.isArray(home.tin) || home.tin.length !== 3 ||
-      !home.tin.every(id => id === null || typeof id === 'string' && Object.hasOwn(HOME_CROPS, id) && HOME_CROPS[id].power)) return false;
+  const ids = Object.keys(HOME_CROPS).filter(id => home.version >= 9 || !HOME_EXTRA_FOODS.includes(id));
+  if (home.version >= 9 && typeof home.moreSeeds !== 'boolean') return false;
+  if (!amounts(home.seeds, ids) || !amounts(home.vegetables, ['spinach', 'carrots', 'beans']) ||
+      !amounts(home.foods, ids.filter(id => HOME_CROPS[id].power)) || !Array.isArray(home.tin) || home.tin.length !== 3 ||
+      !home.tin.every(id => id === null || typeof id === 'string' && ids.includes(id) && HOME_CROPS[id].power)) return false;
   const crop = (row, power) => row && (row.crop === null ? row.grown === 0 :
-    typeof row.crop === 'string' && Object.hasOwn(HOME_CROPS, row.crop) && HOME_CROPS[row.crop].power === power &&
+    typeof row.crop === 'string' && ids.includes(row.crop) && HOME_CROPS[row.crop].power === power &&
     Number.isFinite(row.grown) && row.grown >= 0 && row.grown <= HOME_CROPS[row.crop].seconds);
   if (!Array.isArray(home.beds) || home.beds.length > HOME_BED.count || !home.beds.every(row => {
     if (!crop(row, false) || Object.keys(row).length !== 5 || !whole(row.i) || !whole(row.j) ||
@@ -107,8 +110,12 @@ export function harvestCrop(home, index, pot = false) {
   const key = pot ? 'pots' : 'beds', row = home[key][index], crop = HOME_CROPS[row?.crop];
   if (!crop || row.grown < crop.seconds) return home;
   const store = pot ? 'foods' : 'vegetables';
+  const gift = pot && !home.moreSeeds;
   return {...home, [key]: home[key].map((item, n) => n === index ? {...item, crop: null, grown: 0} : item),
-    [store]: {...home[store], [row.crop]: home[store][row.crop] + 1}, seeds: {...home.seeds, [row.crop]: home.seeds[row.crop] + 1}};
+    [store]: {...home[store], [row.crop]: home[store][row.crop] + 1},
+    seeds: {...home.seeds, [row.crop]: home.seeds[row.crop] + 1,
+      ...(gift ? Object.fromEntries(HOME_EXTRA_FOODS.map(id => [id, home.seeds[id] + HOME_CROPS[id].seeds])) : {})},
+    moreSeeds: home.moreSeeds || gift};
 }
 // The tank does not drain in this step. Its existing fill clock tells exactly when an empty connected tank begins watering.
 export function cropWaterSeconds(home, row, pot, seconds) {
@@ -150,6 +157,19 @@ export function stepHomePowers(powers, seconds) {
   return Object.fromEntries(Object.entries(powers).map(([id, left]) => [id, Math.max(0, left - Math.max(0, seconds))]));
 }
 export const powerStrength = left => Math.max(0, Math.min(1, (left ?? 0) / 20));
+// Meal times and pair clocks belong to this outing. They are never saved.
+export function pairHomePowers(powers, meals) {
+  return Object.fromEntries(Object.entries(HOME_PAIRS).map(([pair, ids]) => [pair,
+    ids.every(id => meals[id]) && Math.abs(meals[ids[0]].at - meals[ids[1]].at) <= 10
+      ? Math.min(...ids.map(id => powers[id] ?? 0)) : 0]));
+}
+export function proteinHomePower(home, powers, meals, now) {
+  const id = Object.keys(meals).sort((a, b) => meals[b].at - meals[a].at).find(key =>
+    !meals[key].protein && now >= meals[key].at && now - meals[key].at <= 5 && powers[key] > 0);
+  if (!id || home.eggs < 1) return {home, powers, meals, eaten: null};
+  return {home: {...home, eggs: home.eggs - 1}, powers: {...powers, [id]: powers[id] + HOME_CROPS[id].lasts / 2},
+    meals: {...meals, [id]: {...meals[id], protein: true}}, eaten: id};
+}
 export function homeFootPlatforms(home, heightAt) {
   if (!home) return [];
   const platforms = home.builds.filter(row => row.stage === 4 && ['coop', 'shed', 'greenhouse', 'tower'].includes(row.kind)).map(row => {
@@ -178,7 +198,9 @@ export function upgradeHome(home) {
   if (home.version < 5) kept = {...kept, loads: {...kept.loads, tower: 'stack'}, raids: newRaids()};
   if (home.version < 6) kept = {...kept, loot: [], scrap: 0, carters: {began: null}};
   if (home.version < 7) kept = {...kept, well: null, loads: {...kept.loads, tank: 'stack'}};
-  return {...kept, version: HOME_RECORD_VERSION, ...newGarden(), loads: {...kept.loads, greenhouse: 'stack'}};
+  if (home.version < 8) kept = {...kept, ...newGarden(), loads: {...kept.loads, greenhouse: 'stack'}};
+  return {...kept, version: HOME_RECORD_VERSION, seeds: {...newGarden().seeds, ...kept.seeds},
+    foods: {...newGarden().foods, ...kept.foods}, moreSeeds: false};
 }
 
 // A name he may write: 1 to 24 letters, numbers, spaces and the marks a place name uses.
@@ -522,7 +544,7 @@ function readableBox(box) {
     box.i >= 0 && box.i < HOME_CELLS && box.j >= 0 && box.j < HOME_CELLS && count(box.eggs) && box.eggs <= BOX_HOLDS;
 }
 export function readableHome(home) {
-  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, 4, 5, 6, 7, HOME_RECORD_VERSION].includes(home.version)) return false;
+  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, 4, 5, 6, 7, 8, HOME_RECORD_VERSION].includes(home.version)) return false;
   const built = cleanHomeName(home.name) === home.name && Array.isArray(home.pieces) && home.pieces.every(readablePiece) &&
     Array.isArray(home.marks) && home.marks.every(readablePiece) && home.marks.length <= 4 * HOME_CELLS * (HOME_CELLS + 1) &&
     home.pieces.filter(piece => piece.kind === 'gate').length <= 1 &&
@@ -895,6 +917,7 @@ export function awayWords(seconds) {
 export function boardLines(opened, home) {
   const lines = [];
   if (home.version >= 8 && canBorrowDrill(home)) lines.push(HOME_WORDS.bedTimber, HOME_WORDS.seedsGift, HOME_WORDS.glassLoad);
+  if (home.moreSeeds) lines.push(HOME_WORDS.moreSeeds);
   if (canBorrowDrill(home) && !home.well?.pump) {
     lines.push(BOARD_WORDS.drillRig);
     if (!home.well) lines.push(BOARD_WORDS.wellHint);

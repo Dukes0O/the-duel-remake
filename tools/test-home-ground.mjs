@@ -2,9 +2,9 @@
 // lifting, the lane from the gate, marks made from above, the solids, the burst, a save and a reload, the save made
 // before this card, and the switch off. Memory-only storage: no real save is read or written.
 import assert from 'node:assert/strict';
-import {HOME_CROPS} from '../src/world/open/content/home-ground.js';
+import {HOME_CROPS, HOME_EXTRA_FOODS} from '../src/world/open/content/home-ground.js';
 import {buildBed, bedRefusal, cropInLand, plantCrop, harvestCrop, packTin, eatFromTin, stepHomePowers, powerStrength,
-  homeFootPlatforms, newGarden, tinWords} from '../src/world/open/home-rule.js';
+  homeFootPlatforms, newGarden, tinWords, pairHomePowers, proteinHomePower} from '../src/world/open/home-rule.js';
 import {footControlInput} from '../src/input-contexts.js';
 import {createFighter, stepFighter, FIGHTER_STEP_SECONDS, FIGHTER_RULES} from '../src/onfoot.js';
 import {readFileSync} from 'node:fs';
@@ -1326,7 +1326,7 @@ const memory = values => {
   const shed = {kind: 'shed', i: 6, j: 10, turn: 0, stage: 0};
   stored = markBuild(stored, shed); stored = {...stored, loads: {...stored.loads, shed: {i: shed.i, j: shed.j}}};
   for (let n = 0; n < 4; n++) stored = raiseBuild(stored, shed);
-  stored = {...stored, foods: {firePeppers: 1, jumpingBeans: 1}};
+  stored = {...stored, foods: {...stored.foods, firePeppers: 1, jumpingBeans: 1}};
   out = stepOpenLand(land(stored), viewOf({...buildingDoor(shed), yaw: Math.PI}, {}, {homeClock: stored.lastSeen, interact: true}), 0, parts);
   equal(homeOf(out.open).tin, ['firePeppers', 'jumpingBeans', null], 'F at the shed packs harvested power food into the tin');
   check(out.requests.some(row => row.text?.includes('Press 4, 5 or 6')), 'the shed explains the free eating keys');
@@ -1378,4 +1378,37 @@ const memory = values => {
   check(Math.abs(game.state.fighter.speed - FIGHTER_RULES.walkMetersPerSecond) < 1e-9, 'expired powers restore ordinary walking');
 }
 
+// Step 5C keeps every byte of a 5B garden until its enabled, backed-up migration.
+{
+  const old = {...newHome('Older garden', 1000), version: 8, eggs: 17,
+    seeds: {spinach: 2, carrots: 3, beans: 4, firePeppers: 1, jumpingBeans: 2},
+    foods: {firePeppers: 4, jumpingBeans: 5}, tin: ['jumpingBeans', null, 'firePeppers']};
+  delete old.moreSeeds;
+  const bytes = JSON.stringify(old);
+  check(readableHome(old), 'a genuine 5B record remains readable');
+  const upgraded = upgradeHome(old);
+  for (const [key, value] of Object.entries(old)) {
+    if (key === 'version') continue;
+    if (['seeds', 'foods'].includes(key)) for (const [id, amount] of Object.entries(value))
+      equal(upgraded[key][id], amount, '5C keeps the older ' + key + ' count for ' + id);
+    else equal(upgraded[key], value, '5C keeps the older ' + key);
+  }
+  equal(JSON.stringify(old), bytes, 'migration does not alter the original 5B bytes');
+  check(readableHome(upgraded), 'the additive version 9 garden is readable');
+  const meals = {superSpinach: {at: 0}, firePeppers: {at: 10}, jumpingBeans: {at: 10.01}};
+  const powers = {superSpinach: 110, firePeppers: 90, jumpingBeans: 120};
+  equal(pairHomePowers(powers, meals), {ram: 90, leap: 90, thump: 0}, 'ten seconds includes the boundary and excludes a late pair');
+  equal(pairHomePowers(stepHomePowers(powers, 90), meals), {ram: 0, leap: 0, thump: 0}, 'pairs stop with their shorter food');
+  const egg = proteinHomePower(upgraded, powers, {firePeppers: {at: 5, protein: false}}, 10);
+  equal([egg.home.eggs, egg.powers.firePeppers], [16, 135], 'an egg at five seconds adds half the original food duration');
+  equal(proteinHomePower(egg.home, egg.powers, egg.meals, 10).home.eggs, 16, 'one meal cannot spend two eggs');
+  equal(proteinHomePower(upgraded, powers, {firePeppers: {at: 0}}, 5.01).home, upgraded, 'a late egg cannot spend the store');
+  check(footControlInput({KeyT: true}, {}).homeProtein && footControlInput({KeyE: true}, {}).right,
+    'T eats protein and E keeps its strafe');
+  for (const id of HOME_EXTRA_FOODS) {
+    const ate = eatFromTin({...upgraded, tin: [id, null, null]}, 0, {});
+    equal(ate.powers[id], HOME_CROPS[id].lasts, id + ' starts its settled duration');
+    equal(stepHomePowers(ate.powers, HOME_CROPS[id].lasts)[id], 0, id + ' ends on time');
+  }
+}
 console.log(`Home ground: ${checks} checks passed.`);

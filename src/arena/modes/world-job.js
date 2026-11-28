@@ -346,7 +346,7 @@ function markTownStepThings(duel, requests) {
 // HOME-GROUND-1: the keys the ground reads, from the walker's own input (src/input-contexts.js, footControlInput).
 const homeKeysOf = state => {
   const input = state.onFoot ? state.fighterInput ?? {} : {};
-  return {eat1: !!input.homeEat1, eat2: !!input.homeEat2, eat3: !!input.homeEat3, build: !!input.homeBuild, turn: !!input.homeTurn, piece: !!input.homePiece, view: !!input.homeView,
+  return {eat1: !!input.homeEat1, eat2: !!input.homeEat2, eat3: !!input.homeEat3, protein: !!input.homeProtein, build: !!input.homeBuild, turn: !!input.homeTurn, piece: !!input.homePiece, view: !!input.homeView,
     burst: !!input.homeBurst, sprint: !!input.sprint, fire: !!input.fire, forward: !!input.forward, back: !!input.back, left: !!input.left,
     right: !!input.right, turnLeft: !!input.turnLeft, turnRight: !!input.turnRight};
 };
