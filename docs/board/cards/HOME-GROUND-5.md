@@ -51,3 +51,16 @@ goes wrong while it is empty; it simply waits.
   review of the save. Claude drives it by hand.
 
 ## Claude answers
+
+## Builder handoff for Claude
+
+Implementation choices are in `docs/board/questions/HOME-GROUND-5.md`; the durable record is Step 5 as built in
+`docs/HOME_GROUND.md`. The independent save review found no Required or Critical issues.
+
+Assertion review owed under rule 18: home migration assertions now expect version 7 and the tank load; older
+fixture comparisons remove only the new fields. The backup matrix now includes version 6 and checks every old
+value. The work-vehicle roster adds the borrowed drill while keeping all five town vehicles and their checks.
+New checks cover the actual outing controls, saved depth, pump, tank clock and unchanged disabled-switch records.
+The historical audio-bank projection excludes exactly the five new drill aliases and verifies each alias's full
+recipe and Home Ground switch; its pinned hash stays exact. No tolerance or replay/world fingerprint changed.
+Claude's hand drive remains due.

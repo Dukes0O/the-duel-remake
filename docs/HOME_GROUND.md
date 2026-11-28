@@ -105,7 +105,8 @@ Kyle's rulings of 27 November.
   reach, and a pond, which the well then fills.
 - **The well is drilled by hand** (Kyle). He drives the drill rig in along the lanes, sets it over the spot, lowers
   the auger, feeds it down and listens for the change when it reaches water (`docs/MACHINES.md`: lower, feed, listen).
-  Mr Penny fits the pump afterwards. A lane wide enough for the digger is wide enough for the rig.
+  After hitting water, he steps out and holds B for six seconds to fit the hand pump himself (HOME-GROUND-5).
+  A lane wide enough for the digger is wide enough for the rig.
 - **Seen from above** (Kyle). One key lifts the camera to look straight down on the whole ground, and the same key
   brings it back. From above he sees his layout as a plan, marks where the next things will go, and watches where the
   Rats are coming from. The hammering is still done on the ground.
@@ -452,7 +453,8 @@ go into the real game after step 4.
   gauge show the connection and water; F reads the amount. Construction and disconnected time do not fill it.
   Backward clocks preserve water and counted time; empty tanks wait without loss.
 - Cues: `home.drill.lower`, `home.drill.grind`, `home.drill.rock`, `home.drill.jam`, `home.drill.water`,
-  `home.pump.fit`, `home.tank.fill`; tank stages reuse `home.fence.hammer`. Claude's hand drive remains due.
+  `home.pump.fit`, `home.tank.fill`; tank stages reuse `home.fence.hammer`. The drill cues play the rig's existing
+  tones. The other home cues await OPEN-SOUND registration, as in earlier steps. Claude's hand drive remains due.
 
 ## 17. Settled with Kyle, 27 November 2026
 
