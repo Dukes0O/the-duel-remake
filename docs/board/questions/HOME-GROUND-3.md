@@ -1,4 +1,4 @@
-# HOME-GROUND-3: the flatbed needs a vehicle handoff
+# HOME-GROUND-3: remaining narrow hooks after Claude's answer
 
 The current outing has one driven car. `src/onfoot-transition.js` measures re-entry against that car's `s` and
 `lateral`; `src/arena/modes/world-job.js` starts a work vehicle only from the job definition and reads load weight
@@ -12,7 +12,22 @@ Options:
    drawing here. The real-key delivery drive remains blocked until the bridge lands.
 
 Recommended pick: option 2. The builder is proceeding with the independent work. No substitute delivery or fake
-truck control will be presented as finished. Claude must assign the bridge before this step is playable end to end.
+truck control will be presented as finished.
+
+**Resolved:** Claude's answer in commit `4fa8786e1` replaces the parked truck with a separate flatbed outing. The lane
+has merged that answer and is implementing the optional vehicle and yard button.
+
+## The roam still needs load weight and vehicle facts
+
+The answer permits only the `startWorkVehicle` gate in `src/arena/modes/world-job.js` to change. Inspection shows
+`syncHaulVehicle` is called only for `haul` and `TOWN_STEP_KINDS`, not `roam` (lines 2292 to 2303). Its view also
+does not pass the vehicle id to the home part, and the roam step carries no `loadKg`. Thus selecting the flatbed
+alone cannot put a delivered load's weight on it.
+Recommended pick: permit three narrow Home Ground hooks in the mode: pass the selected vehicle id and car heading
+to the enabled home part; read that part's `loadKg` into the existing haul weight sync for a flatbed roam; keep the
+existing foot entry/exit controls. The load drawing can read the home record without any renderer state changes.
+Alternative: defer weight and truck-only pickup, which would not meet this card. The builder is doing the other
+approved work while this explicit "nothing else in that file changes" limit awaits clarification.
 
 ## Independent save review: backup detection
 
