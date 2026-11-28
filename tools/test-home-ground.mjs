@@ -1475,6 +1475,24 @@ const memory = values => {
   equal(thumped.raid.riders.map(row => row.health === 0), [true, true, false], 'one landing tips every bike within six metres and keeps the buggy');
   equal(useHomeFightPowers(closeRaid, fighter, {}, {thump: 120}).raid, closeRaid, 'a held jump cannot thump before a landing');
   equal(useHomeFightPowers(closeRaid, fighter, {}, {}, {landed: true, shove: true}).raid, closeRaid, 'expired food cannot shove or thump');
+  let landing = stepOpenLand(land({...gift, tin: ['superSpinach', 'jumpingBeans', null]}),
+    viewOf(me, {eat1: true, eat2: true}), 0, parts);
+  landing.open.parts.home.raid = closeRaid;
+  landing.open.parts.home.lastFoot = {position: p, air: .05};
+  const groundedView = viewOf(me, {}, {fighter: {position: p, yaw: 0, airHeight: 0}});
+  landing = stepOpenLand(landing.open, groundedView, DT, parts);
+  equal(landing.open.parts.home.raid.riders.map(row => row.health === 0), [true, true, false],
+    'the actual home part thumps on a landing even when the previous frame was only five centimetres up');
+  check(cues(landing.events).includes(HOME_CUES.pair), 'the real landing names the pair cue');
+  landing.open.parts.home.raid = closeRaid;
+  const still = stepOpenLand(landing.open, groundedView, DT, parts);
+  check(still.open.parts.home.raid.riders.every(row => row.health > 0), 'standing still cannot trigger another thump');
+  for (const id of HOME_EXTRA_FOODS) {
+    const meal = stepOpenLand(land({...gift, eggs: 1, tin: [id, null, null]}), viewOf(me, {eat1: true}), 0, parts);
+    check(cues(meal.events).includes(HOME_CROPS[id].cue), id + ' names its settled sound cue in the real part');
+    const egg = stepOpenLand(meal.open, viewOf(me, {protein: true}), 5, parts);
+    equal(egg.open.parts.home.powers[id], HOME_CROPS[id].lasts * 1.5 - 5, id + ' gets half its own duration from an egg');
+  }
   const garlic = outsideGarlic({x: 6, z: 0}, {x: 4, z: 0}, {x: 0, z: 0}, 1, 3, 1);
   equal(garlic, {x: 5, z: 0}, 'garlic stops an approaching person five metres away');
   check(outsideGarlic({x: 2, z: 0}, {x: 2, z: 0}, {x: 0, z: 0}, 1, 3, 1).x > 2, 'a person already near turns away from garlic');
