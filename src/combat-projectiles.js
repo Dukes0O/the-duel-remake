@@ -382,10 +382,10 @@ export function stepProjectiles(duel, dt) {
       }
     }
     const contact = !!target || !!raiderTarget || !!fighterTarget || !!fortTarget;
-    const rpgLifetime = Number.isInteger(projectile.targetIndex) &&
+    const rpgLifetime = (Number.isInteger(projectile.targetIndex) || projectile.homeTower === true) &&
       Number.isFinite(projectile.lifetimeSeconds)
       ? clamp(projectile.lifetimeSeconds, T.foot.rpgLifetimeSeconds,
-        T.foot.rpgLifetimeSeconds * 1.25)
+        T.foot.rpgLifetimeSeconds * 1.25 * (projectile.homeTower === true ? 1.25 : 1))
       : T.foot.rpgLifetimeSeconds;
     const expired = projectile.kind === 'harpoon' ? projectile.travelled >= 50 - 1e-10 : projectile.age > (projectile.kind === 'bomb'
       ? T.bomb.lifetime : projectile.kind === 'rpg'

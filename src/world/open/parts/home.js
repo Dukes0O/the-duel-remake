@@ -27,13 +27,15 @@
 import {TALK_RANGE, distanceToPerson} from './people.js';
 import {AWAY_LONGEST, BOARD_NEAR, BOARD_SECONDS, BUILD_IDLE_SECONDS, FOOT_BURST, HAMMER_STRIKE_SECONDS, HEN_LOOK, HOME_BOX,
   HOME_CELLS, HOME_CUES, HOME_CURSOR_SPEED, HOME_OFFER, HOME_OFFER_ID, HOME_PIECES, HOME_REACH, HOME_SIZE, HOME_STEP,
-  HOME_WORDS, MOSS_HENS_ID, MOSS_TALK, defaultHomeName, HOME_BUILDS, HOME_STAGES, HOME_LOAD_STACK, HOME_CREW_TALK} from '../content/home-ground.js';
+  HOME_WORDS, MOSS_HENS_ID, MOSS_TALK, defaultHomeName, HOME_BUILDS, HOME_STAGES, HOME_LOAD_STACK, HOME_CREW_TALK,
+  HOME_TOWER_STAGES, HOME_RAID} from '../content/home-ground.js';
 import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoom, boxSlotInFront, boxesFull, build,
   buildBox, cleanHomeName, crateSpot, cratesLeft, facedThing, gateOf, gatesLeft, gatherBox, giveHens, groundCentre,
   groundPoint, hensWaiting, homeSolids, lift, liftBox, markAt, nameHen, newHome, newsBoardSpot, outlineFor, outsideBy,
   panelsLeft, pieceInLand, readableHome, ripen, slotAt, slotInFront, toGrid, toggleMark, upgradeHome,
   buildBounds, buildInLand, buildingDoor, buildSlot, buildRefusal, markBuild, liftBuild, buildHasLoad, raiseBuild, gatherCoop, shedWords, roostAt,
-  homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome} from '../home-rule.js';
+  homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome, standPanel} from '../home-rule.js';
+import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, raidInterval, towerAtLadder, stepHomeTower} from '../home-raid-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {makeRng} from '../../../rng.js';
 
@@ -58,7 +60,7 @@ function begin() {
     namingHen: null, namingKey: '', namingChain: false, offerOpen: false, given: false, opened: null, ripenedAt: 0,
     building: false, idle: 0, tool: null, strike: null, armed: false, onGround: false, flock: [], flockSeed: 1,
     board: null, boardShown: false, crateTalk: false, crewTalk: false, crewLesson: null, crewWalk: 0, crewKey: '', crewPeople: [],
-    loadHeld: null};
+    loadHeld: null, raid: null, lastDay: null, tower: null};
 }
 
 // The third speed. It empties in FOOT_BURST.seconds of use; once spent it refills fully before it can be used again.
@@ -225,7 +227,8 @@ export const homePart = {
       const moment = clock === null ? null : clock + now;
       const counted = awayFor(kept.lastSeen, moment);
       const ripe = ripenHome(kept, counted);
-      const opened = {...ripe.home, lastSeen: moment === null ? ripe.home.lastSeen : Math.max(moment, ripe.home.lastSeen ?? 0)};
+      const opened = openHomeSitting({...ripe.home,
+        lastSeen: moment === null ? ripe.home.lastSeen : Math.max(moment, ripe.home.lastSeen ?? 0)}, context.seed);
       next.clockBase = opened.lastSeen;
       next.openedAt = now;
       next.opened = {away: counted, long: Number.isFinite(kept.lastSeen) && moment !== null && moment - kept.lastSeen > AWAY_LONGEST,
@@ -302,7 +305,34 @@ export const homePart = {
     const gate = gateOf(record);
     const gateMiddle = gate && pieceInLand(gate);
     next.gateOpen = !!gateMiddle && !!where && Math.hypot(where.x - gateMiddle.x, where.z - gateMiddle.z) < GATE_OPENS;
-    const near = !!fighter && outsideBy(fighter.position.x, fighter.position.z) < BUILD_NEAR;
+    const ladder = fighter && !fighter.knockedDown ? towerAtLadder(record, fighter.position) : null;
+    next.ladderAvailable = !!ladder;
+    next.tower = fighter && !fighter.knockedDown ? stepHomeTower(state.tower, ladder, pressed('interact'), dt) : null;
+    if (next.tower && next.tower.direction !== state.tower?.direction && next.tower.direction !== 0) events.push(cue(HOME_CUES.towerClimb));
+    const near = !!fighter && !next.tower && outsideBy(fighter.position.x, fighter.position.z) < BUILD_NEAR;
+    record = {...record, raids: {...record.raids, played: record.raids.played + Math.max(0, dt)}};
+    const dusk = state.lastDay !== null && state.lastDay !== 'dusk' && view.partOfDay === 'dusk';
+    next.lastDay = view.partOfDay ?? state.lastDay;
+    const due = dusk && !next.raid && homeRaidDue(record);
+    if (due && where && outsideBy(where.x, where.z) <= HOME_RAID.near && !context.leave) {
+      next.raid = startHomeRaid(record, context.seed, due === 'test', view.difficulty);
+      // A quit cannot restore an overdue deadline and demand the same raid on reopening.
+      if (due === 'real') record = {...record, raids: {...record.raids,
+        nextDue: record.raids.played + raidInterval(context.seed, record.raids.won + record.raids.lost)}};
+      const crewHere = record.builds.some(row => row.stage === 4);
+      requests.push(say('raid-call', crewHere ? HOME_WORDS.raidWren : HOME_WORDS.raidCall));
+      events.push(cue(HOME_CUES.raidCall), cue(HOME_CUES.raidBike));
+    }
+    if (next.raid) {
+      const stepped = stepHomeRaid(record, next.raid, {...view, gateOpen: next.gateOpen, leaving: !!context.leave}, dt, context.seed);
+      record = stepped.home; next.raid = stepped.raid;
+      events.push(...stepped.events);
+      if (stepped.news) {
+        next.opened = {...next.opened, raid: stepped.news};
+        requests.push(say('raid-result', stepped.news));
+        next.raid = null;
+      }
+    }
     // The marker that led him here goes once he stands on his ground.
     if (state.marked && where && outsideBy(where.x, where.z) === 0) {
       requests.push({type: 'marker', place: null});
@@ -363,7 +393,7 @@ export const homePart = {
     const offer = crewOffer(record);
     const newsPrompt = offer ? words('crewHand', {piece: offer.kind}) : record.crew.job ? words('crewBusy', {piece: record.crew.job.kind}) : HOME_WORDS.boardHint;
     let note = '';
-    if (fighter && !next.naming && pressed('interact')) {
+    if (fighter && !next.naming && !next.tower && !state.tower && !ladder && pressed('interact')) {
       if (atNews) {
         if (offer) {
           catchUp(); record = handToCrew(record, offer, record.lastSeen);
@@ -376,7 +406,7 @@ export const homePart = {
         next.crateTalk = true;
         requests.push({type: 'talk', id: MOSS_HENS_ID, scene: MOSS_TALK, person: 'moss', speaker: 'moss', asked: [],
           threadPriority: true, position: {x: crate.x, y: scablandsSurfaceHeightAt(crate.x, crate.z), z: crate.z}, anchorPosition: true});
-      } else if (buildingAt?.stage === 4 && (buildingAt.kind === 'coop' || distance(fighter.position, buildingDoor(buildingAt)) <= BOARD_REACH)) {
+      } else if (buildingAt?.stage === 4 && buildingAt.kind !== 'tower' && (buildingAt.kind === 'coop' || distance(fighter.position, buildingDoor(buildingAt)) <= BOARD_REACH)) {
         catchUp();
         if (buildingAt.kind === 'coop') {
           const before = record.eggs;
@@ -498,12 +528,15 @@ export const homePart = {
               events.push(cue(HOME_CUES.gather));
               requests.push(say('gathered', gathered === 1 ? words('gatheredOne', {store: record.eggs}) : words('gathered', {count: gathered, store: record.eggs})));
             }
+          } else if (outline.target.down) {
+            record = standPanel(record, outline.target);
+            events.push(cue(HOME_CUES.fenceUp));
           } else {
             record = lift(record, outline.target);
             if (outline.target.kind === 'gate') next.kind = 'gate';
           }
           choices.push(choice('lift', record));
-          events.push(cue(HOME_CUES.lift));
+          if (!outline.target.down) events.push(cue(HOME_CUES.lift));
           hammer = null;
           next.building = true;
         } else if (outline?.mode === 'refused' && pressed('build')) {
@@ -545,7 +578,7 @@ export const homePart = {
           atNews ? newsPrompt : atBoard ? HOME_WORDS.renameHint : atCrate ? HOME_WORDS.crateWaiting :
           facedBox ? (facedBox.box.eggs > 1 ? words('gather', {count: record.boxes[facedBox.index]?.eggs ?? 0}) :
             facedBox.box.eggs === 1 ? HOME_WORDS.gatherOne : HOME_WORDS.emptyBox) :
-          outline?.mode === 'lift' ? words('lift', {piece: nameOf(outline.target)}) :
+          outline?.mode === 'lift' ? outline.target.down ? HOME_WORDS.fenceUp : words('lift', {piece: nameOf(outline.target)}) :
           outline?.mode === 'refused' ? HOME_WORDS[outline.reason] :
           hammer ? HOME_WORDS.hammering :
           outline ? (kind === 'box' ? HOME_WORDS.holdBox : words(outline.marked ? 'holdMark' : 'hold', {piece: nameOf(piece)})) + carried :
@@ -591,6 +624,10 @@ export const homePart = {
     // Where he stands and faces, for his mark in the view from above.
     next.standing = fighter ? {x: fighter.position.x, z: fighter.position.z, yaw: fighter.yaw} : null;
     next.strike = building && next.hammer ? (next.hammer.seconds % HAMMER_STRIKE_SECONDS) / HAMMER_STRIKE_SECONDS : null;
+    if (next.tower) {
+      Object.assign(next, {tool: null, strike: null, building: false, armed: true, above: false, outline: null,
+        prompt: next.tower.progress === 1 ? HOME_WORDS.towerDown : HOME_WORDS.towerClimbing});
+    } else if (ladder && !next.naming && !next.building) next.prompt = HOME_WORDS.towerUp;
 
     // Read the board only beside it, down on foot. Refresh its news after gathering, laying or building this tick.
     const canReadBoard = fighter && news && !next.above && distance(fighter.position, news) <= BOARD_NEAR;
@@ -608,13 +645,15 @@ export const homePart = {
       next.solidsKey = solidsKey;
       requests.push({type: 'solids', id: 'home-ground', solids: homeSolids(record, {gateOpen: next.gateOpen, heightAt: scablandsSurfaceHeightAt})});
     }
+    // Keep all play seconds, even if this is the last tick before leaving. No wall time enters this counter.
+    choices.push(choice('play-clock', record));
     return {state: next, events, requests, choices};
   },
 };
 
 // G changes what is in his hands: a panel, the gate while he carries it, an old crate while he has one.
 function nextKind(kind, record) {
-  const order = ['panel', 'gate', 'box', 'coop', 'shed'];
+  const order = ['panel', 'gate', 'box', 'coop', 'shed', 'tower'];
   const has = row => row === 'panel' || (row === 'gate' && gatesLeft(record) > 0) || (row === 'box' && cratesLeft(record) > 0) ||
     (!!HOME_BUILDS[row] && record.hens.length > 0 && record.boxes.length > 0);
   for (let n = 1; n <= order.length; n++) {
@@ -717,7 +756,7 @@ function stepBuilding({state, next, record, fighter, keys, pressed, dt, events, 
   next.outline = next.building || next.above ? {piece: row ?? slot, mode: reason ? 'refused' : 'build', reason,
     progress: hammer ? hammer.seconds / HOME_BUILDS[kind].hammer : 0, marked: !!row, shake: !!reason && pressed('build')} : null;
   next.prompt = note || (reason ? HOME_WORDS[reason] : row?.stage === 4 ?
-    (kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
-    row ? next.above ? HOME_WORDS.buildLift : buildHasLoad(record, row) ? words('buildStage', {piece: kind, stage: HOME_STAGES[row.stage]}) :
+    (kind === 'tower' ? HOME_WORDS.towerUp : kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
+    row ? next.above ? HOME_WORDS.buildLift : buildHasLoad(record, row) ? words('buildStage', {piece: kind, stage: (kind === 'tower' ? HOME_TOWER_STAGES : HOME_STAGES)[row.stage]}) :
       words('buildLoad', {piece: kind}) + ' ' + HOME_WORDS.buildLift : words('buildMark', {piece: kind}));
 }

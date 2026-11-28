@@ -83,6 +83,9 @@ function stepFighterInFixedTime(duel, dt) {
   // HOME-GROUND-1: while he looks down on his ground from above he stands still, and a burst runs at the third speed.
   const home = state.arena?.worldJob?.open?.parts.home;
   const input = carryingValve ? {...state.fighterInput, sprint: false, walkScale: .5}
+    : home?.tower ? {lookX: state.fighterInput.lookX, lookY: state.fighterInput.lookY,
+      turnLeft: state.fighterInput.turnLeft, turnRight: state.fighterInput.turnRight,
+      fire: state.fighterInput.fire, aim: state.fighterInput.aim}
     : home?.above ? {lookX: state.fighterInput.lookX, lookY: state.fighterInput.lookY}
     : home?.burst?.active ? {...state.fighterInput, burst: true} : state.fighterInput;
   while (transition.fighterStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS) {
@@ -165,6 +168,8 @@ export function stepFootTransition(duel, dt) {
 
   if (state.onFoot) {
     stepFighterInFixedTime(duel, dt);
+    const home = state.arena?.worldJob?.open?.parts.home;
+    if (home?.tower || home?.ladderAvailable) { transition.heldSeconds = 0; return true; }
     // One press of F climbs onto the stopped tanker; it wins over getting
     // back into a car parked beside it.
     if (!state.boarding && held && !transition.needsRelease && climbAboard(duel)) {

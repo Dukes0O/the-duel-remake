@@ -24,21 +24,24 @@
 //             until a clock has been handed to the part. The clock is read once, when an outing opens.
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, HEN_BREEDS, HEN_SETTLE_SECONDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_CRATES,
   HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, MOSS_HENS, layInterval,
-  HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS, HOME_BOX_REACH, HOME_CREW_SECONDS} from './content/home-ground.js';
+  HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS, HOME_BOX_REACH, HOME_CREW_SECONDS, HOME_TOWER} from './content/home-ground.js';
 
-export const HOME_RECORD_VERSION = 4;
+export const HOME_RECORD_VERSION = 5;
 const AXES = ['x', 'z'];
 const whole = value => Number.isSafeInteger(value);
 
 export const newHome = (name, lastSeen = null) => ({version: HOME_RECORD_VERSION, name, pieces: [], marks: [], hens: [], boxes: [],
-  eggs: 0, lastSeen, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed(), crew: {job: null, began: null, done: 0}});
+  eggs: 0, lastSeen, builds: [], loads: {coop: 'stack', shed: 'stack', tower: 'stack'}, flatbed: firstFlatbed(),
+  crew: {job: null, began: null, done: 0}, raids: newRaids()});
+export const newRaids = () => ({played: 0, sittings: 0, nextDue: null, testDone: false, won: 0, lost: 0});
 function firstFlatbed() { return {...groundPoint(15, -3), yaw: 0}; }
 // Reading an older record does not upgrade it. Only the enabled part calls this.
 export function upgradeHome(home) {
   if (home.version === HOME_RECORD_VERSION) return home;
   let kept = home.version === 1 ? {...home, hens: [], boxes: [], eggs: 0, lastSeen: null} : home;
   if (home.version < 3) kept = {...kept, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed()};
-  return {...kept, version: HOME_RECORD_VERSION, crew: {job: null, began: null, done: 0}};
+  if (home.version < 4) kept = {...kept, crew: {job: null, began: null, done: 0}};
+  return {...kept, version: HOME_RECORD_VERSION, loads: {...kept.loads, tower: 'stack'}, raids: newRaids()};
 }
 
 // A name he may write: 1 to 24 letters, numbers, spaces and the marks a place name uses.
@@ -71,12 +74,14 @@ function readableBuild(row) {
 const loadPoint = row => row && Object.keys(row).length === 2 && whole(row.i) && whole(row.j) &&
   row.i >= 0 && row.j >= 0 && row.i < HOME_CELLS && row.j < HOME_CELLS;
 function readableBuildings(home) {
+  const kinds = home.version >= 5 ? Object.keys(HOME_BUILDS) : ['coop', 'shed'];
   if (!Array.isArray(home.builds) || home.builds.length > (home.version === 3 ? 2 : HOME_CELLS * HOME_CELLS) || !home.builds.every(readableBuild) ||
       (home.version >= 4 && new Set(home.builds.map(row => row.i + ':' + row.j)).size !== home.builds.length) ||
       (home.version === 3 && new Set(home.builds.map(row => row.kind)).size !== home.builds.length) ||
-      ['coop', 'shed'].some(kind => home.builds.filter(row => row.kind === kind && row.stage < 4).length > 1) ||
-      !home.loads || Object.keys(home.loads).length !== 2 ||
-      !['coop', 'shed'].every(kind => ['stack', 'bed'].includes(home.loads[kind]) || loadPoint(home.loads[kind])) ||
+      home.builds.some(row => !kinds.includes(row.kind)) ||
+      kinds.some(kind => home.builds.filter(row => row.kind === kind && row.stage < 4).length > 1) ||
+      !home.loads || Object.keys(home.loads).length !== kinds.length ||
+      !kinds.every(kind => ['stack', 'bed'].includes(home.loads[kind]) || loadPoint(home.loads[kind])) ||
       Object.values(home.loads).filter(row => row === 'bed').length > 1 ||
       !home.flatbed || Object.keys(home.flatbed).length !== 3 ||
       !['x', 'z', 'yaw'].every(key => Number.isFinite(home.flatbed[key]))) return false;
@@ -240,7 +245,8 @@ function inBounds({kind, i, j, axis}) {
 const onEdge = ({i, j, axis}) => axis === 'x' ? j === 0 || j === HOME_CELLS : i === 0 || i === HOME_CELLS;
 
 export function readablePiece(piece) {
-  return piece !== null && typeof piece === 'object' && Object.keys(piece).length === 4 &&
+  return piece !== null && typeof piece === 'object' &&
+    (Object.keys(piece).length === 4 || Object.keys(piece).length === 5 && piece.kind === 'panel' && typeof piece.down === 'boolean') &&
     Object.hasOwn(HOME_PIECES, piece.kind) && inBounds(piece) && (piece.kind !== 'gate' || onEdge(piece));
 }
 
@@ -254,20 +260,32 @@ function readableBox(box) {
     box.i >= 0 && box.i < HOME_CELLS && box.j >= 0 && box.j < HOME_CELLS && count(box.eggs) && box.eggs <= BOX_HOLDS;
 }
 export function readableHome(home) {
-  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, HOME_RECORD_VERSION].includes(home.version)) return false;
+  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, 4, HOME_RECORD_VERSION].includes(home.version)) return false;
   const built = cleanHomeName(home.name) === home.name && Array.isArray(home.pieces) && home.pieces.every(readablePiece) &&
     Array.isArray(home.marks) && home.marks.every(readablePiece) && home.marks.length <= 4 * HOME_CELLS * (HOME_CELLS + 1) &&
     home.pieces.filter(piece => piece.kind === 'gate').length <= 1 &&
     home.pieces.filter(piece => piece.kind === 'panel').length <= HOME_PANELS;
   if (!built || home.version === 1) return built;
   if (home.version >= 3 && !readableBuildings(home)) return false;
-  if (home.version === 4 && !readableCrew(home)) return false;
+  if (home.version >= 4 && !readableCrew(home)) return false;
+  if (home.version >= 5 && !readableRaids(home.raids)) return false;
   const builtIn = coopBoxes(home);
   return Array.isArray(home.hens) && home.hens.length <= (builtIn.length ? HOME_BUILDS.coop.hens * builtIn.length / 3 : MOSS_HENS.length) && home.hens.every(readableHen) &&
     Array.isArray(home.boxes) && home.boxes.length <= HOME_CRATES + builtIn.length && home.boxes.every(readableBox) &&
     builtIn.every(cell => home.boxes.some(box => sameCell(box, cell))) &&
     new Set(home.boxes.map(box => box.i + ':' + box.j)).size === home.boxes.length &&
     count(home.eggs) && (home.lastSeen === null || (Number.isFinite(home.lastSeen) && home.lastSeen >= 0));
+}
+
+function readableRaids(raids) {
+  return !!raids && Object.keys(raids).length === 6 && Number.isFinite(raids.played) && raids.played >= 0 &&
+    count(raids.sittings) && (raids.nextDue === null || Number.isFinite(raids.nextDue) && raids.nextDue >= 0) &&
+    typeof raids.testDone === 'boolean' && count(raids.won) && count(raids.lost);
+}
+
+export function standPanel(home, piece) {
+  if (piece.kind !== 'panel' || !piece.down) return home;
+  return {...home, pieces: home.pieces.map(row => row === piece ? {...row, down: false} : row)};
 }
 
 // The one-step lines a piece covers, as keys: 'x:3:0' is the step east from node (3, 0).
@@ -390,7 +408,7 @@ export const GATE_POST = .3;
 export function homeSolids(home, {gateOpen = false, heightAt}) {
   const rows = [];
   for (const row of home?.builds ?? []) {
-    if (row.stage < 2) continue;
+    if (row.stage < (row.kind === 'tower' ? 1 : 2)) continue;
     const at = buildInLand(row), w = HOME_BUILDS[row.kind].width * HOME_STEP, d = HOME_BUILDS[row.kind].depth * HOME_STEP;
     const add = (key, x, z, halfX, halfZ, height) => {
       const px = at.x + x * Math.cos(at.heading) + z * Math.sin(at.heading);
@@ -398,6 +416,10 @@ export function homeSolids(home, {gateOpen = false, heightAt}) {
       rows.push({id: `home/${row.kind}/${row.i}/${row.j}/${key}`, kind: 'wall', x: px, z: pz, halfX, halfZ, heading: at.heading,
         height, base: heightAt(at.x, at.z)});
     };
+    if (row.kind === 'tower') {
+      for (const x of [-1.2, 1.2]) for (const z of [-1.2, 1.2]) add(`post/${x}/${z}`, x, z, .16, .16, HOME_TOWER.platform);
+      continue;
+    }
     for (const x of [-w / 2, w / 2]) for (const z of [-d / 2, d / 2]) add(`post/${x}/${z}`, x, z, .09, .09, 2.1);
     if (row.stage >= 3) {
       add('back', 0, -d / 2, w / 2, .06, 2.1);
@@ -411,6 +433,7 @@ export function homeSolids(home, {gateOpen = false, heightAt}) {
       heading: 0, height: HOME_BOX.height, base: heightAt(x, z)});
   }
   for (const piece of home?.pieces ?? []) {
+    if (piece.down) continue;
     const {x, z, length, heading} = pieceInLand(piece);
     const along = {x: Math.cos(heading), z: -Math.sin(heading)};
     const id = `home/${piece.kind}/${piece.axis}/${piece.i}/${piece.j}`;
@@ -463,7 +486,7 @@ export function crateSpot(gate) {
 // Every step of the outside edge has a panel or the gate in it, and the gate hangs.
 export function fenceClosed(home) {
   if (!gateOf(home)) return false;
-  const covered = new Set(home.pieces.flatMap(stepsOf));
+  const covered = new Set(home.pieces.filter(piece => !piece.down).flatMap(stepsOf));
   for (let n = 0; n < HOME_CELLS; n++)
     for (const key of [`x:${n}:0`, `x:${n}:${HOME_CELLS}`, `z:0:${n}`, `z:${HOME_CELLS}:${n}`]) if (!covered.has(key)) return false;
   return true;
@@ -593,6 +616,9 @@ export function awayWords(seconds) {
 // the outing found when it opened: {away (seconds counted), long (the clock said more than AWAY_LONGEST), laid}.
 export function boardLines(opened, home) {
   const lines = [];
+  if (opened?.raid) lines.push(opened.raid);
+  const down = home?.pieces.filter(piece => piece.down).length ?? 0;
+  if (down) lines.push(down === 1 ? HOME_WORDS.panelDown : fill(HOME_WORDS.panelsDown, {count: down === 2 ? 'Two' : down}));
   if (opened?.finished) lines.push(crewFinishedWords(home, opened.finished));
   const away = opened?.away ?? 0;
   if (opened?.long) lines.push(BOARD_WORDS.awayLong);

@@ -29,6 +29,15 @@ import {homeCameraPose, homeBuildCameraPose, stepHomeLift} from '../src/world/op
 import {LegacyRoadsideDuel} from './legacy-roadside-duel.mjs';
 import {stepFootTransition} from '../src/onfoot-transition.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
+import {HOME_RAID, HOME_TOWER} from '../src/world/open/content/home-ground.js';
+import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, ramHomePanels,
+  towerAtLadder, stepHomeTower, homeTowerPose} from '../src/world/open/home-raid-rule.js';
+import {standPanel} from '../src/world/open/home-rule.js';
+import {homeRocketReach, selectFootGear, stepFootWeapons} from '../src/onfoot-weapons.js';
+import {syncHomeGround} from '../src/arena/modes/home-ground.js';
+import {damageRaider} from '../src/raiders.js';
+import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
+import {stepProjectiles} from '../src/combat-projectiles.js';
 import {worldHudModel} from '../src/world/world-hud.js';
 
 let checks = 0;
@@ -448,7 +457,7 @@ const memory = values => {
   equal(transferHomeLoad(home, {...drive, vehicle: 'rattler'}), home, 'only the flatbed carries the building loads');
   equal(transferHomeLoad(home, {...drive, speedKmh: 2}), home, 'the flatbed must stop to load');
   home = transferHomeLoad(home, drive);
-  equal(home.loads, {coop: 'bed', shed: 'stack'}, 'one press loads the coop and leaves the shed stack');
+  equal(home.loads, {coop: 'bed', shed: 'stack', tower: 'stack'}, 'one press loads the coop and leaves the other stacks');
   equal(homeLoadKg(home), HOME_BUILDS.coop.kg, 'the bed exposes its loadKg for the existing haul weight bridge');
   equal(transferHomeLoad(home, drive), home, 'a full bed cannot take the second load');
   home = transferHomeLoad(home, {...drive, position: buildInLand(coop)});
@@ -589,11 +598,13 @@ const memory = values => {
   equal(crewOffer(home), null, 'the first coop must be raised by hand');
   equal(handToCrew(home, first, 1000), home, 'the crew refuses an untaught kind');
   for (let n = 0; n < 4; n++) home = raiseBuild(home, first);
-  const legacy = {...home, version: 3}; delete legacy.crew;
+  const legacy = {...home, version: 3, loads: {...home.loads}};
+  delete legacy.crew; delete legacy.raids; delete legacy.loads.tower;
   const original = JSON.stringify(legacy);
   check(readableHome(legacy), 'a completed version 3 coop remains readable');
-  const upgraded = upgradeHome(legacy), {crew: _crew, ...oldFields} = upgraded;
-  equal({...oldFields, version: 3}, legacy, 'version 3 loses no field, nest or stored egg when upgraded');
+  const upgraded = upgradeHome(legacy), {crew: _crew, raids: _raids, ...oldFields} = upgraded;
+  const {tower: _tower, ...oldLoads} = oldFields.loads;
+  equal({...oldFields, loads: oldLoads, version: 3}, legacy, 'version 3 loses no field, nest or stored egg when upgraded');
   equal(JSON.stringify(legacy), original, 'upgrading leaves the old record unchanged');
   const second = {...first, i: 5};
   home = markBuild(home, second);
@@ -713,6 +724,148 @@ const memory = values => {
   check(Math.abs(projected.x) < 1 && projected.y > -.45 && projected.y < 1, 'the box top is inside the standing camera above the prompt');
   const home = {...newHome('Box'), boxes: [{i: box.i, j: box.j, eggs: 1}]};
   check(facedThing(home, me, me.yaw)?.kind === 'box', 'F and B still reach the box at its new distance');
+}
+
+// HOME-GROUND-4: play-only demands, a harmless lesson, bounded losses and the tower.
+{
+  const seed = 37, me = {...groundPoint(10, 10), yaw: 0};
+  let home = newHome('Raid ground');
+  home = markBuild(home, {kind: 'coop', i: 3, j: 5, turn: 0, stage: 0});
+  home = {...home, loads: {...home.loads, coop: {i: 3, j: 5}}, eggs: 47};
+  for (let n = 0; n < 4; n++) home = raiseBuild(home, 'coop');
+  const legacy = {...home, version: 4, loads: {coop: home.loads.coop, shed: home.loads.shed},
+    crew: {job: null, began: null, done: 0}};
+  delete legacy.raids;
+  const bytes = JSON.stringify(legacy), migrated = upgradeHome(legacy);
+  check(readableHome(legacy) && readableHome(migrated), 'both version 4 and version 5 are readable');
+  for (const key of ['pieces', 'hens', 'eggs', 'builds', 'boxes', 'crew', 'flatbed', 'lastSeen'])
+    equal(migrated[key], legacy[key], 'version 5 keeps old ' + key);
+  equal(JSON.stringify(legacy), bytes, 'migration never mutates the original');
+  const world = newWorld({seed, night: 2});
+  const land = record => openLand({...world, open: {...world.open, home: record}});
+  const off = stepOpenLand(land(legacy), {...viewOf(me), homeGround: false}, 100, parts);
+  equal(JSON.stringify(homeOf(off.open)), bytes, 'the off switch preserves version 4 bytes');
+  let out = stepOpenLand(land(home), viewOf(me, {}, {homeClock: 1000, partOfDay: 'day'}), 10, parts);
+  equal(homeOf(out.open).raids.played, 10, 'play seconds are counted');
+  equal(homeOf(out.open).raids.sittings, 1, 'one outing opens one sitting');
+  const deadline = homeOf(out.open).raids.nextDue;
+  check(deadline >= HOME_RAID.earliest && deadline <= HOME_RAID.latest, 'the first deadline is 75 to 105 play minutes');
+  out = stepOpenLand(land(homeOf(out.open)), viewOf(me, {}, {homeClock: 1000 + 3 * 86400, partOfDay: 'day'}), 0, parts);
+  equal(homeOf(out.open).raids.played, 10, 'three days away add no raid time');
+  equal(homeOf(out.open).raids.nextDue, deadline, 'time away does not move a deadline');
+  equal(homeOf(out.open).raids.sittings, 2, 'reopening counts one new sitting');
+  let eligible = {...home, raids: {...home.raids, testDone: true, nextDue: 0}};
+  for (let n = 1; n <= 4; n++) {
+    eligible = openHomeSitting(eligible, seed);
+    equal(homeRaidDue(eligible), n < 4 ? null : 'real', 'real raid eligibility in sitting ' + n);
+  }
+  const far = {...me, x: me.x + 300};
+  out = stepOpenLand(land(eligible), viewOf(far, {}, {partOfDay: 'day'}), 1, parts);
+  out = stepOpenLand(out.open, viewOf(far, {}, {partOfDay: 'dusk'}), 1, parts);
+  check(!out.open.parts.home.raid, 'an overdue raid waits while away at dusk');
+  out = stepOpenLand(out.open, viewOf(me, {}, {partOfDay: 'dusk'}), 1, parts);
+  check(!out.open.parts.home.raid, 'returning after dusk waits for the next dusk');
+  out = stepOpenLand(out.open, viewOf(me, {}, {partOfDay: 'day'}), 1, parts);
+  out = stepOpenLand(out.open, viewOf(me, {}, {partOfDay: 'dusk'}), 1, parts);
+  check(out.open.parts.home.raid?.riders.length === 3, 'two bikes and a buggy arrive at the next home dusk');
+  check(cues(out.events).includes(HOME_CUES.raidCall), 'the dusk call names its cue');
+  const saved = JSON.parse(JSON.stringify(homeOf(out.open)));
+  equal(Object.keys(saved.raids).sort(), ['played', 'sittings', 'nextDue', 'testDone', 'won', 'lost'].sort(), 'no active raid enters the record');
+  check(!stepOpenLand(land(saved), viewOf(me, {}, {partOfDay: 'dusk'}), 0, parts).open.parts.home.raid, 'reopening never resumes an active raid');
+  const view = {...viewOf(me), difficulty: 'easy'};
+  const test = startHomeRaid(home, seed, true, 'easy');
+  const lesson = stepHomeRaid(home, test, view, 60, seed);
+  equal(lesson.raid.outcome, 'won', 'waiting one minute wins the test raid');
+  equal(lesson.home.eggs, home.eggs, 'the test raid loses no eggs');
+  check(lesson.home.raids.testDone && lesson.home.raids.won === 0 && lesson.home.raids.lost === 0, 'the test only marks its lesson complete');
+  const chased = stepHomeRaid(home, test, {...view, fighter: {position: test.riders[0].position}}, 1, seed);
+  check(chased.raid.riders[0].retreat, 'chasing the test bike sends it away');
+  check(stepHomeRaid(home, test, {...view, onFoot: false, carPosition: test.riders[0].position}, 0, seed)
+    .raid.riders[0].retreat, 'chasing in the truck also sends the test bike away');
+  const shot = stepHomeRaid(home, test, {...view, actors: [{id: test.riders[0].id, health: 1}]}, 1, seed);
+  check(shot.raid.riders[0].retreat, 'hitting the test bike sends it away');
+  const raid = startHomeRaid(eligible, seed, false, 'easy');
+  equal(raid, startHomeRaid(eligible, seed, false, 'easy'), 'the same seed and home choose the same raid');
+  const inside = {...raid, seconds: 239, riders: raid.riders.map(row => ({...row, position: me, entered: true}))};
+  const loss = stepHomeRaid(eligible, inside, view, 1, seed);
+  equal(loss.raid.outcome, 'lost', 'a live raider inside at four minutes loses the raid');
+  equal(loss.home.eggs, 43, 'a loss takes four of 47 eggs, at most a tenth');
+  equal(loss.home.hens, eligible.hens, 'a loss keeps every hen');
+  equal(loss.home.builds, eligible.builds, 'a loss keeps every building');
+  const left = stepHomeRaid(eligible, inside, {...view, leaving: true}, 1, seed);
+  equal([left.raid.outcome, left.home.eggs, left.home.raids.won, left.home.raids.lost], ['left', 47, 0, 0], 'leaving beats timeout with nothing lost or won');
+  const dead = {...raid, riders: raid.riders.map(row => ({...row, health: 0}))};
+  equal(stepHomeRaid(eligible, dead, view, DT, seed).raid.outcome, 'won', 'wrecking every raider wins');
+  equal(stepHomeRaid(eligible, raid, view, 8, seed), stepHomeRaid(eligible, raid, view, 8, seed), 'the same inputs repeat movement and fence results');
+  const panel = {kind: 'panel', i: 5, j: 0, axis: 'x'}, fenced = build(home, panel);
+  const from = groundPoint(5.5, -3), to = groundPoint(5.5, 3);
+  for (const [speed, kind] of [[25, 'buggy'], [40, 'bike']])
+    equal(ramHomePanels(fenced, from, to, speed, kind).fallen.length, 0, 'only a buggy above 25 km/h flattens tin');
+  const rammed = ramHomePanels(fenced, from, to, 26, 'buggy');
+  equal(rammed.fallen.length, 1, 'a fast buggy flattens the contacted panel');
+  check(!homeSolids(rammed.home, {heightAt: () => 0}).some(row => row.id === 'home/panel/x/5/0'), 'fallen tin is no longer solid');
+  const down = rammed.home.pieces.find(row => row.down);
+  const repaired = standPanel(rammed.home, down);
+  check(homeSolids(repaired, {heightAt: () => 0}).some(row => row.id === 'home/panel/x/5/0'), 'repair restores the solid');
+  const hammerAt = {...groundPoint(5.5, -.6), yaw: 0};
+  const tapped = run(land(rammed.home), viewOf(hammerAt, {build: true}), DT);
+  check(!homeOf(tapped.open).pieces[0].down && cues(tapped.events).includes(HOME_CUES.fenceUp), 'one B press repairs a fallen panel');
+  let towerHome = markBuild(home, {kind: 'tower', i: 13, j: 7, turn: 0, stage: 0});
+  towerHome = {...towerHome, loads: {...towerHome.loads, tower: {i: 13, j: 7}}};
+  for (let n = 0; n < 4; n++) towerHome = raiseBuild(towerHome, 'tower');
+  const row = towerHome.builds.find(row => row.kind === 'tower'), door = buildingDoor(row);
+  equal(towerAtLadder(towerHome, door), row, 'F finds the finished tower ladder');
+  let tower = stepHomeTower(null, row, true, DT);
+  tower = stepHomeTower(tower, row, false, 2);
+  equal(tower.progress, 1, 'two seconds reaches the platform');
+  const pose = homeTowerPose(tower);
+  check(Math.abs(pose.y - scablandsSurfaceHeightAt(pose.x, pose.z) + 1.62 - 6) < .1, 'the eye stands about six metres above the ground');
+  const duel = {state: {arena: {worldJob: {open: {parts: {home: {tower}}}}}}};
+  equal(homeRocketReach(duel), 1.25, 'the tower extends rocket reach by a quarter');
+  equal(selectFootGear(duel, 2), false, 'the hammer cannot replace the launcher on the tower');
+  tower = stepHomeTower(tower, row, true, 1);
+  check(tower.progress > 0 && tower.progress < 1, 'F starts the climb down');
+  equal(stepHomeTower(tower, row, false, 1), null, 'two seconds returns to the ground');
+  const second = {kind: 'tower', i: 16, j: 7, turn: 0, stage: 0};
+  towerHome = markBuild(towerHome, second);
+  towerHome = {...towerHome, loads: {...towerHome.loads, tower: {i: 16, j: 7}}};
+  equal(crewOffer(towerHome), second, 'builders can raise the second tower after the first');
+  check(readableHome(towerHome), 'a tower and raid record round-trip as version 5');
+  const game = new LegacyRoadsideDuel({seed});
+  game.startCampaign({mode: 'wasteland', car: 'falcone_f42', startStage: 0, discoveredGate: true, seed});
+  Object.assign(game.state, {status: 'racing', countdown: 0, speedMph: 0});
+  game.state.input.interact = true;
+  for (let n = 0; n < 25; n++) stepFootTransition(game, DT);
+  game.state.input.interact = false;
+  const top = {row, progress: 1, direction: 0};
+  const live = {on: true, raid, tower: top};
+  const job = {actors: [], job: {steps: [{kind: 'roam'}], stepIndex: 0},
+    open: {world: {seed}, parts: {home: live}}};
+  game.state.arena = {worldJob: job, participants: [{id: 'player'}]};
+  syncHomeGround(game, job);
+  equal(job.actors.length, 3, 'raid actors enter the existing combat hit pipeline');
+  check(job.actors.every(actor => actor.homeRaid && actor.ambushKey), 'home combat bodies cannot revive as roadside raiders');
+  equal(game.state.fighter.y, homeTowerPose(top).y, 'the adapter puts the real fighter on the platform');
+  game.state.fighterInput = {fire: true};
+  stepFootWeapons(game, DT);
+  const rocket = game.state.combat.projectiles.find(item => item.kind === 'rpg');
+  check(rocket && rocket.y > game.state.fighter.y, 'a real rocket launches from the raised fighter');
+  equal(rocket.lifetimeSeconds, COMBAT_TUNING.foot.rpgLifetimeSeconds * 1.25, 'the actual rocket flies a quarter longer');
+  // Keep this shot clear of terrain and bodies while checking actual expiration, not only launch data.
+  Object.assign(rocket, {y: 1000, vy: 0, age: COMBAT_TUNING.foot.rpgLifetimeSeconds});
+  stepProjectiles(game, DT);
+  check(game.state.combat.projectiles.includes(rocket), 'an unlocked tower rocket survives the ordinary range limit');
+  rocket.age = rocket.lifetimeSeconds;
+  stepProjectiles(game, DT);
+  check(!game.state.combat.projectiles.includes(rocket), 'the tower rocket expires at its extended limit');
+  const victim = job.actors[0];
+  damageRaider(game, victim, victim.health);
+  const hit = stepHomeRaid(eligible, raid, {...view, actors: job.actors}, DT, seed);
+  equal(hit.raid.riders[0].health, 0, 'combat damage reaches the raid rule');
+  live.raid = null; live.tower = null;
+  syncHomeGround(game, job);
+  equal(job.actors.length, 0, 'ending the raid removes its combat bodies');
+  equal(game.state.fighter.y, scablandsSurfaceHeightAt(door.x, door.z), 'climbing down restores the ground');
 }
 
 console.log(`Home ground: ${checks} checks passed.`);

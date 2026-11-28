@@ -2,6 +2,7 @@ import {arsenalEnabled} from './combat-weapons.js';
 import {targetFor,targetIdentity} from './arsenal/targeting.js';
 import {combatArmorEnabled} from './combat-armor.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
+import {HOME_TOWER} from './world/open/content/home-ground.js';
 import {crewPerks} from './crew.js';
 import {brandSwingReady} from './world/jobs/brand-rule.js';
 import {wrenchLimit} from './world/open/service-rule.js';
@@ -19,6 +20,7 @@ const T = COMBAT_TUNING.foot;
 const EPSILON = 1e-8;
 const GEAR = Object.freeze({1: 'rpg', 2: 'wrench'});
 const length = (x, y, z) => Math.hypot(x, y, z);
+export const homeRocketReach = duel => duel.state.arena?.worldJob?.open?.parts.home?.tower?.progress === 1 ? HOME_TOWER.rocketReach : 1;
 
 function showGear(duel) {
   const state = duel.state, weapons = state.footWeapons;
@@ -71,6 +73,7 @@ export function resetFootWeaponUser(duel) {
 
 export function selectFootGear(duel, slot) {
   const state = duel.state, weapons = state.footWeapons;
+  if (state.arena?.worldJob?.open?.parts.home?.tower && slot !== 1) return false;
   if (slot === 3) return selectSignatureGear(duel);
   const selected = GEAR[slot];
   if (!state.onFoot || !weapons || !selected ||
@@ -129,7 +132,7 @@ function openWeaponLowered(duel, fighter, weapons, input, world) {
 function aimedCar(duel, fighter, direction) {
   let chosen = null, best = Infinity;
   const eyeY = fighter.y + T.rpgEyeHeight;
-  const lockRange=T.rpgLockRange *
+  const lockRange=T.rpgLockRange * homeRocketReach(duel) *
     (crewPerks(fighter.crewId).lockRangeMultiplier || 1);
   duel.state.opponents.forEach((actor, index) => {
     if (!viableTarget(actor)) return;
@@ -153,7 +156,7 @@ function advanceLock(duel, fighter, weapons, input, dt, direction) {
     const previousId=weapons.lockTargetId;
     if(input.aim && (previousId || target !== null)){
       const selected=targetFor(duel,duel.state,{
-        range:T.rpgLockRange*(crewPerks(fighter.crewId).lockRangeMultiplier||1),
+        range:T.rpgLockRange*homeRocketReach(duel)*(crewPerks(fighter.crewId).lockRangeMultiplier||1),
         origin:fighter,lockedTargetId:previousId ||
           targetIdentity(duel,duel.state.opponents[target])});
       target=selected ? duel.state.opponents.indexOf(selected) : null;
@@ -200,10 +203,10 @@ function launchRpg(duel, weapons, fighter, dt, direction) {
     splashRadius: T.rpgSplashRadius *
       (crewPerks(fighter.crewId).blastRadiusMultiplier || 1),
     targetIndex,
+    ...(homeRocketReach(duel) > 1 ? {homeTower: true} : {}),
     ...(arsenalEnabled(duel) && targetIndex !== null ? {targetId:weapons.lockTargetId,
       attackerId:'player',lockRangeMultiplier} : {}),
-    lifetimeSeconds: targetIndex === null ? T.rpgLifetimeSeconds
-      : T.rpgLifetimeSeconds * lockRangeMultiplier,
+    lifetimeSeconds: T.rpgLifetimeSeconds * homeRocketReach(duel) * (targetIndex === null ? 1 : lockRangeMultiplier),
   });
   weapons.ammo--;
   weapons.lastFireAt = state.stageTimeSec;
@@ -301,6 +304,10 @@ function stepFootWeaponInput(duel, dt) {
   // key takes it back, as in town (src/world/open/parts/home.js).
   const home = job?.open?.parts?.home;
   if (home?.on === true && home.onGround === true && home.armed !== true && !input.fire) weapons.lowered = true;
+  if (home?.tower) {
+    weapons.lowered = false;
+    if (home.tower.progress !== 1) { weapons.fireHeld = !!input.fire; return; }
+  }
   if (state.arena?.worldJob?.night2?.holstered) {
     weapons.fireHeld = !!input.fire;
     fighter.flaming = false;
