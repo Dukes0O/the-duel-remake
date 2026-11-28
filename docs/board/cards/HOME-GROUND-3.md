@@ -86,11 +86,6 @@ the haul step's `loadKg` on it. So:
 This keeps the step playable end to end in one card. A mid-outing change of vehicle can be its own card later, if
 play asks for it.
 
-## Builder handoff
-
-Changed assertions for Claude's written review: two version 1 upgrade expectations now require version 3 and its
-added fields; the exact board text now includes the settled building invitation; the board's reread check compares
-all of its text instead of only its former four-line count. No tolerance or old progress check was loosened.
 **27 November 2026, the two follow-up questions** (the questions file, commit `ee637374a`): both approved, in this
 card.
 1. **Load weight on a flatbed outing:** yes to the three narrow hooks in `src/arena/modes/world-job.js`: pass the
@@ -103,3 +98,9 @@ card.
    test in the career backup suite. Run every suite that names `career-backup` and the save and pay browser guards
    (`wasteland-career`, `yard-home`) once, since this touches the save path. No real save is read or written.
 Then hand over for review; the card no longer waits on either question.
+
+## Builder handoff
+
+Changed assertions for Claude's written review: two version 1 upgrade expectations now require version 3 and its
+added fields; the exact board text now includes the settled building invitation; the board's reread check compares
+all of its text instead of only its former four-line count. No tolerance or old progress check was loosened.

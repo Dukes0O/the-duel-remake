@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-28T02:13:45.511Z
+Observed at: 2026-11-28T03:03:25.717Z
 
-Observation commit: 2810ca2f19959c114a4247c5145d11d4337694ee
+Observation commit: 78efeb6010050dc72dc73e793f0719dc4b5f1bc9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2810ca2f19959c114a4247c5145d11d4337694ee
+Integration HEAD: 78efeb6010050dc72dc73e793f0719dc4b5f1bc9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -85,15 +85,15 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | unavailable | unavailable | 250,000,000 B |
-| Wasteland models | 463,023,175 B | +424,100 B | 60,000,000 B |
+| Wasteland models | 463,023,175 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 499,162 B | +0 B | 500,000 B |
-| Review `looks/` | 117,914,586 B | +2,287,058 B | 20,000,000 B |
-| Added bytes in last merge | 411,600 B | -1,423,174 B | 5,000,000 B |
-| All `public/` | 760,219,984 B | +424,100 B | unavailable |
-| Git objects | 1,160,844,288 B | +8,150,016 B | unavailable |
-| Lane folders | 0 | -1 | unavailable |
+| Review `looks/` | 117,914,586 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 16,290 B | +0 B | 5,000,000 B |
+| All `public/` | 760,219,984 B | +0 B | unavailable |
+| Git objects | 1,161,182,208 B | +0 B | unavailable |
+| Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
@@ -101,7 +101,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 0d3ddc8e512a300fefc3fcd4b393683099a1a8aa
 - Local main: missing
-- Local integration/wasteland: 4fa8786e12bfafedc4eb0c3636a384f6f13f2b60
+- Local integration/wasteland: 5a5a9014627bc5359dd08937d42a02a7910a9e01
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -109,7 +109,7 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 0d3ddc8e512a300fefc3fcd4b393683099a1a8aa.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 4fa8786e12bfafedc4eb0c3636a384f6f13f2b60.
+- Remote origin/integration/wasteland: matches local; cached commit 5a5a9014627bc5359dd08937d42a02a7910a9e01.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
 Issue: codex/bowl-batch3-fix: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.lanes/bowl-batch3-fix

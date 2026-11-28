@@ -343,7 +343,7 @@ go into the real game after step 4.
   or G shows the build outline. On his ground the launcher is lowered; the fire key takes it back, and while he builds
   he holds a hammer, or a wrench for the gate.
 
-### Step 3 implementation, awaiting load weight and migration backup (HOME-GROUND-3)
+### Step 3 implementation (HOME-GROUND-3, behind the switch `home-ground`)
 
 - The record is version 3. It keeps every earlier field and adds `builds: [{kind, i, j, turn, stage}]`,
   `loads: {coop, shed}` and `flatbed: {x, z, yaw}`. Loads are `stack`, `bed`, or a grid point `{i, j}`. Stage 0 is a
@@ -355,15 +355,22 @@ go into the real game after step 4.
   lifted as old crates. F gathers all three. Up to six hens walk through its open front at dusk and leave at dawn.
   The shed's door and the gate board name the same egg store. No new currency or separate store is introduced.
 - Version 1 and 2 records remain unchanged when read and while the switch is off. Only the enabled part upgrades
-  them. The shared migration backup detector still needs to cover that upgrade before this step is complete.
+  them. `needsCareerMigration` compares the stored `profile.story.open.home.version` with `HOME_RECORD_VERSION`;
+  startup verifies a byte-for-byte career backup before any older home can be upgraded. A failed or unverified
+  backup stops startup with the old bytes intact.
 - Claude's outing decision replaces the parked truck and mid-outing vehicle change. With owned ground and the
   switch on, the Story Wall offers "Go out in Tin Town's flatbed". The normal foot controls enter the outing's truck
   at Tin Town's gate. The chosen vehicle is job data only; it never changes the saved garage car or race fields.
-- The load transfer and weight rules are tested. Connecting them to the outing still needs the shared mode to pass
-  the vehicle facts and apply the carried weight. The card currently permits only its vehicle-start gate to change;
-  `docs/board/questions/HOME-GROUND-3.md` asks for those extra hooks and the migration-backup detector.
+- The existing work-vehicle view still requires `wasteland-town` to draw the truck. HOME-GROUND-3's question file
+  requests the matching narrow Home Ground drawing gate; until it lands, both switches are needed for its model.
+- On an enabled open outing, the mode passes the work vehicle id and car heading to the home part. A fresh F press
+  loads or sets down one bundle while the flatbed is stopped within 4 m. Holding F keeps the existing foot entry
+  and exit controls. An ordinary car gets the sentence explaining that it needs Tin Town's flatbed.
+- The home part supplies `loadKg` to the existing haul weight calculation, so loading changes the truck's mass and
+  driving response and unloading restores its empty weight. Its pose is saved with the home. The home look reads
+  that pose to draw tin, posts and wire or a door on the bed; it never writes game state.
 - The real-key scenario marks a coop, returns to the yard, chooses the flatbed and attempts its delivery. It is
-  syntax-checked only; delivery and the carried bundle's drawing remain unfinished until the hooks are permitted.
+  syntax-checked here and runs at night; Claude drives the merged step by hand.
 
 ## 17. Settled with Kyle, 27 November 2026
 

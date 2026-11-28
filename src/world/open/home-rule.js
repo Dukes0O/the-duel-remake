@@ -142,7 +142,7 @@ export function roostAt(home, index, partOfDay) {
     z: at.z - x * Math.sin(at.heading) + z * Math.cos(at.heading)};
 }
 export const homeLoadKg = home => Object.keys(HOME_BUILDS).reduce((kg, kind) => kg + (home.loads[kind] === 'bed' ? HOME_BUILDS[kind].kg : 0), 0);
-// A single interaction, called only by a stopped, driven flatbed. The vehicle bridge is a separate scope decision.
+// A single interaction from the enabled home part, only for a stopped, driven flatbed.
 export function transferHomeLoad(home, {vehicle, position, speedKmh}) {
   if (vehicle !== 'flatbed' || !position || !Number.isFinite(speedKmh) || Math.abs(speedKmh) >= 1.5) return home;
   const bed = Object.keys(HOME_BUILDS).find(kind => home.loads[kind] === 'bed');

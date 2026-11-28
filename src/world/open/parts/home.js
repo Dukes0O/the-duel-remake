@@ -3,6 +3,7 @@
 // nothing of the record and asks for nothing to be drawn or saved.
 //
 // What it reads from the job's view: homeGround, openRoam, onFoot, fighter, carPosition, interact, people, playerName,
+// homeVehicle (the outing's work vehicle id), homeCarHeading and speedKmh for its load and saved truck pose,
 // jobEvents, homeKeys {build, turn, piece, view, burst, sprint, fire, forward, back, left, right, turnLeft, turnRight}
 // (the keys held this tick), homeName ({name} typed in the box, or {cancel: true}) and homeClock: the laptop's clock, in
 // seconds since 1970, read once when the outing opened (src/app.js). Nothing reads a clock during play: the hens lay over
@@ -20,6 +21,7 @@
 //   flock                   where each hen is and what she is doing
 //   board                   {lines, until} while the board at the gate is shown
 //   opened                  what the outing found when it opened: {away, long, laid, hadHens}
+//   loadKg, flatbedOuting    weight for the existing haul sync, and whether to draw a load on the driven bed
 //   on                      true once the part has run with its switch on; the drawing draws nothing before
 // Its choices write the record with the effect {type: 'home', record}; nothing else of the world is changed.
 import {TALK_RANGE, distanceToPerson} from './people.js';

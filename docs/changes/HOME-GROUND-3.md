@@ -1,14 +1,15 @@
-# HOME-GROUND-3: in review, delivery hooks still blocked
-- Version 3 keeps old progress and adds building stages, loads and truck pose; coop/shed rules, stage drawing, roosting and eggs are implemented.
-- Claude's answer is implemented: an owned, enabled home adds a separate flatbed outing; the choice never changes the saved garage car.
-- Shared file: `src/app.js` only passes and validates the chosen vehicle. The mode changes only its approved work-vehicle start gate.
-- Incomplete: live load interaction/refusal, weight sync and bundle on the driven bed; migration backup detection. See the card's question file.
-- Runtime tested at `2810ca2f1`; build passed (`npm.cmd run build -- --outDir .qa-dist/home-ground-3/build`). Later changes are docs only.
-- Lane: all 128 selected suites passed across the initial run and continuation; sandbox-blocked PowerShell check passed with access. Core was inadvertently repeated once.
-- Focused passes: Home Ground 178, hens 1,256, hen look, outing gates, board 623 and repo hygiene. Scenario syntax passes; browser delivery is not run.
-- Guards: 306 replay checks, 12 combat replay checks, 65 world-composition checks passed; no fingerprints or signatures changed.
-- Independent review: no new progress-loss or outing fault; full save approval waits for pre-migration backup coverage. Memory-only saves throughout.
-- Changed assertions for Claude: two v1 upgrades now expect v3's additive fields; board text adds the building invitation and checks all lines instead of four.
+# HOME-GROUND-3: approved hooks complete; drawing gate awaits scope approval
+- Version 3 preserves old progress and adds staged coop/shed builds, loads and truck pose; the separate flatbed outing never changes the garage car.
+- Enabled open-outing hooks pass vehicle id and heading, then feed the home part's `loadKg` into the existing haul mass calculation; foot controls are unchanged.
+- `needsCareerMigration` detects stored homes older than `HOME_RECORD_VERSION`; verified exact-byte backups precede upgrades, and backup failures leave old bytes intact.
+- Shared core file: `src/app.js` (round 1) only passes/validates the chosen vehicle; round 2 touches the approved `world-job.js` hooks and shared `career-backup.js`. No game/main/render3d/config edits.
+- Runtime checked at `78efeb601`; later changes are comments and documentation only. Board stays `review`, `waiting_on: claude`; no push, merge or release.
+- Lane: all 141 selected suites passed across the initial run, continuation and targeted environment retries (PowerShell access, fixture Git ceiling, installed FFmpeg); no whole-tier repeat.
+- Card checks: Home Ground 196, hens 1,256, hen look, real outing load/unload mass, and core 804 passed. Board 623 and placement checks passed. The real-key coop scenario passes syntax; its drive remains a night check.
+- All 20 suites naming `career-backup` passed; save fixtures passed 1,145 checks over 27 historical shapes and one forged fixture; fine/quit and combat-credit checks also passed.
+- Guards: 306 race replay, 12 combat replay and 65 world-composition checks passed; no fingerprints or signatures changed.
+- Browser guards `wasteland-career` and `yard-home` passed once after blocked Chrome startup, with 3/15 screenshots and no warnings/errors. Production build passed (chunk-size warning).
+- Independent save review approved with no blocking findings; its 238 damaged/partial-home probes did not throw. Memory-only saves throughout. Existing truck drawing still needs `wasteland-town`; the narrow home-only view gate is the remaining scope question.
+- Changed assertions for Claude: v1 upgrades require v3's additive fields; board text adds the settled invitation and checks all text rather than four lines. No assertions or tolerances were loosened in round 2.
 - Cues: `home.load.on`, `home.load.off`, `home.coop.stage`, `home.shed.stage`, `home.hens.roost`, `home.shed.door`.
-- Cockpit: T-119, In Review, linked to this card. The feature stays `dev`; no merge or release.
-- **Removed:** superseded parked-flatbed scenario route, replaced by selecting an outing from the yard. No old progress or assets removed.
+- **Removed:** superseded parked-truck scenario route replaced by the yard's flatbed outing; obsolete blocker wording replaced by current design. This round's evidence and generated scratch are removed; no old progress or assets removed.
