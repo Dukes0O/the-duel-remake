@@ -10,13 +10,14 @@ import {scrapBuilder, yardSurface} from '../../scablands-yard-look.js';
 import {createHaulLoadLook} from '../../../town/view/haul-load-look.js';
 import {createStoryPeople} from '../../jobs/story-people.js';
 import {createStoryPeopleView} from '../../story-people-view.js';
-import {BOX_HOLDS, HOME_BOX, HOME_BUILDS, HOME_LOAD_STACK, HOME_CELLS, HOME_CORNER, HOME_PANELS, HOME_PIECES, HOME_SIZE, HOME_STEP} from '../content/home-ground.js';
+import {BOX_HOLDS, HOME_BOX, HOME_BUILDS, HOME_LOAD_STACK, HOME_CELLS, HOME_CORNER, HOME_PANELS, HOME_PIECES, HOME_SIZE, HOME_STEP, HOME_TANK} from '../content/home-ground.js';
 import {GATE_POST, boardSpot, boxInLand, crateSpot, cratesLeft, gateOf, hensWaiting, newsBoardSpot, panelsLeft,
-  pieceInLand, buildInLand, groundPoint} from '../home-rule.js';
+  pieceInLand, buildInLand, groundPoint, wellInLand, tankConnected, homeDrillHole} from '../home-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {HOME_HEN_MODEL, createEgg, createHen, createNestBox, corrugated as buildingTin} from './home-hens-look.js';
 import {createHomeTowerLook} from './home-tower-look.js';
 import {createHomeRaidersLook} from './home-raiders-look.js';
+import {createDrillCuttingsView} from '../../../machines/drill-view.js';
 
 const MOST_MARKS = 96;
 // The eggs drawn in one nest box: a clutch of up to this many shows how full it is.
@@ -123,6 +124,7 @@ function newsTexture() {
 
 // A piece's middle, run and height in the land; a nest box stands in its cell.
 function shapeOf(piece) {
+  if (piece.kind === 'well') return {...wellInLand(piece), length: HOME_STEP, depth: HOME_STEP, heading: 0, height: 1.2};
   if (HOME_BUILDS[piece.kind]) return {...buildInLand(piece), length: HOME_BUILDS[piece.kind].width * HOME_STEP,
     depth: HOME_BUILDS[piece.kind].depth * HOME_STEP, height: piece.kind === 'tower' ? 6.7 : 2.5};
   if (piece.kind === 'box') return {...boxInLand(piece), length: HOME_BOX.size, heading: 0, height: HOME_BOX.height};
@@ -176,8 +178,24 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const buildings = new Map(), haul = createHaulLoadLook(), loadDraws = new Map();
   const towers = createHomeTowerLook(loadAsset);
   const raiders = createHomeRaidersLook(loadAsset); group.add(raiders.group);
-  materials.building = yardSurface();
+  const cuttings = createDrillCuttingsView(group, scablandsSurfaceHeightAt);
+  let waterClock = null;
   materials.chalk = new THREE.LineBasicMaterial({color: 0xe8e2cf});
+  materials.water = std('home tank water gauge', 0x558c98, {roughness: .3, metalness: .1});
+  const cylinder = (radius, height, material) => new THREE.Mesh(keep(new THREE.CylinderGeometry(radius, radius, height, 20)), material);
+  const well = new THREE.Group(); well.name = 'home-well'; group.add(well);
+  const wellMark = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(HOME_STEP, .03, HOME_STEP))), materials.chalk);
+  wellMark.name = 'home-well-mark'; wellMark.position.y = .04; well.add(wellMark);
+  const hole = cylinder(.17, .025, materials.post); hole.name = 'home-well-hole'; hole.position.y = .03; well.add(hole);
+  const pump = new THREE.Group(); pump.name = 'home-hand-pump'; well.add(pump);
+  const foot = cylinder(.25, .08, materials.post); foot.position.y = .04; pump.add(foot);
+  const barrel = cylinder(.12, .85, materials.tin); barrel.position.y = .5; pump.add(barrel);
+  const cap = cylinder(.17, .07, materials.post); cap.position.y = .96; pump.add(cap);
+  const spout = cylinder(.045, .38, materials.tin); spout.rotation.z = Math.PI / 2; spout.position.set(-.22, .72, 0); pump.add(spout);
+  const tip = cylinder(.045, .12, materials.tin); tip.position.set(-.4, .67, 0); pump.add(tip);
+  const handle = new THREE.Mesh(keep(new THREE.BoxGeometry(.055, .055, .65)), materials.post);
+  handle.name = 'home-pump-handle'; handle.position.set(0, 1.06, .22); handle.rotation.x = -.22; pump.add(handle);
+  materials.building = yardSurface();
   const crewProps = ['rook', 'wren'].map(id => {
     const prop = new THREE.Group(); prop.name = 'home-tool-' + id;
     if (id === 'rook') {
@@ -198,6 +216,41 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     const drawn = new THREE.Group(); drawn.name = 'home-' + kind; group.add(drawn);
     const w = HOME_BUILDS[kind].width * HOME_STEP, d = HOME_BUILDS[kind].depth * HOME_STEP;
     const stages = Array.from({length: 4}, (_, index) => { const part = new THREE.Group(); part.name = kind + '-stage-' + (index + 1); drawn.add(part); return part; });
+    if (kind === 'tank') {
+      // A small riveted tin drum on a braced steel stand, built with the coop's materials and stage renderer.
+      for (const x of [-.8, .8]) {
+        const rail = new THREE.Mesh(keep(new THREE.BoxGeometry(.14, .12, 1.8)), materials.post);
+        rail.position.set(x, .06, 0); stages[0].add(rail);
+      }
+      for (const x of [-.7, .7]) for (const z of [-.7, .7]) {
+        const leg = new THREE.Mesh(keep(new THREE.BoxGeometry(.1, .8, .1)), materials.post);
+        leg.position.set(x, .5, z); stages[1].add(leg);
+      }
+      for (const side of [-1, 1]) {
+        const brace = new THREE.Mesh(keep(new THREE.BoxGeometry(1.6, .07, .07)), materials.post);
+        brace.position.set(0, .5, side * .7); brace.rotation.z = side * .4; stages[1].add(brace);
+      }
+      const drum = cylinder(.65, .75, materials.tin); drum.name = 'home-tank-drum'; drum.position.y = 1.25; stages[2].add(drum);
+      for (const y of [.9, 1.25, 1.6]) {
+        const seam = new THREE.Mesh(keep(new THREE.TorusGeometry(.655, .018, 6, 32)), materials.seamRust);
+        seam.rotation.x = Math.PI / 2; seam.position.y = y; stages[2].add(seam);
+      }
+      for (let n = 0; n < 8; n++) {
+        const bolt = cylinder(.018, .035, materials.post); bolt.rotation.x = Math.PI / 2;
+        bolt.position.set(Math.sin(n * Math.PI / 4) * .66, 1.58, Math.cos(n * Math.PI / 4) * .66);
+        bolt.rotation.z = -n * Math.PI / 4; stages[2].add(bolt);
+      }
+      const lid = cylinder(.67, .07, materials.tin); lid.name = 'home-tank-lid'; lid.position.y = 1.67; stages[3].add(lid);
+      const hatch = cylinder(.16, .06, materials.post); hatch.position.y = 1.73; stages[3].add(hatch);
+      const gaugeBack = new THREE.Mesh(keep(new THREE.BoxGeometry(.12, .7, .025)), materials.post);
+      gaugeBack.position.set(0, 1.25, .66); stages[2].add(gaugeBack);
+      const water = new THREE.Mesh(keep(new THREE.BoxGeometry(.065, .64, .03).translate(0, .32, 0)), materials.water);
+      water.name = 'home-tank-water-level'; water.position.set(0, .93, .68); stages[2].add(water);
+      const pipe = cylinder(.045, 1, materials.post); pipe.name = 'home-well-tank-pipe'; group.add(pipe);
+      const mark = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, .03, d))), materials.chalk);
+      mark.name = 'tank-footprint'; mark.position.y = .07; drawn.add(mark);
+      const result = {drawn, stages, mark, water, pipe}; buildings.set(key, result); return result;
+    }
     if (kind === 'tower') {
       towers.add(stages);
       const mark = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, .03, d))), materials.chalk);
@@ -437,7 +490,18 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       if (!group.visible) return;
       raiders.update(worldJob, here, seconds, drawnShift);
       const record = worldJob.open.world.open.home ?? null;
-      for (const drawing of buildings.values()) drawing.drawn.visible = false;
+      const waterDt = waterClock === null ? 0 : Math.max(0, Math.min(.25, seconds - waterClock)); waterClock = seconds;
+      well.visible = !!record?.well;
+      if (record?.well) {
+        const at = wellInLand(record.well);
+        well.position.set(at.x, ground(at.x, at.z, drawnShift), at.z);
+        wellMark.visible = record.well.depth === 0;
+        hole.visible = record.well.depth > 0;
+        pump.visible = record.well.pump;
+      }
+      cuttings.update(state.drillRig?.hole ?? (record?.well ? homeDrillHole(record, worldJob.open.world.seed) : null), waterDt,
+        state.drillRig?.machine.heading ?? 0);
+      for (const drawing of buildings.values()) { drawing.drawn.visible = false; if (drawing.pipe) drawing.pipe.visible = false; }
       for (const row of record?.builds ?? []) {
         const key = `${row.kind}/${row.i}/${row.j}`, drawing = buildingDraw(row.kind, key);
         const at = buildInLand(row), shape = state.outline;
@@ -445,6 +509,18 @@ export function createHomeGroundView({course, loadAsset} = {}) {
         drawing.drawn.visible = true;
         drawing.drawn.position.set(at.x, ground(at.x, at.z, drawnShift), at.z); drawing.drawn.rotation.y = at.heading;
         drawing.mark.visible = row.stage === 0;
+        if (drawing.water) {
+          drawing.water.scale.y = Math.max(.001, row.litres / HOME_TANK.litres);
+          drawing.pipe.visible = tankConnected(record, row);
+          if (drawing.pipe.visible) {
+            const from = wellInLand(record.well);
+            const a = new THREE.Vector3(from.x, ground(from.x, from.z, drawnShift) + .12, from.z);
+            const b = new THREE.Vector3(at.x, ground(at.x, at.z, drawnShift) + .9, at.z);
+            drawing.pipe.position.copy(a).add(b).multiplyScalar(.5);
+            drawing.pipe.scale.y = a.distanceTo(b);
+            drawing.pipe.quaternion.setFromUnitVectors(up, b.sub(a).normalize());
+          }
+        }
         drawing.stages.forEach((stage, index) => {
           stage.visible = index < row.stage || (index === row.stage && progress > 0);
           stage.scale.y = index === row.stage ? Math.max(.01, progress) : 1;
@@ -484,7 +560,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
           load.visible = !!show;
           if (show) {
             const at = onBed ? record.flatbed : location === 'stack' ?
-              {...HOME_LOAD_STACK, x: HOME_LOAD_STACK.x + (kind === 'shed' ? 2.7 : kind === 'tower' ? -2.7 : 0)} : groundPoint(location.i, location.j);
+              {...HOME_LOAD_STACK, x: HOME_LOAD_STACK.x + (kind === 'shed' ? 2.7 : kind === 'tower' ? -2.7 : 0),
+                z: HOME_LOAD_STACK.z + (kind === 'tank' ? 2.7 : 0)} : groundPoint(location.i, location.j);
             // The supply-truck model's deck is 1.5125 m high, behind its cab. Its wheels touch y=0.
             const yaw = onBed ? at.yaw : 0, behind = onBed ? -1.4 : 0;
             load.position.set(at.x + Math.sin(yaw) * behind, ground(at.x, at.z, drawnShift) + (onBed ? 1.5125 : 0),
@@ -705,7 +782,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       // The ground slopes half a metre, so the flat grid stands just above its highest corner.
       if (grid.visible) grid.position.set(HOME_CORNER.x, Math.max(...corners.map(([x, z]) =>
         ground(HOME_CORNER.x + x, HOME_CORNER.z + z, drawnShift))) + .12, HOME_CORNER.z);
-      rising.visible = !!shape && !HOME_BUILDS[shape.piece?.kind] && shape.mode === 'build' && shape.progress > 0 && !state.above;
+      rising.visible = !!shape && !HOME_BUILDS[shape.piece?.kind] && shape.piece?.kind !== 'well' && shape.mode === 'build' && shape.progress > 0 && !state.above;
       if (shape) {
         const piece = shape.mode === 'lift' ? shape.target : shape.piece;
         const {x, z, length, heading, height: tall, depth: buildingDepth} = shapeOf(piece);
@@ -740,6 +817,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       }
     },
     dispose() {
+      cuttings.dispose();
       towers.dispose();
       raiders.dispose();
       moss.dispose();

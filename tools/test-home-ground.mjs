@@ -40,12 +40,70 @@ import {damageRaider} from '../src/raiders.js';
 import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 import {stepProjectiles} from '../src/combat-projectiles.js';
 import {worldHudModel} from '../src/world/world-hud.js';
+import {drillSite} from '../src/machines/drill.js';
+import {HOME_TANK} from '../src/world/open/content/home-ground.js';
+import {markWell, wellInLand, homeDrillHole, drillHomeWell, fitHomePump, fillHomeTanks, tankConnected,
+  wellRefusal, tankWords} from '../src/world/open/home-rule.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 const equal = (a, b, message) => { assert.deepEqual(a, b, message); checks++; };
 const DT = 1 / 60;
 const parts = [homePart];
+
+// Step 5: the real drill, saved depth and water that waits without taking anything away.
+{
+  let home = newHome('Water', 1000);
+  home = {...home, builds: [{kind: 'coop', i: 2, j: 8, turn: 0, stage: 4}],
+    boxes: [{i: 2, j: 8, eggs: 0}, {i: 3, j: 8, eggs: 0}, {i: 2, j: 9, eggs: 0}]};
+  const seed = 42, cell = {i: 12, j: 12};
+  home = markWell(home, cell, seed);
+  const at = wellInLand(home.well);
+  equal(home.well.water, drillSite(seed, Math.round(at.x), Math.round(at.z)).depth, 'water depth is the existing drill site at whole world metres');
+  equal(markWell({...home, well: null}, cell, seed), home, 'the same seed and well mark find the same water');
+  equal(wellRefusal(home, {i: 14, j: 14}), 'wellExists', 'there is one saved well');
+  const first = drillHomeWell(home, seed, {mastDown: true, feed: .5}, 30);
+  check(first.home.well.depth > 0 && first.home.well.depth < home.well.water, 'a short drilling session leaves a partial hole');
+  const restored = JSON.parse(JSON.stringify(first.home));
+  equal(homeDrillHole(restored, seed).depth, first.hole.depth, 'the next outing resumes the saved depth');
+  const rocky = {...home, well: {...home.well, depth: homeDrillHole(home, seed).site.gravelEnd}};
+  const jam = drillHomeWell(rocky, seed, {mastDown: true, feed: 1}, 1);
+  check(jam.hole.jammed && jam.home.well.depth === rocky.well.depth, 'hard feeding in rock jams without advancing');
+  const clear = drillHomeWell(jam.home, seed, {mastDown: true, feed: -1}, 1, jam.hole);
+  check(!clear.hole.jammed, 'backing off clears the existing drill jam');
+  let cut = {home: restored, hole: homeDrillHole(restored, seed)}, seconds = 30;
+  while (cut.home.well.depth < cut.home.well.water && seconds < 600) {
+    cut = drillHomeWell(cut.home, seed, {mastDown: true, feed: .5}, 1, cut.hole); seconds++;
+  }
+  equal(cut.home.well.depth, home.well.water, 'drilling stops exactly at water');
+  check(seconds > 90 && seconds < 360, 'a steady well takes a few minutes of play');
+  equal(drillHomeWell(cut.home, seed, {mastDown: true, feed: .5}, 60, cut.hole).home, cut.home, 'feeding after water never drills deeper');
+  home = fitHomePump(cut.home);
+  check(home.well.pump && readableHome(home), 'the finished hand pump survives record validation');
+  const tank = {kind: 'tank', i: 14, j: 12, turn: 0, stage: 0, litres: 0, filled: null};
+  home = markBuild(home, tank);
+  home = {...home, loads: {...home.loads, tank: {i: tank.i, j: tank.j}}};
+  for (let n = 0; n < 4; n++) home = raiseBuild(home, tank);
+  const row = home.builds.find(item => item.kind === 'tank');
+  check(tankConnected(home, row) && readableHome(home), 'a finished tank within eight metres has a pump connection');
+  equal(row.filled, 1000, 'the tank starts its clock when its lid is fitted');
+  const half = fillHomeTanks(home, 1000 + HOME_TANK.seconds / 2);
+  equal(half.builds.at(-1).litres, HOME_TANK.litres / 2, 'six real hours fills half the tank');
+  equal(fillHomeTanks(half, 900), half, 'a backward clock loses no water or counted time');
+  equal(fillHomeTanks(half, half.builds.at(-1).filled), half, 'the same clock moment cannot fill twice');
+  const full = fillHomeTanks(JSON.parse(JSON.stringify(half)), 1000 + HOME_TANK.seconds);
+  equal(full.builds.at(-1).litres, HOME_TANK.litres, 'a closed game and reload completes the twelve-hour fill');
+  equal(fillHomeTanks(full, 1000 + 10 * HOME_TANK.seconds).builds.at(-1).litres, HOME_TANK.litres, 'water never passes full');
+  const dry = {...home, well: {...home.well, pump: false}};
+  const waited = fillHomeTanks(dry, 1000 + HOME_TANK.seconds);
+  equal(waited.builds.at(-1).litres, 0, 'an empty tank without a pump waits harmlessly');
+  equal(fillHomeTanks({...waited, well: home.well}, 1000 + HOME_TANK.seconds).builds.at(-1).litres, 0, 'fitting a pump cannot claim old disconnected time');
+  check(tankWords(half, half.builds.at(-1)).endsWith('.') && tankWords(half, half.builds.at(-1)).includes('500'), 'F reads a whole sentence with the water amount');
+  for (const well of [{...home.well, depth: -1}, {...home.well, water: Infinity}, {...home.well, depth: 0}, {...home.well, i: 20}])
+    check(!readableHome({...home, well}), 'invalid or premature pumped wells are rejected');
+  for (const litres of [-1, Infinity, HOME_TANK.litres + 1])
+    check(!readableHome({...home, builds: home.builds.map(item => item.kind === 'tank' ? {...item, litres} : item)}), 'invalid tank amounts are rejected');
+}
 
 // Step 4B: persistent loot, one bed, the store and the carters' one-hour contract.
 {
@@ -88,13 +146,16 @@ const parts = [homePart];
   for (const bad of [{...loaded, scrap: -1}, {...loaded, loot: [{...extra, worth: 99}]},
     {...loaded, carters: {began: Infinity}}, {...loaded, loot: [...loaded.loot, {...extra, position: 'bed'}]},
     {...loaded, loads: {...loaded.loads, coop: 'bed'}}]) check(!readableHome(bad), 'damaged version 6 loot is rejected');
-  const {loot, scrap, carters, ...older} = loaded;
+  const {loot, scrap, carters, well: _well, ...older} = loaded;
+  older.loads = {...older.loads}; delete older.loads.tank;
   const legacy = {...older, version: 5, raids: {...older.raids, won: 7}, loads: {...older.loads, tower: 'bed'}};
   const bytes = JSON.stringify(legacy);
   check(readableHome(legacy), 'version 5 remains readable');
   const upgraded = upgradeHome(legacy);
   equal(JSON.stringify(legacy), bytes, 'loading version 5 does not mutate it');
-  const {loot: freshLoot, scrap: freshScrap, carters: freshCarters, ...kept} = upgraded;
+  const {loot: freshLoot, scrap: freshScrap, carters: freshCarters, well: freshWell, ...kept} = upgraded;
+  kept.loads = {...kept.loads}; delete kept.loads.tank;
+  equal(freshWell, null, 'the version 7 well starts unmarked');
   equal({...kept, version: 5}, legacy, 'version 6 preserves every version 5 field including raids and the tower load');
   equal([freshLoot, freshScrap, freshCarters], [[], 0, {began: null}], 'only the three new fields are added');
 }
@@ -510,7 +571,7 @@ const memory = values => {
   equal(transferHomeLoad(home, {...drive, vehicle: 'rattler'}), home, 'only the flatbed carries the building loads');
   equal(transferHomeLoad(home, {...drive, speedKmh: 2}), home, 'the flatbed must stop to load');
   home = transferHomeLoad(home, drive);
-  equal(home.loads, {coop: 'bed', shed: 'stack', tower: 'stack'}, 'one press loads the coop and leaves the other stacks');
+  equal(home.loads, {coop: 'bed', shed: 'stack', tower: 'stack', tank: 'stack'}, 'one press loads the coop and leaves the other stacks');
   equal(homeLoadKg(home), HOME_BUILDS.coop.kg, 'the bed exposes its loadKg for the existing haul weight bridge');
   equal(transferHomeLoad(home, drive), home, 'a full bed cannot take the second load');
   home = transferHomeLoad(home, {...drive, position: buildInLand(coop)});
@@ -652,11 +713,11 @@ const memory = values => {
   equal(handToCrew(home, first, 1000), home, 'the crew refuses an untaught kind');
   for (let n = 0; n < 4; n++) home = raiseBuild(home, first);
   const legacy = {...home, version: 3, loads: {...home.loads}};
-  delete legacy.crew; delete legacy.raids; delete legacy.loads.tower;
+  delete legacy.crew; delete legacy.raids; delete legacy.loads.tower; delete legacy.loads.tank;
   const original = JSON.stringify(legacy);
   check(readableHome(legacy), 'a completed version 3 coop remains readable');
   const upgraded = upgradeHome(legacy), {crew: _crew, raids: _raids, ...oldFields} = upgraded;
-  const {tower: _tower, ...oldLoads} = oldFields.loads;
+  const {tower: _tower, tank: _tank, ...oldLoads} = oldFields.loads;
   equal({...oldFields, loads: oldLoads, version: 3}, legacy, 'version 3 loses no field, nest or stored egg when upgraded');
   equal(JSON.stringify(legacy), original, 'upgrading leaves the old record unchanged');
   const second = {...first, i: 5};
@@ -1023,6 +1084,93 @@ const memory = values => {
     check(settled.ok, 'version 6 settles through the actual save writer');
     equal(savedOpenRecord(settled.profile).home, record, 'carried loot, active carters and stored scrap each survive the save round trip');
   }
+}
+
+// Step 5 through the enabled part: choose a mark, drill, leave, resume, fit the pump and read a tank.
+{
+  let home = newHome('Well and tank', 1000);
+  const coop = {kind: 'coop', i: 2, j: 8, turn: 0, stage: 0};
+  home = markBuild(home, coop); home = {...home, loads: {...home.loads, coop: {i: 2, j: 8}}};
+  for (let n = 0; n < 4; n++) home = raiseBuild(home, coop);
+  const world = newWorld({seed: 42, night: 2});
+  const land = saved => openLand({...world, open: {...world.open, home: saved}});
+  const me = {...groundPoint(12.5, 10.6), yaw: 0};
+  let out = run(land(home), viewOf(me, {}, {homeClock: 1000}), DT);
+  out.open.parts.home.kind = 'tower';
+  out = run(out.open, viewOf(me, {piece: true}, {homeClock: 1000}), DT);
+  equal(out.open.parts.home.kind, 'well', 'G offers the well after the completed coop');
+  out = run(out.open, viewOf(me, {build: true}, {homeClock: 1000}), DT);
+  check(homeOf(out.open).well?.water > 0, 'B marks a real seeded well');
+  const marked = homeOf(out.open), at = wellInLand(marked.well);
+  const drive = extra => viewOf(null, {}, {homeClock: 1100, homeVehicle: 'drill', carPosition: at, homeCarHeading: 0,
+    speedKmh: 0, ...extra});
+  out = stepOpenLand(land(marked), drive({homeDrillKeys: {KeyB: true}}), DT, parts);
+  check(out.open.parts.home.drilling && cues(out.events).includes(HOME_CUES.drillLower), 'B lowers the stopped borrowed rig over the mark');
+  out = stepOpenLand(out.open, drive({homeDrillKeys: {Space: true}}), 20, parts);
+  const depth = homeOf(out.open).well.depth;
+  check(depth > 0, 'Space feeds the real drill through the home part');
+  const middle = JSON.parse(JSON.stringify(homeOf(out.open)));
+  out = stepOpenLand(land(middle), drive({homeClock: 5000}), DT, parts);
+  equal(homeOf(out.open).well.depth, depth, 'an outing away never drills on the real clock');
+  out = stepOpenLand(out.open, drive({homeClock: 5000, homeDrillKeys: {KeyB: true}}), DT, parts);
+  const drillEvents = [];
+  for (let seconds = 0; homeOf(out.open).well.depth < middle.well.water && seconds < 600; seconds += .25) {
+    out = stepOpenLand(out.open, drive({homeClock: 5000, homeDrillKeys: {Space: true}}), .25, parts);
+    drillEvents.push(...out.events);
+  }
+  equal(homeOf(out.open).well.depth, middle.well.water, 'the resumed outing stops at the same water depth');
+  check(cues(drillEvents).includes(HOME_CUES.drillRock) && cues(drillEvents).includes(HOME_CUES.drillWater), 'rock and water have distinct home cues');
+  const foot = {...at, z: at.z - 1.6, yaw: 0};
+  out = run(out.open, viewOf(foot, {}, {homeClock: 5000}), DT);
+  out = run(out.open, viewOf(foot, {build: true}, {homeClock: 5000}), 3);
+  check(!homeOf(out.open).well.pump, 'half the hammering time does not fit the pump');
+  out = run(out.open, viewOf(foot, {build: true}, {homeClock: 5000}), 3.1);
+  check(homeOf(out.open).well.pump && cues(out.events).includes(HOME_CUES.pumpFit), 'six held seconds fits the pump with its own cue');
+  home = homeOf(out.open);
+  const tank = {kind: 'tank', i: 14, j: 12, turn: 0, stage: 0, litres: 0, filled: null};
+  home = markBuild(home, tank);
+  home = transferHomeLoad(home, {vehicle: 'flatbed', position: HOME_LOAD_STACK, speedKmh: 0});
+  equal(home.loads.tank, 'bed', 'the marked tank load is chosen before unmarked shed and tower loads');
+  home = transferHomeLoad(home, {vehicle: 'flatbed', position: buildInLand(tank), speedKmh: 0});
+  equal(home.loads.tank, {i: tank.i, j: tank.j}, 'the existing flatbed delivery supplies the tank');
+  for (let n = 0; n < 4; n++) home = raiseBuild(home, tank);
+  const completedAt = home.lastSeen;
+  const reader = {...buildingDoor(tank), yaw: Math.PI};
+  out = stepOpenLand(land(home), viewOf(reader, {}, {homeClock: completedAt + HOME_TANK.seconds / 2, interact: true}), 0, parts);
+  equal(homeOf(out.open).builds.at(-1).litres, HOME_TANK.litres / 2, 'six closed hours fills the tank through the actual outing clock');
+  check(out.requests.some(request => request.text?.includes('500 of its 1000 litres.')), 'F at the tank reads its current water in a whole sentence');
+  const readOnly = JSON.stringify(out.open);
+  const look = createHomeGroundView(); look.update({open: out.open}, null, 1);
+  check(look.group.getObjectByName('home-hand-pump')?.visible, 'the completed hand pump is drawn');
+  check(look.group.getObjectByName('home-well-tank-pipe')?.visible, 'the connected tank has a drawn pipe');
+  equal(JSON.stringify(out.open), readOnly, 'drawing the pump, water gauge and pipe never changes saved water'); look.dispose();
+  const kept = homeOf(out.open), snapshot = JSON.stringify(kept);
+  const settled = settleOpenWorld({}, {...world, open: {...world.open, home: kept}});
+  check(settled.ok, 'the version 7 well and tank settle through the real save writer');
+  equal(savedOpenRecord(settled.profile).home, kept, 'a version 7 save round trip keeps the well, water and clock');
+  equal(JSON.stringify(homeOf(stepOpenLand(land(kept), viewOf(reader, {}, {homeGround: false, homeClock: 999999}), 100, parts).open)), snapshot,
+    'with the switch off no well or tank field is touched');
+  out = stepOpenLand(land(kept), viewOf(reader, {}, {homeClock: completedAt + HOME_TANK.seconds}), 0, parts);
+  equal(homeOf(out.open).builds.at(-1).litres, HOME_TANK.litres, 'two separate outings total twelve real hours without double counting');
+  // A crew-built tank starts filling only after its lid is complete, even when both events happened offline.
+  const second = {...tank, i: 14, j: 9};
+  let crew = {...home, lastSeen: 1000, builds: home.builds.map(row => row.kind === 'tank' ? {...row, filled: 1000} : row)};
+  crew = markBuild(crew, second); crew = {...crew, loads: {...crew.loads, tank: {i: second.i, j: second.j}}};
+  crew = handToCrew(crew, second, 1000);
+  check(crew.crew.job?.kind === 'tank', 'a later tank uses the existing taught crew rule');
+  const work = ripenHome(crew, 3600 + HOME_TANK.seconds / 2);
+  equal(work.home.builds.at(-1).litres, HOME_TANK.litres / 2, 'crew construction time is not counted as filling time');
+  // Version 6 is read unchanged, including loot and a carter contract, then gains only the two new fields.
+  const legacy = {...home, version: 6, builds: home.builds.filter(row => row.kind !== 'tank'),
+    loot: [{kind: 'crate', position: 'bed', worth: 4}], scrap: 123, carters: {began: home.lastSeen - 10}, loads: {...home.loads}};
+  delete legacy.well; delete legacy.loads.tank;
+  const bytes = JSON.stringify(legacy);
+  check(readableHome(legacy), 'a real version 6 home remains readable');
+  const upgraded = upgradeHome(legacy), {well: freshWell, ...old} = upgraded;
+  old.loads = {...old.loads}; delete old.loads.tank;
+  equal({...old, version: 6}, legacy, 'version 7 preserves every version 6 value, including the active carters and cargo');
+  equal(freshWell, null, 'old homes gain no automatic well');
+  equal(JSON.stringify(legacy), bytes, 'upgrading version 6 never mutates the source');
 }
 
 console.log(`Home ground: ${checks} checks passed.`);

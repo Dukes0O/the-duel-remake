@@ -899,8 +899,9 @@ export class App {
   }
   _startOpenRoam(vehicle) {
     this._refreshPlayer();
-    if (vehicle !== undefined && (vehicle !== 'flatbed' || this._switches().enabled('home-ground') !== true ||
-        !savedOpenRecord(this.profile)?.home)) return false;
+    const home = savedOpenRecord(this.profile)?.home;
+    if (vehicle !== undefined && (!['flatbed', 'drill'].includes(vehicle) || this._switches().enabled('home-ground') !== true ||
+        !home || vehicle === 'drill' && !home.builds?.some(row => row.kind === 'coop' && row.stage === 4))) return false;
     const routineRoads = night2Banked(savedLedger(this.profile)) && this.gasRunAvailable() ?
       (emberBattleOpen(this.profile) ? ['long'] : GAS_RUN_ROADS) : [];
     // HOME-GROUND-2: the one reading of the laptop's clock for the player's ground, as the outing opens.

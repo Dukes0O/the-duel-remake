@@ -13,6 +13,7 @@ import {createWaterStreamView} from '../../arsenal/water-stream-view.js';
 import {createHaulLoadLook, stackHaulPieces} from './haul-load-look.js';
 import {scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {createGroundShade} from '../../world/scrap-look.js';
+import {createDrillView} from '../../machines/drill-view.js';
 
 const MODEL_FOLDER = '/assets/models/wasteland/town/';
 // Wheel centres stand 0.52 to 0.57 m up on the models, which is their radius.
@@ -59,9 +60,10 @@ export function workVehicleToDraw(state, flags) {
   if (state?.arena?.mode !== 'world-job') return null;
   const worldJob = state.arena.worldJob;
   // HOME-GROUND-3: Tin Town's flatbed on an open outing is drawn with Home Ground's switch alone.
-  const homeFlatbed = flags?.enabled?.('home-ground') === true && worldJob?.definition?.id === 'open-roam' &&
-    worldJob?.vehicle?.id === 'flatbed';
-  if (flags?.enabled?.('wasteland-town') !== true && !homeFlatbed) return null;
+  const homeMachine = flags?.enabled?.('home-ground') === true && worldJob?.definition?.id === 'open-roam' &&
+    ['flatbed', 'drill'].includes(worldJob?.vehicle?.id);
+  if (worldJob?.vehicle?.id === 'drill' && !homeMachine) return null;
+  if (flags?.enabled?.('wasteland-town') !== true && !homeMachine) return null;
   return worldJob?.vehicle ?? null;
 }
 
@@ -91,9 +93,9 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     const body = node.clone(true);
     body.position.set(0, 0, 0);
     // The models face along -z; the renderer's cars face along +z.
-    const turned = new THREE.Group();
-    turned.rotation.y = Math.PI;
-    turned.add(body);
+    const drill = vehicle.id === 'drill' ? createDrillView(body) : null;
+    const turned = drill?.root ?? new THREE.Group();
+    if (!drill) { turned.rotation.y = Math.PI; turned.add(body); }
     const group = new THREE.Group();
     group.name = `work-vehicle:${vehicle.id}`;
     group.add(turned);
@@ -126,7 +128,7 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     const stack = new THREE.Group();
     stack.name = 'haul-stack';
     turned.add(stack);
-    return {id:vehicle.id, group, turned, contactY:tyres.isEmpty() ? 0 : tyres.min.y, steers, spins,
+    return {id:vehicle.id, group, turned, drill, body, contactY:tyres.isEmpty() ? 0 : tyres.min.y, steers, spins,
       bedBox:bedBox && !bedBox.isEmpty() ? bedBox : null, stack, stackKey:'', stackIds:null,
       load:loadNode ? findModelNode(body, loadNode) : null,
       maxSteer:definition.maxSteerDeg * Math.PI / 180, roll:0, clock:null};
@@ -307,6 +309,10 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
 
   function remove() {
     if (shown) for (const mesh of [...shown.stack.children]) look.release(mesh);
+    // Only the auger was made for this view; shared model geometry and materials belong to the asset cache.
+    shown?.body.getObjectByName('drill-auger')?.traverse(node => {
+      if (node.isMesh) { node.geometry.dispose(); node.material.dispose(); }
+    });
     shown?.group.removeFromParent();
     shown = null;
     clearFallen();
@@ -351,6 +357,8 @@ export function createWorkVehicleView({loadModel = url => new GLTFLoader().loadA
     // Wheels: the front ones turn with the steering, all of them roll with the distance driven.
     const seconds = shown.clock === null ? 0 : Math.max(0, Math.min(0.25, clock - shown.clock));
     shown.clock = clock;
+    const rig = state.arena.worldJob.open?.parts.home?.drillRig;
+    if (shown.drill && rig) shown.drill.update(rig, shown.body, seconds);
     shown.roll -= (state.speedMph || 0) * MPH_TO_MPS * seconds / WHEEL_RADIUS_M;
     turn.setFromAxisAngle(ALONG_Y, -(state.steerVisual || 0) * shown.maxSteer);
     for (const wheel of shown.steers) wheel.object.quaternion.copy(turn).multiply(wheel.base);

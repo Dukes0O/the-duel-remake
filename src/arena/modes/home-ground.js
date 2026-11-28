@@ -5,10 +5,30 @@ import {scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {homeTowerPose} from '../../world/open/home-raid-rule.js';
 import {buildingDoor} from '../../world/open/home-rule.js';
 import {selectFootGear} from '../../onfoot-weapons.js';
+import {DRIVE} from '../../config.js';
+import {wrapHeading} from '../../offroad-physics.js';
+
+// Borrowed rig only: the machine solver owns its tracks. The car keeps contacts, entry and exit, and its HUD.
+export function prepareHomeDrillControls(duel, world, input) {
+  if (world.definition.id !== 'open-roam' || world.vehicle?.id !== 'drill' ||
+      duel.featureFlags?.enabled?.('home-ground') !== true || duel.state.onFoot) return false;
+  world.homeDrillKeys = {KeyW: input.throttle > 0, KeyS: input.brake > 0,
+    KeyA: input.steer < 0, KeyD: input.steer > 0, Space: input.boost === true, KeyB: world.homeDrillToggle === true};
+  world.homeDrillToggle = false;
+  Object.assign(input, {throttle: 0, brake: 0, steer: 0, boost: false});
+  Object.assign(duel.state, {speedMph: 0, pushVelocity: 0, reverseHoldSec: 0, boost: 0});
+  return true;
+}
 
 export function syncHomeGround(duel, world) {
   const state = duel.state, home = world.open?.parts.home;
   if (!home?.on) return;
+  if (!state.onFoot && !state.combatWrecking && world.vehicle?.id === 'drill' && home.drillRig) {
+    const pose = home.drillRig.machine, near = duel.course.nearest(pose.x, pose.z, state.s);
+    Object.assign(state, {s: near.s, lateral: near.lateral,
+      headingError: wrapHeading(pose.heading - duel.course.at(near.s).heading), speedMph: pose.speedMps / DRIVE.mphToWorld,
+      groundHeight: scablandsSurfaceHeightAt(pose.x, pose.z)});
+  }
   const raid = home.raid;
   if (world.homeRaidZone && world.homeRaidZone.id !== raid?.id) {
     const old = world.homeRaidZone;
