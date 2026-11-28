@@ -13,3 +13,11 @@ Options:
 
 Recommended pick: option 2. The builder is proceeding with the independent work. No substitute delivery or fake
 truck control will be presented as finished. Claude must assign the bridge before this step is playable end to end.
+
+## Independent save review: backup detection
+
+The save reviewer found that `needsCareerMigration` in `src/career-backup.js` does not detect a version 1 or 2 home
+being upgraded to version 3. The migration is additive and the review found no lost old values, but the save review
+requires a backup before a save shape changes (also SPEC 0.4). The shared backup hook is outside this card's files.
+Options: extend ownership to that hook and its tests, or assign it alongside the vehicle bridge. Recommended pick:
+assign the backup hook alongside the bridge and keep this card in review until it is resolved. No real saves were used.

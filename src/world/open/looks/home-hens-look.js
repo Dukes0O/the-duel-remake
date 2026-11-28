@@ -348,7 +348,7 @@ function board(sx, sy, sz, rect, size = 512) {
 // A corrugated sheet in its own plane: ribs run up (y), across x, the face looking along +z. The foot is at y 0.
 // `top(x)` gives the height of the top edge at x (a gable is cut on a slant); `holes` are openings {x0, x1, y0, y1};
 // `dents` are {x, y, r, depth}; `u` is the range of the picture across the sheet, so that sheets differ.
-function corrugated(width, height, {top = () => height, holes = [], dents = [], u = [0, 1], pitch = .076, depth = .018, rows = 6, seed = 1} = {}) {
+export function corrugated(width, height, {top = () => height, holes = [], dents = [], u = [0, 1], pitch = .076, depth = .018, rows = 6, seed = 1} = {}) {
   const columns = Math.round(width / (pitch / 4));
   const breaks = new Set(); for (let r = 0; r <= rows; r++) breaks.add(r / rows);
   for (const hole of holes) { breaks.add(hole.y0 / height); breaks.add(hole.y1 / height); }

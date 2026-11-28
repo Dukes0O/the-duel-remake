@@ -5,13 +5,16 @@
 // frames. The hens, the nest boxes and the eggs are HOME-GROUND-LOOK-1's parts (src/world/open/looks/home-hens-look.js);
 // Moss's travelling crate and the spare crates are plain slatted crates drawn here.
 import * as THREE from 'three';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {scrapBuilder, yardSurface} from '../../scablands-yard-look.js';
+import {createHaulLoadLook} from '../../../town/view/haul-load-look.js';
 import {createStoryPeople} from '../../jobs/story-people.js';
 import {createStoryPeopleView} from '../../story-people-view.js';
-import {BOX_HOLDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_PANELS, HOME_PIECES, HOME_SIZE, HOME_STEP} from '../content/home-ground.js';
+import {BOX_HOLDS, HOME_BOX, HOME_BUILDS, HOME_LOAD_STACK, HOME_CELLS, HOME_CORNER, HOME_PANELS, HOME_PIECES, HOME_SIZE, HOME_STEP} from '../content/home-ground.js';
 import {GATE_POST, boardSpot, boxInLand, crateSpot, cratesLeft, gateOf, hensWaiting, newsBoardSpot, panelsLeft,
-  pieceInLand} from '../home-rule.js';
+  pieceInLand, buildInLand, groundPoint} from '../home-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
-import {HOME_HEN_MODEL, createEgg, createHen, createNestBox} from './home-hens-look.js';
+import {HOME_HEN_MODEL, createEgg, createHen, createNestBox, corrugated as buildingTin} from './home-hens-look.js';
 
 const MOST_MARKS = 96;
 // The eggs drawn in one nest box: a clutch of up to this many shows how full it is.
@@ -118,6 +121,8 @@ function newsTexture() {
 
 // A piece's middle, run and height in the land; a nest box stands in its cell.
 function shapeOf(piece) {
+  if (HOME_BUILDS[piece.kind]) return {...buildInLand(piece), length: HOME_BUILDS[piece.kind].width * HOME_STEP,
+    depth: HOME_BUILDS[piece.kind].depth * HOME_STEP, height: 2.5};
   if (piece.kind === 'box') return {...boxInLand(piece), length: HOME_BOX.size, heading: 0, height: HOME_BOX.height};
   return {...pieceInLand(piece), height: HOME_PIECES[piece.kind].height};
 }
@@ -160,6 +165,60 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   const ground = (x, z, shift) => scablandsSurfaceHeightAt(x, z) + (shift?.(x, z) ?? 0);
   const geometries = [];
   const keep = geometry => { geometries.push(geometry); return geometry; };
+
+  const buildings = new Map(), haul = createHaulLoadLook(), loadDraws = new Map();
+  materials.building = yardSurface();
+  materials.chalk = new THREE.LineBasicMaterial({color: 0xe8e2cf});
+  function buildingDraw(kind) {
+    if (buildings.has(kind)) return buildings.get(kind);
+    const drawn = new THREE.Group(); drawn.name = 'home-' + kind; group.add(drawn);
+    const w = HOME_BUILDS[kind].width * HOME_STEP, d = HOME_BUILDS[kind].depth * HOME_STEP;
+    const stages = Array.from({length: 4}, (_, index) => { const part = new THREE.Group(); part.name = kind + '-stage-' + (index + 1); drawn.add(part); return part; });
+    const scrap = (stage, make) => {
+      const builder = scrapBuilder(); make(builder.frame(0, 0, 0, 0));
+      const geometry = keep(mergeGeometries(builder.parts, false));
+      builder.parts.forEach(part => part.dispose());
+      const mesh = new THREE.Mesh(geometry, materials.building); mesh.castShadow = mesh.receiveShadow = true; stages[stage].add(mesh);
+    };
+    scrap(0, f => {
+      for (let x = -w / 2 + .25; x < w / 2; x += .5) f.box(.49, .08, d, x, .04, 0, 0x655a47, {ribs: true, foot: .3});
+    });
+    scrap(1, f => {
+      for (const x of [-w / 2, w / 2]) for (const z of [-d / 2, d / 2])
+        f.strut([x, 0, z], [x + (x < 0 ? .035 : -.02), z < 0 ? 2.45 : 2.1, z + .02], .13, 0x51473b);
+      for (const z of [-d / 2, d / 2]) f.box(w, .13, .12, 0, z < 0 ? 2.4 : 2.05, z, 0x51473b);
+      for (const x of [-w / 2, w / 2]) {
+        f.strut([x, 2.4, -d / 2], [x, 2.05, d / 2], .12, 0x51473b);
+        f.strut([x, .1, -d / 2], [x, 1.7, -d / 2 + 1.3], .08, 0x493d31);
+      }
+    });
+    const tin = (stage, width, height, x, y, z, yaw = 0, pitch = 0, seed = 1) => {
+      const mesh = new THREE.Mesh(keep(buildingTin(width, height, {seed, dents: [{x: .15, y: .55, r: .25, depth: .035}]})), materials.tin);
+      mesh.position.set(x, y, z); mesh.rotation.set(pitch, yaw, 0); mesh.castShadow = mesh.receiveShadow = true; stages[stage].add(mesh);
+    };
+    tin(2, w, 2.4, 0, .08, -d / 2, Math.PI, 0, 7);
+    for (const side of [-1, 1]) tin(2, d, 2.1, side * w / 2, .08, 0, side * Math.PI / 2, 0, 12 + side);
+    if (kind === 'shed') {
+      for (const side of [-1, 1]) tin(2, 1.3, 2.1, side * 1.35, .08, d / 2, 0, 0, 19 + side);
+      tin(2, 1.3, 1.95, .72, .08, d / 2 - .65, Math.PI / 2, 0, 22);
+    } else {
+      // Wire on the front of the run, with a central opening. Hens remain visible inside.
+      const points = [];
+      for (const side of [-1, 1]) {
+        const lo = side < 0 ? -2 : .65, hi = side < 0 ? -.65 : 2;
+        for (let x = lo; x <= hi; x += .1) points.push(x, .1, d / 2, x, 1.2, d / 2);
+        for (let y = .1; y <= 1.2; y += .1) points.push(lo, y, d / 2, hi, y, d / 2);
+      }
+      const geometry = keep(new THREE.BufferGeometry()); geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+      materials.wire ??= new THREE.LineBasicMaterial({color: 0x6a655a});
+      stages[2].add(new THREE.LineSegments(geometry, materials.wire));
+    }
+    const slope = Math.atan2(.35, d), run = Math.hypot(d, .35) + .3;
+    tin(3, w + .3, run, 0, 2.03, d / 2 + .15, 0, -Math.PI / 2 + slope, 31);
+    const mark = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, .03, d))), materials.chalk);
+    mark.name = kind + '-footprint'; mark.position.y = .07; drawn.add(mark);
+    const result = {drawn, stages, mark}; buildings.set(kind, result); return result;
+  }
 
   // ---- The bare ground: four stakes with rag flags, pegs every 8 m and a rope between them, 0.35 m up. ----------
   const bounds = new THREE.Group(); bounds.name = 'home-ground-bounds'; group.add(bounds);
@@ -330,6 +389,57 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       group.visible = state?.on === true;
       if (!group.visible) return;
       const record = worldJob.open.world.open.home ?? null;
+      for (const kind of Object.keys(HOME_BUILDS)) {
+        const row = record?.builds?.find(item => item.kind === kind);
+        const drawing = row ? buildingDraw(kind) : buildings.get(kind);
+        if (drawing) {
+          drawing.drawn.visible = !!row;
+          if (row) {
+            const at = buildInLand(row), progress = state.outline?.piece?.kind === kind ? state.outline.progress : 0;
+            drawing.drawn.position.set(at.x, ground(at.x, at.z, drawnShift), at.z); drawing.drawn.rotation.y = at.heading;
+            drawing.mark.visible = row.stage === 0;
+            drawing.stages.forEach((stage, index) => {
+              stage.visible = index < row.stage || (index === row.stage && progress > 0);
+              stage.scale.y = index === row.stage ? Math.max(.01, progress) : 1;
+            });
+          }
+        }
+        const location = record?.loads?.[kind];
+        // The vehicle bridge owns the driven bed. Here the haul look draws the stack and delivered bundles only.
+        const show = !!record?.boxes?.length && location && location !== 'bed' && !(row?.stage > 0);
+        let load = loadDraws.get(kind);
+        if (show && !load) {
+          load = new THREE.Group(); load.name = 'home-load-' + kind;
+          const sheetCount = kind === 'coop' ? 8 : 10, postCount = kind === 'coop' ? 4 : 6;
+          for (let n = 0; n < sheetCount; n++) {
+            const sheet = new THREE.Mesh(keep(buildingTin(2, 1, {seed: n + 3})), materials.tin);
+            sheet.rotation.x = -Math.PI / 2; sheet.position.set((n % 3 - 1) * .02, .06 + n * .035, .5);
+            sheet.castShadow = true; load.add(sheet);
+          }
+          for (let n = 0; n < postCount; n++) {
+            const post = haul.piece({id: 'home-' + kind + '-post-' + n, kind: 'rail'}, 'steel');
+            post.position.set(0, .5 + Math.floor(n / 3) * .1, -.25 + n % 3 * .17); post.scale.set(.6, .18, .18);
+            load.add(post);
+          }
+          if (kind === 'coop') {
+            for (let n = 0; n < 8; n++) {
+              const roll = new THREE.Mesh(keep(new THREE.TorusGeometry(.22, .008, 4, 20)), materials.post);
+              roll.rotation.y = Math.PI / 2; roll.position.set(.55 + n * .04, .63, .3); load.add(roll);
+            }
+          } else {
+            const door = new THREE.Mesh(keep(buildingTin(.9, 1.9, {seed: 50})), materials.tin);
+            door.rotation.x = -Math.PI / 2; door.position.set(0, .85, .95); load.add(door);
+          }
+          group.add(load); loadDraws.set(kind, load);
+        }
+        if (load) {
+          load.visible = !!show;
+          if (show) {
+            const at = location === 'stack' ? {...HOME_LOAD_STACK, x: HOME_LOAD_STACK.x + (kind === 'shed' ? 2.7 : 0)} : groundPoint(location.i, location.j);
+            load.position.set(at.x, ground(at.x, at.z, drawnShift), at.z);
+          }
+        }
+      }
       const deliveryGate = gateOf(record), delivery = record && hensWaiting(record) ? crateSpot(deliveryGate) : null;
       const nextMossKey = delivery ? `${delivery.x}/${delivery.z}` : '';
       if (mossKey !== nextMossKey) {
@@ -479,7 +589,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
         drawn.object.position.set(x, y, z);
         // The hen's nose is along +X; a yaw of 0 faces +z.
         drawn.object.rotation.y = yaw - Math.PI / 2;
-        if (drawn.pose !== mode) drawn.setPose(mode);
+        const pose = mode === 'roost' ? 'stand' : mode;
+        if (drawn.pose !== pose) drawn.setPose(pose);
         drawn.update(seconds);
       }
       hens.visible = henCount > 0;
@@ -501,22 +612,22 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       // The ground slopes half a metre, so the flat grid stands just above its highest corner.
       if (grid.visible) grid.position.set(HOME_CORNER.x, Math.max(...corners.map(([x, z]) =>
         ground(HOME_CORNER.x + x, HOME_CORNER.z + z, drawnShift))) + .12, HOME_CORNER.z);
-      rising.visible = !!shape && shape.mode === 'build' && shape.progress > 0 && !state.above;
+      rising.visible = !!shape && !HOME_BUILDS[shape.piece?.kind] && shape.mode === 'build' && shape.progress > 0 && !state.above;
       if (shape) {
         const piece = shape.mode === 'lift' ? shape.target : shape.piece;
-        const {x, z, length, heading, height: tall} = shapeOf(piece);
+        const {x, z, length, heading, height: tall, depth: buildingDepth} = shapeOf(piece);
         const height = (tall + .1) * (state.above ? 1.4 : 1);
         const colour = OUTLINE[shape.mode] ?? OUTLINE.build;
         materials.outline.color.setHex(colour); materials.fill.color.setHex(colour); materials.edge.color.setHex(colour);
         const wobble = shape.shake ? Math.sin(seconds * 60) * .06 : 0;
         outline.position.set(x + wobble, ground(x, z, drawnShift), z); outline.rotation.y = yawOf(heading);
         // From above the outline is drawn a metre thick, or it would be a hair seen from 60 m.
-        const depth = state.above ? 1 : .3;
+        const depth = buildingDepth ?? (state.above ? 1 : .3);
         outlineBox.scale.set(length, height, depth); outlineEdges.scale.set(length, height, depth);
         // While he hammers, the real piece rises out of the ground through its seconds, and the pale fill is not drawn.
-        outlineFill.visible = shape.progress > 0 && !rising.visible;
+        outlineFill.visible = shape.progress > 0 && !rising.visible && !buildingDepth;
         // The outline fades to a faint frame so that the rising piece is what he sees.
-        materials.outline.opacity = rising.visible ? .08 : .32;
+        materials.outline.opacity = rising.visible || (buildingDepth && shape.progress > 0) ? .08 : .32;
         outlineFill.scale.set(length * .98, Math.max(.01, height * shape.progress), depth + .02);
         if (rising.visible) {
           const grow = Math.max(.04, shape.progress);
@@ -535,6 +646,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     },
     dispose() {
       moss.dispose();
+      for (const load of loadDraws.values()) for (const mesh of [...load.children]) if (mesh.name.startsWith('haul-piece:')) haul.release(mesh);
+      haul.dispose();
       for (const geometry of geometries) geometry.dispose();
       for (const material of Object.values(materials)) { material.map?.dispose?.(); material.dispose(); }
       for (const mesh of [pegs, ropes, stakes, flags, stack, panels, posts, marks, crateSlats, tops]) mesh.dispose();

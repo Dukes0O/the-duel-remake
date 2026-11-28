@@ -7,10 +7,13 @@
 // A panel covers one step; the gate covers four, and must stand in the outside fence.
 //
 // THE RECORD kept in the save (world.open.home):
+//   version 3 adds builds: [{kind, i, j, turn, stage}], loads: {coop, shed}, flatbed: {x, z, yaw}.
+//   A load is 'stack', 'bed', or a grid point {i, j}. Once its floor stands, the load is part of that building.
+//   A completed coop adds three ordinary {i, j, eggs} entries to boxes; coopBoxes identifies its fixed nests.
 //   version 2 (HOME-GROUND-2): {version: 2, name, pieces, marks, hens: [{name, breed, due}], boxes: [{i, j, eggs}], eggs,
 //     lastSeen}
 //   version 1 (HOME-GROUND-1): {version: 1, name, pieces: [{kind, i, j, axis}], marks: [{kind, i, j, axis}]}
-// A version 1 record is read as it is and left as it is; the ground's part turns it into version 2 the first time it runs
+// A version 1 or 2 record is read as it is; the ground's part turns it into version 3 the first time it runs
 // with its switch on (upgradeHome). The panels and the gate he still carries are worked out from it: HOME_PANELS less
 // the panels standing, and one gate less the gate standing; the old crates likewise, HOME_CRATES less the nest boxes.
 //   hens      each hen's name, breed and `due`: the seconds until her next egg, 0 while she waits for room in a box
@@ -19,23 +22,142 @@
 //   lastSeen  the real moment, in seconds since 1970 by the laptop's clock, at which the hens' `due` was true; null
 //             until a clock has been handed to the part. The clock is read once, when an outing opens.
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, HEN_BREEDS, HEN_SETTLE_SECONDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_CRATES,
-  HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, MOSS_HENS, layInterval} from './content/home-ground.js';
+  HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, MOSS_HENS, layInterval,
+  HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS} from './content/home-ground.js';
 
-export const HOME_RECORD_VERSION = 2;
+export const HOME_RECORD_VERSION = 3;
 const AXES = ['x', 'z'];
 const whole = value => Number.isSafeInteger(value);
 
 export const newHome = (name, lastSeen = null) => ({version: HOME_RECORD_VERSION, name, pieces: [], marks: [], hens: [], boxes: [],
-  eggs: 0, lastSeen});
-// A step 1 record as step 2 keeps it: nothing of what he built changes.
-export const upgradeHome = home => home.version === 1
-  ? {...home, version: HOME_RECORD_VERSION, hens: [], boxes: [], eggs: 0, lastSeen: null} : home;
+  eggs: 0, lastSeen, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed()});
+function firstFlatbed() { return {...groundPoint(15, -3), yaw: 0}; }
+// Reading an older record does not upgrade it. Only the enabled part calls this.
+export function upgradeHome(home) {
+  if (home.version === 3) return home;
+  const kept = home.version === 1 ? {...home, hens: [], boxes: [], eggs: 0, lastSeen: null} : home;
+  return {...kept, version: 3, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed()};
+}
 
 // A name he may write: 1 to 24 letters, numbers, spaces and the marks a place name uses.
 export function cleanHomeName(text) {
   if (typeof text !== 'string') return null;
   const name = text.replace(/\s+/g, ' ').trim();
   return name.length >= 1 && name.length <= HOME_NAME_LONGEST && /^[\p{L}\p{N} '&.,!?-]+$/u.test(name) ? name : null;
+}
+
+// Step 3 keeps one first building of each kind. Stage 0 is its movable chalk mark.
+const sameCell = (a, b) => a.i === b.i && a.j === b.j;
+export function buildBounds(row) {
+  const size = HOME_BUILDS[row.kind], turned = row.turn % 2;
+  return {i0: row.i, j0: row.j, i1: row.i + (turned ? size.depth : size.width),
+    j1: row.j + (turned ? size.width : size.depth)};
+}
+const rectanglesOverlap = (a, b) => !!b && a.i0 < b.i1 && a.i1 > b.i0 && a.j0 < b.j1 && a.j1 > b.j0;
+function pieceThroughBuild(piece, row) {
+  const b = buildBounds(row), span = HOME_PIECES[piece.kind].cells;
+  return piece.axis === 'x' ? piece.j >= b.j0 && piece.j <= b.j1 && piece.i < b.i1 && piece.i + span > b.i0
+    : piece.i >= b.i0 && piece.i <= b.i1 && piece.j < b.j1 && piece.j + span > b.j0;
+}
+function readableBuild(row) {
+  if (!row || Object.keys(row).length !== 5 || !Object.hasOwn(HOME_BUILDS, row.kind) ||
+      !whole(row.i) || !whole(row.j) || !whole(row.turn) || row.turn < 0 || row.turn > 3 ||
+      !whole(row.stage) || row.stage < 0 || row.stage > 4) return false;
+  const b = buildBounds(row);
+  return b.i0 >= 0 && b.j0 >= 0 && b.i1 <= HOME_CELLS && b.j1 <= HOME_CELLS;
+}
+const loadPoint = row => row && Object.keys(row).length === 2 && whole(row.i) && whole(row.j) &&
+  row.i >= 0 && row.j >= 0 && row.i < HOME_CELLS && row.j < HOME_CELLS;
+function readableBuildings(home) {
+  if (!Array.isArray(home.builds) || home.builds.length > 2 || !home.builds.every(readableBuild) ||
+      new Set(home.builds.map(row => row.kind)).size !== home.builds.length ||
+      !home.loads || Object.keys(home.loads).length !== 2 ||
+      !['coop', 'shed'].every(kind => ['stack', 'bed'].includes(home.loads[kind]) || loadPoint(home.loads[kind])) ||
+      Object.values(home.loads).filter(row => row === 'bed').length > 1 ||
+      !home.flatbed || Object.keys(home.flatbed).length !== 3 ||
+      !['x', 'z', 'yaw'].every(key => Number.isFinite(home.flatbed[key]))) return false;
+  return home.builds.every(row => row.stage === 0 || loadPoint(home.loads[row.kind]));
+}
+export function buildInLand(row) {
+  const b = buildBounds(row), at = groundPoint((b.i0 + b.i1) / 2, (b.j0 + b.j1) / 2);
+  return {...at, width: (b.i1 - b.i0) * HOME_STEP, depth: (b.j1 - b.j0) * HOME_STEP, heading: row.turn * Math.PI / 2};
+}
+export function buildingDoor(row) {
+  const at = buildInLand(row), front = HOME_BUILDS[row.kind].depth * HOME_STEP / 2 + .3;
+  return {x: at.x + Math.sin(at.heading) * front, z: at.z + Math.cos(at.heading) * front};
+}
+export function buildSlot(kind, position, yaw, turn = 0) {
+  const size = HOME_BUILDS[kind], w = (turn % 2 ? size.depth : size.width), d = (turn % 2 ? size.width : size.depth);
+  const reach = HOME_REACH + (Math.abs(Math.sin(yaw)) * w + Math.abs(Math.cos(yaw)) * d) * HOME_STEP / 2;
+  const {a, b} = toGrid(position.x + Math.sin(yaw) * reach, position.z + Math.cos(yaw) * reach);
+  return {kind, i: Math.round(a - w / 2), j: Math.round(b - d / 2), turn, stage: 0};
+}
+export function buildRefusal(home, row) {
+  if (!readableBuild(row)) return 'offGround';
+  if (home.builds.some(other => other.kind === row.kind)) return 'buildExists';
+  const bounds = buildBounds(row);
+  if (rectanglesOverlap(bounds, laneOf(gateOf(home)))) return 'lane';
+  if (home.builds.some(other => rectanglesOverlap(bounds, buildBounds(other))) ||
+      home.pieces.some(piece => pieceThroughBuild(piece, row)) ||
+      home.boxes.some(box => rectanglesOverlap(bounds, {i0: box.i, i1: box.i + 1, j0: box.j, j1: box.j + 1}))) return 'onTop';
+  return null;
+}
+export function markBuild(home, row) {
+  if (row.stage !== 0 || buildRefusal(home, row)) return home;
+  return {...home, builds: [...home.builds, {...row}]};
+}
+export function liftBuild(home, kind) {
+  return {...home, builds: home.builds.filter(row => row.kind !== kind || row.stage > 0)};
+}
+export function buildHasLoad(home, row) {
+  const at = home.loads[row.kind];
+  return loadPoint(at) && Math.hypot(at.i - row.i, at.j - row.j) * HOME_STEP <= 4;
+}
+export function raiseBuild(home, kind) {
+  const row = home.builds.find(item => item.kind === kind);
+  if (!row || row.stage >= 4 || !buildHasLoad(home, row)) return home;
+  const next = {...home, builds: home.builds.map(item => item === row ? {...row, stage: row.stage + 1} : item)};
+  if (kind === 'coop' && row.stage === 3) next.boxes = [...home.boxes, ...coopBoxes(next).map(cell => ({...cell, eggs: 0}))];
+  return settle(next);
+}
+// Built-in nests use the existing egg record and laying rules. Their cells cannot be lifted as crates.
+export function coopBoxes(home) {
+  if (home?.version !== 3 || !Array.isArray(home.builds)) return [];
+  const row = home.builds.find(item => item?.kind === 'coop' && item.stage === 4);
+  if (!row) return [];
+  return [[0, 0], [1, 0], [0, 1]].map(([x, z]) => {
+    for (let n = 0; n < row.turn; n++) [x, z] = [z, 1 - x];
+    return {i: row.i + x, j: row.j + z};
+  });
+}
+export function gatherCoop(home) {
+  return home.boxes.reduce((kept, box, index) => coopBoxes(home).some(cell => sameCell(box, cell)) ? gatherBox(kept, index) : kept, home);
+}
+export const shedWords = home => home.eggs === 1 ? HOME_WORDS.shedStoreOne : HOME_WORDS.shedStore.replace('{count}', home.eggs);
+export function roostAt(home, index, partOfDay) {
+  const row = home.builds?.find(item => item.kind === 'coop' && item.stage === 4);
+  if (!row || index >= HOME_BUILDS.coop.hens || !['dusk', 'dark'].includes(partOfDay)) return null;
+  const at = buildInLand(row), x = (index % 3 - 1) * .65, z = .65 + Math.floor(index / 3) * .55;
+  return {x: at.x + x * Math.cos(at.heading) + z * Math.sin(at.heading),
+    z: at.z - x * Math.sin(at.heading) + z * Math.cos(at.heading)};
+}
+export const homeLoadKg = home => Object.keys(HOME_BUILDS).reduce((kg, kind) => kg + (home.loads[kind] === 'bed' ? HOME_BUILDS[kind].kg : 0), 0);
+// A single interaction, called only by a stopped, driven flatbed. The vehicle bridge is a separate scope decision.
+export function transferHomeLoad(home, {vehicle, position, speedKmh}) {
+  if (vehicle !== 'flatbed' || !position || !Number.isFinite(speedKmh) || Math.abs(speedKmh) >= 1.5) return home;
+  const bed = Object.keys(HOME_BUILDS).find(kind => home.loads[kind] === 'bed');
+  if (bed) {
+    const mark = home.builds.find(row => row.kind === bed && row.stage === 0);
+    if (!mark || Math.hypot(position.x - buildInLand(mark).x, position.z - buildInLand(mark).z) > 4) return home;
+    return {...home, loads: {...home.loads, [bed]: {i: mark.i, j: mark.j}}};
+  }
+  const kind = Object.keys(HOME_BUILDS).find(key => {
+    if (home.builds.some(row => row.kind === key && row.stage > 0)) return false;
+    const location = home.loads[key];
+    const at = location === 'stack' ? HOME_LOAD_STACK : loadPoint(location) ? groundPoint(location.i, location.j) : null;
+    return at && Math.hypot(position.x - at.x, position.z - at.z) <= 4;
+  });
+  return kind ? {...home, loads: {...home.loads, [kind]: 'bed'}} : home;
 }
 
 // Where a piece may stand at all: inside the square, and for the gate in its outside edge.
@@ -62,14 +184,17 @@ function readableBox(box) {
     box.i >= 0 && box.i < HOME_CELLS && box.j >= 0 && box.j < HOME_CELLS && count(box.eggs) && box.eggs <= BOX_HOLDS;
 }
 export function readableHome(home) {
-  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, HOME_RECORD_VERSION].includes(home.version)) return false;
+  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, HOME_RECORD_VERSION].includes(home.version)) return false;
   const built = cleanHomeName(home.name) === home.name && Array.isArray(home.pieces) && home.pieces.every(readablePiece) &&
     Array.isArray(home.marks) && home.marks.every(readablePiece) && home.marks.length <= 4 * HOME_CELLS * (HOME_CELLS + 1) &&
     home.pieces.filter(piece => piece.kind === 'gate').length <= 1 &&
     home.pieces.filter(piece => piece.kind === 'panel').length <= HOME_PANELS;
   if (!built || home.version === 1) return built;
-  return Array.isArray(home.hens) && home.hens.length <= MOSS_HENS.length && home.hens.every(readableHen) &&
-    Array.isArray(home.boxes) && home.boxes.length <= HOME_CRATES && home.boxes.every(readableBox) &&
+  if (home.version === 3 && !readableBuildings(home)) return false;
+  const builtIn = coopBoxes(home);
+  return Array.isArray(home.hens) && home.hens.length <= (builtIn.length ? HOME_BUILDS.coop.hens : MOSS_HENS.length) && home.hens.every(readableHen) &&
+    Array.isArray(home.boxes) && home.boxes.length <= HOME_CRATES + builtIn.length && home.boxes.every(readableBox) &&
+    builtIn.every(cell => home.boxes.some(box => sameCell(box, cell))) &&
     new Set(home.boxes.map(box => box.i + ':' + box.j)).size === home.boxes.length &&
     count(home.eggs) && (home.lastSeen === null || (Number.isFinite(home.lastSeen) && home.lastSeen >= 0));
 }
@@ -109,10 +234,12 @@ export function refusal(home, piece) {
   if (!inBounds(piece)) return 'offGround';
   if (piece.kind === 'gate' && !onEdge(piece)) return 'gateEdge';
   if (piecesUnder(home.pieces, piece).length) return 'onTop';
+  if ((home.builds ?? []).some(row => pieceThroughBuild(piece, row))) return 'onTop';
   if (piece.kind === 'gate') {
     const lane = laneOf(piece);
     if (home.pieces.some(other => stepsOf(other).some(key => crossesLane(key, lane)))) return 'gateLane';
     if ((home.boxes ?? []).some(box => boxInLane(box, lane))) return 'gateLaneBox';
+    if ((home.builds ?? []).some(row => rectanglesOverlap(buildBounds(row), lane))) return 'lane';
     if (!gatesLeft(home)) return 'noGate';
   } else {
     const lane = laneOf(gateOf(home));
@@ -191,6 +318,22 @@ export function pieceInLand(piece) {
 export const GATE_POST = .3;
 export function homeSolids(home, {gateOpen = false, heightAt}) {
   const rows = [];
+  for (const row of home?.builds ?? []) {
+    if (row.stage < 2) continue;
+    const at = buildInLand(row), w = HOME_BUILDS[row.kind].width * HOME_STEP, d = HOME_BUILDS[row.kind].depth * HOME_STEP;
+    const add = (key, x, z, halfX, halfZ, height) => {
+      const px = at.x + x * Math.cos(at.heading) + z * Math.sin(at.heading);
+      const pz = at.z - x * Math.sin(at.heading) + z * Math.cos(at.heading);
+      rows.push({id: `home/${row.kind}/${key}`, kind: 'wall', x: px, z: pz, halfX, halfZ, heading: at.heading,
+        height, base: heightAt(at.x, at.z)});
+    };
+    for (const x of [-w / 2, w / 2]) for (const z of [-d / 2, d / 2]) add(`post/${x}/${z}`, x, z, .09, .09, 2.1);
+    if (row.stage >= 3) {
+      add('back', 0, -d / 2, w / 2, .06, 2.1);
+      for (const side of [-1, 1]) add('side/' + side, side * w / 2, 0, .06, d / 2, 2.1);
+      if (row.kind === 'shed') for (const side of [-1, 1]) add('front/' + side, side * 1.35, d / 2, .65, .06, 2.1);
+    }
+  }
   for (const box of home?.boxes ?? []) {
     const {x, z} = boxInLand(box);
     rows.push({id: `home/box/${box.i}/${box.j}`, kind: 'post', x, z, halfX: HOME_BOX.size / 2, halfZ: HOME_BOX.size / 2,
@@ -262,7 +405,7 @@ export function nameHen(home, index, text) {
   if (!name || !home.hens?.[index] || home.hens[index].name === name) return home;
   return {...home, hens: home.hens.map((hen, n) => n === index ? {...hen, name} : hen)};
 }
-export const cratesLeft = home => home?.hens?.length ? HOME_CRATES - home.boxes.length : 0;
+export const cratesLeft = home => home?.hens?.length ? HOME_CRATES - home.boxes.length + coopBoxes(home).length : 0;
 export const boxRoom = home => (home?.boxes ?? []).reduce((sum, box) => sum + BOX_HOLDS - box.eggs, 0);
 export const eggsInBoxes = home => (home?.boxes ?? []).reduce((sum, box) => sum + box.eggs, 0);
 export const boxesFull = home => (home?.boxes?.length ?? 0) > 0 && boxRoom(home) === 0;
@@ -300,6 +443,7 @@ export function boxSlotInFront(position, yaw) {
 export function boxRefusal(home, cell) {
   if (!whole(cell.i) || !whole(cell.j) || cell.i < 0 || cell.j < 0 || cell.i >= HOME_CELLS || cell.j >= HOME_CELLS) return 'offGround';
   if (home.boxes.some(box => box.i === cell.i && box.j === cell.j)) return 'boxCell';
+  if ((home.builds ?? []).some(row => rectanglesOverlap(buildBounds(row), {i0: cell.i, i1: cell.i + 1, j0: cell.j, j1: cell.j + 1}))) return 'onTop';
   if (boxInLane(cell, laneOf(gateOf(home)))) return 'boxLane';
   if (cratesLeft(home) <= 0) return 'noCrates';
   return null;
@@ -322,6 +466,7 @@ export function gatherBox(home, index) {
 // Picking a box up gathers its eggs first; the old crate is back in his hands.
 export function liftBox(home, index) {
   if (!home.boxes[index]) return home;
+  if (coopBoxes(home).some(cell => sameCell(cell, home.boxes[index]))) return home;
   const gathered = gatherBox(home, index);
   return {...gathered, boxes: gathered.boxes.filter((_, n) => n !== index)};
 }
@@ -389,7 +534,9 @@ export function boardLines(opened, home) {
   const waiting = eggsInBoxes(home);
   lines.push(!home.boxes.length ? BOARD_WORDS.noBox : boxesFull(home) ? BOARD_WORDS.full : waiting === 0 ? BOARD_WORDS.emptyBoxes :
     waiting === 1 ? BOARD_WORDS.waitingOne : fill(BOARD_WORDS.waiting, {count: waiting}));
-  lines.push(home.eggs === 0 ? BOARD_WORDS.storeNone : home.eggs === 1 ? BOARD_WORDS.storeOne : fill(BOARD_WORDS.store, {count: home.eggs}));
+  lines.push(home.builds?.some(row => row.kind === 'shed' && row.stage === 4) ? shedWords(home) :
+    home.eggs === 0 ? BOARD_WORDS.storeNone : home.eggs === 1 ? BOARD_WORDS.storeOne : fill(BOARD_WORDS.store, {count: home.eggs}));
+  if (home.boxes.length && !home.builds?.some(row => row.kind === 'coop' && row.stage === 4)) lines.push(BOARD_WORDS.firstBuildings);
   return lines;
 }
 
@@ -403,6 +550,7 @@ export function facedThing(home, position, yaw) {
   // The box's snapped cell can lie beside the sight line or one cell further on. The same reach serves building,
   // gathering and picking it up, without extending the reach for fence panels.
   (home?.boxes ?? []).forEach((box, index) => {
+    if (coopBoxes(home).some(cell => sameCell(cell, box))) return;
     const at = boxInLand(box), dx = at.x - position.x, dz = at.z - position.z;
     const along = dx * ahead.x + dz * ahead.z, across = dx * ahead.z - dz * ahead.x;
     if (along >= .3 && Math.hypot(dx, dz) <= HOME_REACH + HOME_STEP && Math.abs(across) <= along * Math.tan(BOX_AIM))
