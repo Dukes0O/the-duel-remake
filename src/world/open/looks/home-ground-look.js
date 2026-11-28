@@ -496,7 +496,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
         prop.visible = !!person && !state.crewTalk;
         if (!person) return;
         // The figures and their implements are presentation only. No work is counted by this stroke.
-        const root = crew.group.children[index];
+        const root = crew.group.getObjectByName('home-person-' + person.id) ??
+          crew.group.getObjectByName('story-person-' + person.figure);
         if (root) {
           root.name = 'home-person-' + person.id;
           root.scale.set(person.id === 'rook' ? 1.08 : 1, person.id === 'rook' ? 1.05 : 1, 1);
