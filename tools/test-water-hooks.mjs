@@ -79,6 +79,7 @@ same(FEATURE_STATES['water-road'], 'on', 'the Water Road is released (WATER-FINI
   same(app._water.pending, null, 'another mode clears it');
   ok(app.startCampaign(app.getRaceChoices()), 'a Rival Duel starts');
   same(app._water.run, null, 'it is not the story\'s race');
+  same(app.duel.waterRoadJob, null, 'an ordinary race has no story tuning marker');
   app._settleResult(raceResult(), app.duel.state);
   ok(!water(app.profile).jobs, 'a win in another mode grants nothing');
   app.returnToMenu();
@@ -99,6 +100,7 @@ same(FEATURE_STATES['water-road'], 'on', 'the Water Road is released (WATER-FINI
   // Lose, quit, abandon: nothing.
   app.waterStep('sal');
   ok(app.startCampaign(app.getRaceChoices()) && app._water.run?.mark === 'sal', 'the story race starts');
+  same(app.duel.waterRoadJob, 'sal', 'the Story-card marker reaches race simulation');
   ok(!app.storyCaption, 'Hollis waits while the road loads');
   app.duel.state.countdown = 0; app.duel.step(DT);
   ok(app.storyCaption?.id === 'story.water.job.sal', 'Hollis\'s radio line shows at GO');
@@ -150,6 +152,7 @@ same(FEATURE_STATES['water-road'], 'on', 'the Water Road is released (WATER-FINI
   app.waterStep('kettle');
   ok(app.startArenaEvent({mode: 'last-car-rolling', venueId: 'scrapdome', opponents: 2}), 'START: Last Car Rolling');
   ok(app._water.run?.mark === 'kettle', 'the story\'s game');
+  same(app.duel.waterRoadJob, 'kettle', 'the Story-card marker reaches arena simulation');
   app.duel.state.countdown = 0; for (let n = 0; n < 3 && app.duel.state.arena.phase !== 'fight'; n++) app.duel.step(DT);
   ok(app.storyCaption?.id === 'story.water.job.kettle', 'Hollis\'s radio line shows as the fight begins');
   const s = app.duel.state;
@@ -256,6 +259,25 @@ same(FEATURE_STATES['water-road'], 'on', 'the Water Road is released (WATER-FINI
   app._saveProfile();
   winFight(false);
   same(said, ['story.water.vesper.8'], 'and not after a rematch');
+}
+
+// The Story Wall alone marks a warlord fight; a rematch keeps that run's mark.
+{
+  const app = freshApp();
+  app.profile.wasteland.territories.sal.hold = 100;
+  app.profile.story.water.jobs = ['sal'];
+  app._saveProfile();
+  intoYard(app);
+  same(app.waterStep('sal'), {started: true}, 'the Story Wall starts Sal');
+  same(app.duel.waterRoadJob, 'sal', 'her story marker reaches the fight');
+  const armor = app.duel.state.opponents[0].maxArmor;
+  app.restart();
+  same([app.duel.waterRoadJob, app.duel.state.opponents[0].maxArmor], ['sal', armor], 'a rematch retains its story numbers');
+  app.returnToMenu();
+  intoYard(app);
+  ok(app.startWarlordFight('sal'), 'her ordinary fight starts');
+  same(app.duel.waterRoadJob, null, 'choosing a fight outside the Story Wall clears the marker');
+  ok(app.duel.state.opponents[0].maxArmor > armor, 'the ordinary fight retains its released armor');
 }
 
 console.log(`test-water-hooks: ${checks} checks passed`);

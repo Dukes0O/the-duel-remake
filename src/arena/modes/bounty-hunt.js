@@ -2,6 +2,7 @@ import {makeRng} from '../../rng.js';
 
 // Bounty Hunt rules (SCRAPDOME 10). Only native simulation writes this state.
 export const BOUNTY_RULES = Object.freeze({
+  waterEasyArmorScale: .8,
   timeLimitSec: 180, suddenDeathSec: 30, pointsPerSecond: 1, markedWreckPoints: 20,
 });
 

@@ -1,3 +1,4 @@
+import {waterEasy} from '../../story/water-easy.js';
 import {makeRng} from '../../rng.js';
 import {createRaidZones} from '../../raiders.js';
 import {createFighter, FIGHTER_RULES} from '../../onfoot.js';
@@ -6,6 +7,7 @@ import {sweepObstacle} from '../../collision.js';
 import {crewPerks} from '../../crew.js';
 
 export const AMBUSH_RULES = Object.freeze({
+  waterEasy: Object.freeze({raiderHealth: 25, wearPerSecond: .5, rocketGapSec: 9.9, fortHealth: 900, buggyArmor: 30}),
   rank: 12, timeLimitSec: Infinity, suddenDeathSec: 0, maxOpponents: 1,
   waveCounts: Object.freeze([3, 4, 5, 6, 8]), gapSec: 10,
   firstWaveApproachSec: 20, firstWaveRocketGapSec: 6.6,
@@ -68,6 +70,7 @@ function scrapCover(course, index, pose, heading) {
 
 function fortLayout(duel) {
   const course = duel.course;
+  const health = waterEasy(duel) ? AMBUSH_RULES.waterEasy.fortHealth : AMBUSH_RULES.fortHealth;
   if (course.def.id === 'pit') {
     const radius = course.def.pit.pileRadius + 8;
     const cover = Array.from({length: 8}, (_, index) => {
@@ -76,7 +79,7 @@ function fortLayout(duel) {
       return scrapCover(course, index, pose, pose.heading);
     });
     const fort = {x: 0, y: 0, z: 0, s: 0, lateral: -course.def.pit.radius,
-      health: AMBUSH_RULES.fortHealth, maxHealth: AMBUSH_RULES.fortHealth, cover,
+      health, maxHealth: health, cover,
       core: course.features.obstacles.find(obstacle => obstacle.id === 'pit-centre-pile')};
     const park = poseAt(course, course.length / 8,
       course.def.pit.pileRadius + 4 - course.def.pit.radius);
@@ -89,8 +92,8 @@ function fortLayout(duel) {
     const pose = poseAt(course, s + ds, lateral);
     return scrapCover(course, index, pose, pose.heading);
   });
-  return {fort: {...at, health: AMBUSH_RULES.fortHealth,
-    maxHealth: AMBUSH_RULES.fortHealth, cover},
+  return {fort: {...at, health,
+    maxHealth: health, cover},
   park: poseAt(course, s, 5), fighter: poseAt(course, s, 2)};
 }
 
@@ -153,13 +156,14 @@ function startWave(duel, wave) {
     s: alley.waveSpawn.fighters[index].s, side: index ? 1 : -1,
     raiders: [], salvage: null, warning: null, warnedLap: duel.state.currentLap,
     nextShotAt: alley.attackStartsAt, shotCount: 0, ambushWave: wave,
-    shotGapSec: wave === 1 ? AMBUSH_RULES.firstWaveRocketGapSec :
+    shotGapSec: waterEasy(duel) ? AMBUSH_RULES.waterEasy.rocketGapSec : wave === 1 ? AMBUSH_RULES.firstWaveRocketGapSec :
       COMBAT_TUNING.foot.rpgReloadSeconds}));
+  const health = waterEasy(duel) ? AMBUSH_RULES.waterEasy.raiderHealth : COMBAT_TUNING.raider.health;
   for (const [index, pose] of alley.waveSpawn.fighters.entries()) {
     const raider = {...templates[index % templates.length],
       ...createFighter(duel.course, duel.state, pose), ...pose,
       id: `ambush-${wave}-${index}`, ambushWave: wave, firedLap: 0,
-      health: COMBAT_TUNING.raider.health, maxHealth: COMBAT_TUNING.raider.health,
+      health, maxHealth: health,
       knockedDown: false, knockdownRemaining: 0, knockdownAwarded: false,
       knockdownCounted: false, groundY: pose.y};
     zones[index % 2].raiders.push(raider);
@@ -175,6 +179,10 @@ export function initializeAmbushAlley(duel) {
       !['pit', 'salt-flats'].includes(duel.course.def.id)) return false;
   if (state.arena.ambushAlley) return true;
   const {fort, park, fighter} = fortLayout(duel);
+  if (waterEasy(duel)) {
+    const buggy = state.opponents.find(actor => actor.arenaRole === 'ambush-buggy');
+    buggy.armor = buggy.maxArmor = AMBUSH_RULES.waterEasy.buggyArmor;
+  }
   if (!clearPose(duel.course, park, duel._vehicleSpec(state), fort.cover) ||
       !clearPose(duel.course, fighter, BODY, fort.cover) ||
       fort.cover.some(cover => !clearPose(duel.course,
@@ -264,7 +272,7 @@ export function stepAmbushAlley(duel, dt) {
   const nearby = alive.filter(raider => targets.some(cover =>
     distance(raider, cover) <= AMBUSH_RULES.wearRangeMetres));
   if (state.stageTimeSec >= alley.attackStartsAt)
-    damageAmbushFort(duel, nearby.length * AMBUSH_RULES.wearPerSecond * dt, {source: 'wear'});
+    damageAmbushFort(duel, nearby.length * (waterEasy(duel) ? AMBUSH_RULES.waterEasy.wearPerSecond : AMBUSH_RULES.wearPerSecond) * dt, {source: 'wear'});
   if (alley.fort.health <= 0) return {reason: 'fort-fell', winnerId: 'raiders'};
   const buggy = state.opponents.find(actor => actor.arenaRole === 'ambush-buggy' &&
     actor.ambushWave === alley.wave);

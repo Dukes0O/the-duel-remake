@@ -1,3 +1,4 @@
+import {waterEasy} from '../story/water-easy.js';
 import {arenaActor, arenaParticipant, outOfPlay} from '../combat-teams.js';
 import {burst} from '../combat-weapons.js';
 import {worldPose, floorLimit} from '../arena/arena-floor.js';
@@ -6,6 +7,7 @@ import {worldPose, floorLimit} from '../arena/arena-floor.js';
 // into copies. Between splits the ordinary gunner brain drives her; this file
 // adds the Mirage, the stun window and phase two's ramming copies.
 export const MIRAGE_RULES = Object.freeze({
+  waterEasyArmor: 35, waterEasyCooldownSec: 10,
   triggerMetres: 40, spreadMetres: 8, splitSec: 6,
   cooldownSec: Object.freeze({easy: 12, medium: 10, hard: 8}),
   phaseTwoRate: 1.2, stunSec: 2, windowMultiplier: 1.5,
@@ -17,7 +19,8 @@ export const MIRAGE_RULES = Object.freeze({
 const EPSILON = 1e-9;
 
 function cooldown(duel) {
-  const base = MIRAGE_RULES.cooldownSec[duel.state.cpuDifficulty] ?? MIRAGE_RULES.cooldownSec.medium;
+  const base = waterEasy(duel, 'mirage') ? MIRAGE_RULES.waterEasyCooldownSec :
+    MIRAGE_RULES.cooldownSec[duel.state.cpuDifficulty] ?? MIRAGE_RULES.cooldownSec.medium;
   return duel.state.arena.warlordPhase === 2 ? base / MIRAGE_RULES.phaseTwoRate : base;
 }
 
@@ -40,6 +43,7 @@ function leaveMark(duel, actor, pose) {
 }
 
 export function resetMirage(duel, actor) {
+  if (waterEasy(duel, 'mirage')) actor.armor = actor.maxArmor = MIRAGE_RULES.waterEasyArmor;
   const old = actor.mirage;
   removeCopies(duel, actor, false);
   dropMarks(duel.state.arena, true);

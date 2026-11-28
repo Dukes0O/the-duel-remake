@@ -1068,7 +1068,9 @@ export class App {
     this._resetKeyboardInput();
     this._stepAccumulator = 0;
     this._scriptedCrashDone = false;
-    this.duel.startCampaign({...options,...(isSummitAttack(stage)?{opponentCount:0,qualifying:false}:{}),laps,tyre,yetiSeed,weaponLevels:getProfileWeapons(this.profile).levels,
+    const waterLine = this._waterRoad().raceStarted({stage, mode, runId: this.runId, rematch: options.waterRematch === true});
+    const waterRoad = this._waterRoad().run?.mark ?? null;
+    this.duel.startCampaign({...options,waterRoad,...(isSummitAttack(stage)?{opponentCount:0,qualifying:false}:{}),laps,tyre,yetiSeed,weaponLevels:getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
@@ -1086,7 +1088,7 @@ export class App {
     if(storyRun){levelStart(this.duel);this._storySay('story.kogane.daichi.grid');}
     // WATER-HOOKS: a Water Road race, asked for by the Story card (or a restart of one), and its radio line.
     // The line waits for GO: while the road loads the player cannot see it yet.
-    this._waterStartLine=this._waterRoad().raceStarted({stage,mode:this.duel.state.mode,runId:this.runId,rematch:options.waterRematch===true});
+    this._waterStartLine=waterLine;
     return true;
   }
   nextStage(){
@@ -1153,7 +1155,7 @@ export class App {
     // A helicopter visit has no run to restart; the pause menu leaves it.
     if (this.duel.state.status === 'heli') return false;
     if (this.duel.state.arena?.mode === 'warlord')
-      return this.startWarlordFight(this.duel.state.arena.warlordId);
+      return this.startWarlordFight(this.duel.state.arena.warlordId, {waterRoad: this.duel.waterRoadJob});
     if (this.duel.state.arena) return this.startArenaEvent({
       mode: this.duel.state.arena.mode, venueId: this.duel.state.arena.venueId,
     });
@@ -2293,7 +2295,7 @@ export class App {
   warlordsAvailable() {
     return this.arenaAvailable();
   }
-  startWarlordFight(warlordId) {
+  startWarlordFight(warlordId, {waterRoad = null} = {}) {
     this._refreshPlayer();
     const state = this.duel.state;
     const ownRematch = state.arena?.mode === 'warlord' &&
@@ -2303,7 +2305,7 @@ export class App {
         !warlordEnabled(this.duel, warlordId) ||
         !warlordUnlockSatisfied(this.profile, warlordId) ||
         !(this.isYardHomeActive() || ownRematch)) return false;
-    return this._startArenaFight({warlordId, opponents: 1});
+    return this._startArenaFight({warlordId, opponents: 1, waterRoad});
   }
   beginWarlordFight() {
     if (this._runPlayerId !== this.player.id ||
@@ -2410,7 +2412,7 @@ export class App {
     const radio=run.frame(seconds);
     if(radio)this._storyRadioNow().sayTownLine(radio.lineId,{radioReport:radio.report});
   }
-  _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling', job = null}) {
+  _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling', job = null, waterRoad = null}) {
     const state = this.duel.state;
     // Admission reads the current durable owner before creating any run state.
     // The existing failed-save guard keeps unsaved session progress intact.
@@ -2463,6 +2465,7 @@ export class App {
     // WATER-HOOKS: a Water Road game, asked for by the Story card (or a rematch of one), and its radio line.
     const waterLine = this._waterRoad().arenaStarted({mode, venueId, warlordId, runId: this.runId, rematch: !!state.arena});
     // Vesper speaks after the Baron's first defeat only, never after a rematch.
+    options.waterRoad = this._waterRoad().available() ? (warlordId ? waterRoad : this._waterRoad().run?.mark) : null;
     const started = warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
     if (started && mode === 'world-job' && job.open) {

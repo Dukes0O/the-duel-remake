@@ -1,5 +1,7 @@
 # Wasteland run log
 
+28 November (EASY-YOUNG-DRIVER lane sweep): audit candidates advisory; no asset or branch removals; sizes and idle branches in STATUS; generated build, QA scratch and evidence recycled after checks.
+
 28 November (QA-AUDIO-SWEEP lane sweep): repo audit reviewed; candidates remain advisory, with no runtime asset or branch removal; sizes and idle branches recorded in STATUS; this card's evidence, QA scratch and production build output recycled after the verdicts.
 
 27 November (HOME-GROUND-3B lane sweep): repo audit reviewed; no asset or branch removals in this card; sizes and idle branches recorded in STATUS; lane scratch and build output recycled after checks.
@@ -1854,3 +1856,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Janitor HOME-RAID-BIKE-LOOK (28 November): 5,842 tracked files, 900.7 MiB; no unused module candidates. Uncertain assets left intact, generated build and QA scratch recycled; one 383 KB comparison sheet retained. Existing size overruns and idle branches remain on STATUS; lane retained for Claude review.
 - Merge HOME-RAID-BIKE-LOOK (Codex Astra, laptop lane): the raid bike, round 2, passes as a worn trail bike (bike-round-2.jpg)
 - Merge HOME-GROUND-5 (Codex Astra, laptop lane): the well he drills with Tin Town's rig, the hand pump and the 1,000-litre tank on the real clock
+- Merge EASY-YOUNG-DRIVER (Codex Sol, laptop lane): Water Road Easy, story-only, 4 to 7 assisted wins in 10 for every job and fight and at least 2 for a weaker driver

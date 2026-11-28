@@ -1,3 +1,4 @@
+import {waterEasy} from '../story/water-easy.js';
 import {FUEL_RULES, stepFuelRun} from './modes/fuel-run.js';
 import {BOUNTY_RULES, stepBountyHunt, noteBountyWreck, bountyRanking,
   bountyTopTied, bountyDamageWinner} from './modes/bounty-hunt.js';
@@ -39,7 +40,7 @@ export const ARENA_MODES = Object.freeze({
   'world-job': Object.freeze({timeLimitSec: Infinity, suddenDeathSec: Infinity, maxOpponents: 3}),
   warlord: Object.freeze({timeLimitSec: WARLORD_RULES.timeLimitSec,
     suddenDeathSec: WARLORD_RULES.suddenDeathSec, maxOpponents: 2}),
-  'last-car-rolling': Object.freeze({timeLimitSec: 150, suddenDeathSec: 30, maxOpponents: 3}),
+  'last-car-rolling': Object.freeze({waterEasyArmorScale: .8, timeLimitSec: 150, suddenDeathSec: 30, maxOpponents: 3}),
 });
 
 // Computer drivers are named, so callouts read "YOU WRECKED GASKET", and the
@@ -82,7 +83,9 @@ export function applyArenaArmor(duel) {
   const scale = duel.state.arena?.mode === 'warlord' ? .5 : ARENA_RULES.armorScale;
   for (const actor of [duel.state, ...duel.state.opponents]) {
     if (!Number.isFinite(actor.maxArmor)) continue;
-    actor.maxArmor *= scale;
+    const easyScale = duel.state.arena.mode === 'bounty-hunt' ? BOUNTY_RULES.waterEasyArmorScale :
+      ARENA_MODES[duel.state.arena.mode].waterEasyArmorScale;
+    actor.maxArmor *= waterEasy(duel) && actor !== duel.state && easyScale ? easyScale : scale;
     actor.armor = actor.maxArmor;
   }
   initializeConvoyRaid(duel);

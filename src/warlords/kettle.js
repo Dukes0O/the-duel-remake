@@ -1,3 +1,4 @@
+import {waterEasy} from '../story/water-easy.js';
 import {arenaActor, arenaParticipant, outOfPlay, combatOwnerId} from '../combat-teams.js';
 import {DRIVE} from '../config.js';
 import {worldPose, floorLimit} from '../arena/arena-floor.js';
@@ -8,6 +9,7 @@ import {startKnock} from '../vehicle-knock.js';
 // brain. Between drops the ordinary rammer drives him; this file adds the
 // Kettle Drop, its stuck window and the phase-two double drop.
 export const KETTLE_RULES = Object.freeze({
+  waterEasyArmor: 45,
   minMetres: 12, maxMetres: 40, reachMetres: 40, tellScale: 1.4,
   cooldownSec: Object.freeze({easy: 12, medium: 10, hard: 8}),
   ringRadius: 4, squareMetres: 1.8, arcSec: 1.2, arcHeight: 7,
@@ -18,6 +20,7 @@ const EPSILON = 1e-9;
 const MPS_TO_MPH = 1 / .44704;
 
 export function resetKettle(duel, actor) {
+  if (waterEasy(duel, 'kettle')) actor.armor = actor.maxArmor = KETTLE_RULES.waterEasyArmor;
   const old = actor.kettleDrop;
   if (old?.stage === 'leap') land(duel, actor, false);
   actor.kettleDrop = {stage: 'idle', nextDropSec: old?.nextDropSec ?? 0, dropsLeft: 0};

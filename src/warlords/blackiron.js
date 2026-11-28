@@ -1,3 +1,4 @@
+import {waterEasy} from '../story/water-easy.js';
 import {SAL_FIGHT, resetSawSweep, thinkSawSweep} from './sal.js';
 import {DUSTMONGER_FIGHT, resetDustmonger} from './dustmonger.js';
 import {MIRAGE_FIGHT, resetMirage} from './mirage.js';
@@ -11,6 +12,7 @@ import {arenaCarSpec} from '../arena/arena-pilot.js';
 import {arenaFloorSpeed} from '../arena/venues.js';
 
 export const BLACKIRON_RULES = Object.freeze({
+  waterEasyArmor: 38,
   cycle: Object.freeze(['saw', 'dust', 'mirage', 'barrage']),
   cooldownSec: Object.freeze({easy: 8, medium: 7, hard: 6}),
   phaseTwoTellShare: .8,
@@ -34,7 +36,7 @@ export function resetBlackiron(duel, actor) {
   // Town gear (the water cannon) is the player's own, from the town; the Baron never carries it.
   actor.weaponLoadout = [...WEAPON_IDS, ...Object.keys(ARSENAL_WEAPONS).filter(id => !ARSENAL_WEAPONS[id].town)];
   actor.combatRoofLook = 'chrome-crown';
-  actor.maxArmor = BLACKIRON_RULES.armor; actor.armor = actor.maxArmor;
+  actor.maxArmor = waterEasy(duel, 'blackiron') ? BLACKIRON_RULES.waterEasyArmor : BLACKIRON_RULES.armor; actor.armor = actor.maxArmor;
   actor.arenaTellSec = 0;
   actor.arenaNitroSpentSec = 0; actor.arenaNitroTellSec = 0;
 }

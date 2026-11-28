@@ -79,12 +79,23 @@ How it works:
 The modes and warlords keep their own rules and their Easy, Medium and Hard.
 Nothing about the shared difficulty numbers changes.
 
-**Every chapter must be winnable on Easy by a young driver.** The card that
-builds each chapter proves it with the game's test drivers, as the Kogane duel
-did: on Easy, the child-pace driver wins the job and the fight at least 8 times
-in 10. Where a warlord on Easy is too hard for that, the story may only use
-that warlord's own Easy settings, never the shared numbers. If it still cannot,
-the card stops and asks Claude.
+**Every chapter must be winnable on Easy by a young driver.** Claude settled
+EASY-YOUNG-DRIVER on 28 November 2026 under Kyle's 20 November ruling: aim for
+5 to 7 assisted wins in 10, never below 4, and at least 2 child-pace wins in 10.
+Losing is allowed. This replaces the earlier 8-in-10 claim.
+
+Only a job or fight started from the Story card, and its rematches, uses these
+Easy numbers. Ordinary events, Medium and Hard keep their released rules.
+The run marker is checked against the chapter's mode, venue or road; it is not
+saved. Each mode and warlord owns its numbers. The two race jobs share a
+seeded rival pace range in `src/story/water-easy.js`, sampled once per start
+from a separate `rng.js` stream. The two drivers are measured with
+`node tools/test-water-easy.mjs --rates` and `--rates --player assisted`.
+
+The foot driver walks into firing range and around the native pile with its
+usual keys and turn rate, and waits for the selected crew's real RPG lock
+time. Ambush is untimed; its rates observation cap is 900 seconds. Its
+corrected baseline must be measured before any comparison; its latency, aim error, ammo and attack clock stay unchanged.
 
 ## 5. Every line
 
@@ -168,8 +179,8 @@ He can change any of it later. The build rules are in `docs/SCRAPDOME.md`,
    it yet; scrap; and his card on the Story Wall.
 
 He opens for everyone who has beaten Baron Blackiron, story or not. On Easy a
-young driver must beat him at least 8 times in 10 (section 4), using his own
-Easy numbers only.
+young driver uses the same settled target as section 4: 5 to 7 assisted wins
+in 10 (floor 4), with a child-pace floor of 2, using his own Easy numbers only.
 
 ## 7. What changes for a player with progress
 
@@ -251,7 +262,7 @@ own (card WATER-YARD-NEXT) because it is a plain fix.
 | **WATER-HOOKS** | WATER-SAVE | `busy-game-files` | the story mark through arena, warlord and race settlement; "Start job" filling the setup | A story job counts only from the Story card's button; changing mode, venue or road clears it; lose, quit or abandon grants nothing |
 | **WATER-YARD-ART** | none | none | `tools/blender/` recipe for the water works (well, pipe, pump house, boiler, truck bay, water tower with eight fill levels), `public/assets/models/wasteland/scrapdome/` | Three-round cap; gritty, never toy-like; shows each stage in the yard; frame check when wired in |
 | **WATER-SCREENS** | WATER-SAVE, WATER-LINES | none | Story Wall chapters, the bars, the yard stages, results tick | Every chapter says what to do with one button; locked chapters show the bar to the next gate; nothing shows with the switch off |
-| **WATER-EASY** | WATER-HOOKS | none | `tools/test-water-easy.mjs` | Section 4: child-pace driver wins each chapter's job and fight on Easy at least 8 in 10 |
+| **WATER-EASY** | WATER-HOOKS | none | `tools/test-water-easy.mjs` | Section 4: assisted target 5 to 7 in 10 (floor 4); child-pace floor 2 in 10 |
 | **WATER-FINISH** | all above | none | change note | Claude plays chapters 0 to 8 as a young driver on Easy on a fresh memory-only career, and as a finished player; sends Kyle a sheet; switch on |
 | **WARLORD-NINE** | WATER-FINISH, Gratian's answers | none | the ninth warlord (rules, art within the cap, lines), chapter 9 | Gratian's design built; winnable on Easy; Gratian plays it |
 

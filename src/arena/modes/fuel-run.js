@@ -1,5 +1,8 @@
+import {waterEasy} from '../../story/water-easy.js';
+
 // Fuel Run rules (SCRAPDOME 10). Simulation only; presentation reads this state.
 export const FUEL_RULES = Object.freeze({
+  waterEasy: Object.freeze({deliveryPace: .28}),
   deliveriesToWin: 5, timeLimitSec: 180, refillSec: 5,
   pickupMetres: 3.5, depotMetres: 4, innerOffset: -6,
   padFractions: Object.freeze([.16, .36, .57, .81]),
@@ -104,7 +107,8 @@ export function fuelGoal(duel, participant, actor, top) {
   }
   const at = course.worldAt(destination.s, destination.lateral);
   const gap = distance(course, actor, destination);
-  return {x: at.x, z: at.z, speedMph: Math.min(top, Math.max(10, gap * 1.7)), boost: false};
+  return {x: at.x, z: at.z, speedMph: Math.min(top, Math.max(10, gap * 1.7)) *
+    (waterEasy(duel) ? FUEL_RULES.waterEasy.deliveryPace : 1), boost: false};
 }
 
 export function stepFuelRun(duel, dt) {

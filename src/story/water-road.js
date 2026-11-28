@@ -2,8 +2,8 @@
 // 3): what each chapter shows and the one thing to do next, and the story job's
 // mark from the Story card's button through the setup, the start and the
 // settlement. Behind the `water-road` switch. The save rules are in
-// water-save.js, the words in water-lines.js. Nothing here changes a race, a
-// fight or the career's own rewards: a won story job only adds its id to
+// water-save.js, the words in water-lines.js. EASY-YOUNG-DRIVER passes a run
+// marker for story-only Easy tuning; rewards stay unchanged. A won job adds its id to
 // `story.water.jobs`, in the same profile change as the game's own settlement.
 import {COURSE} from '../config.js';
 import {WARLORDS, warlordUnlockSatisfied} from '../warlords.js';
@@ -172,7 +172,7 @@ export function createWaterRoad(app) {
       if (app.duel.state.status !== 'menu') app.returnToMenu();
       return app.duel.state.status === 'menu' ? {courses: action.courseId} : null;
     }
-    if (action.type === 'fight') return app.startWarlordFight(action.warlordId) ? {started: true} : null;
+    if (action.type === 'fight') return app.startWarlordFight(action.warlordId, {waterRoad: action.warlordId}) ? {started: true} : null;
     if (action.type === 'arena') {
       if (!app.isYardHomeActive?.()) return null;
       if (action.mark) pending = {kind: 'arena', mark: action.mark, mode: action.mode, venueId: action.venueId};

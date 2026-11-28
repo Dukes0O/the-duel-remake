@@ -1,3 +1,4 @@
+import {waterEasy} from '../story/water-easy.js';
 import {arenaActor, outOfPlay} from '../combat-teams.js';
 import {DRIVE} from '../config.js';
 import {worldPose} from '../arena/arena-floor.js';
@@ -10,6 +11,7 @@ import {applyOilSlip} from '../arsenal/oil.js';
 // dust. Between veils the ordinary gunner brain drives him; this file only
 // adds the Dust Veil, its window and the phase-two dust storm.
 export const DUST_RULES = Object.freeze({
+  waterEasyArmor: 55,
   behindMetres: 40, behindSideMetres: 15,
   cooldownSec: Object.freeze({easy: 10, medium: 8, hard: 6}),
   phaseTwoRate: 1.2, phaseTwoCloudScale: 1.3,
@@ -27,6 +29,7 @@ function inFight(duel, actor) {
 }
 
 export function resetDustmonger(duel, actor) {
+  if (waterEasy(duel, 'dustmonger')) actor.armor = actor.maxArmor = DUST_RULES.waterEasyArmor;
   const old = actor.dustVeil;
   actor.dustVeil = {stage: 'idle', sinceSec: duel.state.stageTimeSec,
     nextVeilSec: old?.nextVeilSec ?? 0, straightSec: 0,

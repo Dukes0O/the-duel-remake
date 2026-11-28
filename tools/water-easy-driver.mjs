@@ -19,6 +19,9 @@
 // the computer pilot does (src/arena/arena-pilot.js), because a child who keeps driving into a wall is a broken
 // test, not a child.
 globalThis.cancelAnimationFrame ??= () => {};
+import {sweepObstacle} from '../src/collision.js';
+import {FIGHTER_RULES} from '../src/onfoot.js';
+import {crewRpgTiming} from '../src/crew-gear/gear.js';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {DRIVE, COURSE} from '../src/config.js';
@@ -234,6 +237,28 @@ function board(duel, child, hands) {
   return true;
 }
 
+// The fort's native pile also blocks the return to the car. A single simple
+// detour keeps every Ambush walk on the same keys, with no pathfinding or sprint.
+function walkFort(duel, hands, point, stopMetres = 1, destination = 'target') {
+  const fighter = duel.state.fighter, course = duel.course;
+  const metres = Math.hypot(point.x - fighter.x, point.z - fighter.z);
+  if (hands.footRoute?.destination !== destination) hands.footRoute = {destination, around: null};
+  const route = hands.footRoute, core = duel.state.arena.ambushAlley.fort.core;
+  if (core && sweepObstacle(fighter, {...point, y: fighter.y}, core, fighter.yaw,
+      {halfWidth: FIGHTER_RULES.radius, halfLength: FIGHTER_RULES.radius, height: FIGHTER_RULES.height})) {
+    const at = course.nearest(fighter.x, fighter.z, fighter.s);
+    const there = course.nearest(point.x, point.z, at.s);
+    route.around ??= Math.sign(ringDistance(course, at.s, there.s)) || 1;
+    const waypoint = course.worldAt(at.s + route.around * 12,
+      Math.max(course.def.pit.pileRadius + 14, Math.hypot(fighter.x, fighter.z)) - course.def.pit.radius);
+    walk(duel, waypoint, 0);
+  } else {
+    route.around = null;
+    walk(duel, point, stopMetres);
+  }
+  return metres; // Repair and interact always measure the real destination.
+}
+
 // Ambush Alley: on foot at the fort; rockets at the nearest raider (or the buggy), back to the car to reload.
 function holdFort(duel, child, hands, view) {
   const state = duel.state, alley = state.arena.ambushAlley, weapons = state.footWeapons;
@@ -248,7 +273,7 @@ function holdFort(duel, child, hands, view) {
   if (fighter.knockedDown) return;
   if (weapons.ammo <= 0) {
     const car = duel.course.groundAt(state.s, state.lateral);
-    walk(duel, car, 2);
+    walkFort(duel, hands, car, 2, 'reload');
     duel.setInput({interact: fighterDistanceToCar(duel) < 3});
     return;
   }
@@ -270,7 +295,7 @@ function holdFort(duel, child, hands, view) {
       if (weapons.selected !== 'wrench') duel.selectFootGear(2);
       const cover = fort.cover.reduce((best, item) => Math.hypot(item.x - fighter.x, item.z - fighter.z) <
         Math.hypot(best.x - fighter.x, best.z - fighter.z) ? item : best);
-      const metres = walk(duel, cover, 2.2);
+      const metres = walkFort(duel, hands, cover, 2.2, cover.id);
       hands.mend = metres < 3 && !(weapons.repairBlockedUntilRelease && hands.mend);
       duel.setFighterInput({fire: hands.mend, aim: false});
       return;
@@ -281,12 +306,35 @@ function holdFort(duel, child, hands, view) {
   if (weapons.selected !== 'rpg') { duel.selectFootGear(1); duel.setFighterInput({fire: false}); hands.fired = false; }
   if (hands.aimError == null) hands.aimError = child.aimError();
   const dx = target.at.x - fighter.x, dz = target.at.z - fighter.z, flat = Math.hypot(dx, dz);
+  // A target beyond firing range (or behind the native pile) needs a walk,
+  // not an infinite wait with ammo. Same keys and turn speed as every foot move.
+  const from = {x: fighter.x, y: fighter.y + COMBAT_TUNING.foot.rpgEyeHeight, z: fighter.z};
+  const to = {...target.at, y: (target.at.y ?? fighter.y) + .9};
+  const blocked = duel.course.features.obstacles.some(obstacle =>
+    sweepObstacle(from, to, obstacle, fighter.yaw, {halfWidth: 0, halfLength: 0, height: 0}));
+  if (!blocked) hands.fortAround = null;
+  if (flat >= 35 || blocked) {
+    let goal = target.at;
+    if (blocked && duel.course.def.pit) {
+      const course = duel.course, at = course.nearest(fighter.x, fighter.z, fighter.s);
+      const there = course.nearest(target.at.x, target.at.z, at.s);
+      // Keep walking around this obstruction until the view clears. Reversing
+      // at the target's bearing would leave the child pacing behind one cover.
+      hands.fortAround ??= Math.sign(ringDistance(course, at.s, there.s)) || 1;
+      goal = course.worldAt(at.s + hands.fortAround * 12,
+        Math.max(course.def.pit.pileRadius + 14, Math.hypot(fighter.x, fighter.z)) - course.def.pit.radius);
+    }
+    walkFort(duel, hands, goal, 2, target.raider?.id ?? 'buggy');
+    duel.setFighterInput({fire: false, aim: car});
+    hands.fired = false;
+    return;
+  }
   const yawWanted = Math.atan2(dx, dz) + hands.aimError;
   const pitchWanted = Math.atan2((target.at.y ?? fighter.y) + .9 - (fighter.y + COMBAT_TUNING.foot.rpgEyeHeight), flat);
   const turn = wrap(yawWanted - fighter.yaw), tilt = pitchWanted - (fighter.pitch || 0);
   const step = CHILD.footTurnRadiansPerSecond * DT;
   const ready = flat < 40 && state.stageTimeSec + 1e-9 >= weapons.nextFireAt && Math.abs(turn) < step * 1.5 && Math.abs(tilt) < .02 &&
-    (!car || weapons.lockSeconds >= COMBAT_TUNING.foot.rpgLockSeconds - 1e-9);
+    (!car || weapons.lockSeconds >= (crewRpgTiming(duel, fighter.crewId)?.lockSeconds ?? COMBAT_TUNING.foot.rpgLockSeconds) - 1e-9);
   const fire = ready && !hands.fired;
   duel.setFighterInput({turnLeft: turn > step / 2, turnRight: turn < -step / 2, forward: false, back: false,
     left: false, right: false, sprint: false, jump: false, lookX: 0,
@@ -297,13 +345,13 @@ function holdFort(duel, child, hands, view) {
 
 // One arena game. job: {mode, venueId} or fight: {warlordId}. Returns what happened.
 export function playArena({mode = 'last-car-rolling', venueId = 'scrapdome', warlordId = null, seed = 1989,
-  car = STARTER_CAR, arsenalRank = 12, maxSec = 420, rules = {}, opponents = 3, featureFlags = {}}) {
+  car = STARTER_CAR, arsenalRank = 12, maxSec = 420, rules = {}, opponents = 3, featureFlags = {}, waterRoad = null}) {
   const duel = new Duel({seed, featureFlags: {'hidden-road': true, ...featureFlags}});
   duel.state.wastelandGateDiscovered = true;
   const count = mode === 'ambush-alley' ? 0 : opponents;
   const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: 0,
     ...(mode === 'fuel-run' ? {brain: ['collector', 'rammer', 'hunter'][index]} : {})}));
-  const options = {mode, venueId, car, cpuDifficulty: 'easy', difficulty: 'casual', seed, opponents: field, arsenalRank};
+  const options = {mode, venueId, car, cpuDifficulty: 'easy', difficulty: 'casual', seed, opponents: field, arsenalRank, waterRoad};
   const started = warlordId ? startWarlordEvent(duel, {...options, warlordId}) : duel.startArenaEvent(options);
   if (!started) throw Error(`could not start ${warlordId ?? mode}`);
   if (warlordId) beginWarlordEvent(duel);
@@ -367,7 +415,7 @@ export function playArena({mode = 'last-car-rolling', venueId = 'scrapdome', war
 // ---- Mad Max Duel races -----------------------------------------------------------------------------------------------
 // The App's autopilot holds the line; the child drives it at 85 to 90% of the autopilot's corner speed and attacks on
 // the Easy clock with the Easy aim error.
-export async function playRace({courseId, seed = 1989, car = STARTER_CAR, rules = {}}) {
+export async function playRace({courseId, seed = 1989, car = STARTER_CAR, rules = {}, waterRoad = null}) {
   const memory = new Map();
   globalThis.localStorage = {getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, String(v)),
     removeItem: k => memory.delete(k), key: i => [...memory.keys()][i] ?? null, get length() { return memory.size; }};
@@ -377,7 +425,7 @@ export async function playRace({courseId, seed = 1989, car = STARTER_CAR, rules 
   const startStage = COURSE.findIndex(course => course.id === courseId);
   if (startStage < 0) throw Error('no course ' + courseId);
   app.duel.startCampaign({startStage, seed, mode: 'wasteland', discoveredGate: true, car, difficulty: 'casual',
-    cpuDifficulty: 'easy', playerId: app.player.id, upgrades: {}});
+    cpuDifficulty: 'easy', playerId: app.player.id, upgrades: {}, waterRoad});
   if (app.duel.state.mode !== 'wasteland' || app.duel.course.def.id !== courseId) throw Error('could not start ' + courseId);
   const duel = app.duel, state = duel.state, child = childFor(seed, rules);
   app.autopilot = true; app._scriptedCrashDone = true;
