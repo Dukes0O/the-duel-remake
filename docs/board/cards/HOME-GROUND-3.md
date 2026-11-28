@@ -91,3 +91,15 @@ play asks for it.
 Changed assertions for Claude's written review: two version 1 upgrade expectations now require version 3 and its
 added fields; the exact board text now includes the settled building invitation; the board's reread check compares
 all of its text instead of only its former four-line count. No tolerance or old progress check was loosened.
+**27 November 2026, the two follow-up questions** (the questions file, commit `ee637374a`): both approved, in this
+card.
+1. **Load weight on a flatbed outing:** yes to the three narrow hooks in `src/arena/modes/world-job.js`: pass the
+   outing's vehicle id and the car's heading to the enabled home part; on a flatbed open outing, feed the home part's
+   `loadKg` into the existing `syncHaulVehicle` weight sync; keep the foot entry and exit controls as they are. Each
+   hook runs only when `home-ground` is on and the outing is open; the guards prove the released game is unchanged.
+2. **The backup before the save's shape changes:** yes, extend `needsCareerMigration` in `src/career-backup.js` to
+   ask for a backup whenever a stored `world.open.home` has a version below the current one (so a version 1 or 2
+   record is backed up before it becomes version 3, and step 2's own upgrade from 1 to 2 is covered too), with its
+   test in the career backup suite. Run every suite that names `career-backup` and the save and pay browser guards
+   (`wasteland-career`, `yard-home`) once, since this touches the save path. No real save is read or written.
+Then hand over for review; the card no longer waits on either question.
