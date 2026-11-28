@@ -37,7 +37,8 @@ export const HOME_RAID = Object.freeze({
   firstSitting: 4, earliest: 75 * 60, latest: 105 * 60, seconds: 4 * 60,
   testSeconds: 60, near: 150, fled: 60, ramKmh: 25, eggShare: .1,
   startMetres: 45, bikeMps: 7, buggyMps: 9, chaseMetres: 10,
-  easy: Object.freeze({bikeHealth: 45, buggyHealth: 110, retreatHealth: .4, blockedSeconds: 45}),
+  // Easy raiders flee after losing a fifth of their health; a harmless graze still leaves them fighting.
+  easy: Object.freeze({bikeHealth: 45, buggyHealth: 110, retreatHealth: .8, blockedSeconds: 45}),
   medium: Object.freeze({bikeHealth: 60, buggyHealth: 140, retreatHealth: .3, blockedSeconds: 65}),
   hard: Object.freeze({bikeHealth: 75, buggyHealth: 170, retreatHealth: .2, blockedSeconds: 85}),
 });

@@ -786,6 +786,24 @@ const memory = values => {
   check(shot.raid.riders[0].retreat, 'hitting the test bike sends it away');
   const raid = startHomeRaid(eligible, seed, false, 'easy');
   equal(raid, startHomeRaid(eligible, seed, false, 'easy'), 'the same seed and home choose the same raid');
+  const grazed = stepHomeRaid(eligible, raid, {...view, actors: [{id: raid.riders[0].id, health: raid.riders[0].health - 1}]}, 0, seed);
+  check(!grazed.raid.riders[0].retreat, 'a real raider does not flee after a harmless graze');
+  const hurt = stepHomeRaid(eligible, raid, {...view, actors: [{id: raid.riders[0].id, health: 1}]}, 0, seed);
+  check(hurt.raid.riders[0].retreat, 'a real raider below its difficulty health threshold retreats');
+  let breached = newHome('Breach');
+  for (let n = 0; n < 20; n++) for (const piece of [
+    {i: n, j: 0, axis: 'x'}, {i: n, j: 20, axis: 'x'}, {i: 0, j: n, axis: 'z'}, {i: 20, j: n, axis: 'z'},
+  ]) breached = build(breached, {kind: 'panel', ...piece});
+  breached = {...breached, pieces: breached.pieces.map(piece => piece.axis === 'x' && piece.j === 0 && piece.i === 5
+    ? {...piece, down: true} : piece)};
+  const retreating = {...raid, entry: groundPoint(5.5, 0), normal: {x: 0, z: -1},
+    riders: raid.riders.map((row, index) => ({...row, position: groundPoint(14, 14), entered: true,
+      retreat: true, health: index === 0 ? row.health : 0}))};
+  check(stepHomeRaid(breached, retreating, view, 240, seed).raid.riders[0].fled,
+    'a retreating bike leaves through the breach instead of running into intact fence');
+  const nearFence = {...retreating, riders: retreating.riders.map(row => ({...row, position: groundPoint(18, 3)}))};
+  check(stepHomeRaid(breached, nearFence, view, 240, seed).raid.riders[0].fled,
+    'a near-side retreat continues beyond the exit waypoint arrival tolerance');
   const inside = {...raid, seconds: 239, riders: raid.riders.map(row => ({...row, position: me, entered: true}))};
   const loss = stepHomeRaid(eligible, inside, view, 1, seed);
   equal(loss.raid.outcome, 'lost', 'a live raider inside at four minutes loses the raid');

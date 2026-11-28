@@ -58,7 +58,14 @@ export function ramHomePanels(home, from, to, speedKmh, kind) {
 
 function targetOf(raid, rider, home) {
   const p = rider.position;
-  if (rider.retreat) return {x: p.x + raid.normal.x * 100, z: p.z + raid.normal.z * 100};
+  if (rider.retreat) {
+    // Leave through the approach gap. Running straight away from the coop can trap a bike against intact tin.
+    const dx = p.x - raid.entry.x, dz = p.z - raid.entry.z;
+    if (dx * raid.normal.x + dz * raid.normal.z < 0 && Math.abs(dx * raid.normal.z - dz * raid.normal.x) > .25)
+      return {x: raid.entry.x - raid.normal.x * 2, z: raid.entry.z - raid.normal.z * 2};
+    if (outsideBy(p.x, p.z) < 3.9) return {x: raid.entry.x + raid.normal.x * 4, z: raid.entry.z + raid.normal.z * 4};
+    return {x: p.x + raid.normal.x * 100, z: p.z + raid.normal.z * 100};
+  }
   if (raid.test) {
     // A square lap keeps the bike outside the fence, including at its corners.
     const corners = [[-4, -4], [HOME_CELLS + 4, -4], [HOME_CELLS + 4, HOME_CELLS + 4], [-4, HOME_CELLS + 4]];
@@ -134,7 +141,8 @@ export function stepHomeRaid(home, raid, view, dt, seed) {
     const seen = (view.actors ?? []).find(actor => actor.id === row.id);
     const health = seen ? Math.min(row.health, seen.health) : row.health;
     const chased = raid.test && gap(where, row.position) <= R.chaseMetres;
-    return {...row, health, retreat: row.retreat || chased || health < row.health || health <= row.maxHealth * tune.retreatHealth};
+    return {...row, health, retreat: row.retreat || chased || (raid.test && health < row.health) ||
+      health <= row.maxHealth * tune.retreatHealth};
   });
   let next = {...raid, seconds, riders}, events = [];
   if (raid.test && !raid.rattled && seconds >= 5) {
