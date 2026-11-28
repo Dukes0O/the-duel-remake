@@ -1105,19 +1105,6 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
-  - id: HOME-GROUND-5
-    title: "Home Ground step 5: the well he drills with Tin Town's rig, the hand pump and the tank"
-    owner: "codex"
-    model: "astra"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Codex Astra, laptop lane, 28 November 2026"
-    needs: []
-    locks: ["home-ground"]
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-5.md"
-
   - id: HOME-GROUND-5B
     title: "Home Ground step 5: garden beds, the greenhouse, fire peppers and jumping beans"
     owner: "codex"
@@ -1125,7 +1112,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["HOME-GROUND-5"]
+    needs: []
     locks: ["home-ground"]
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-5B.md"

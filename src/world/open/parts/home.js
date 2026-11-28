@@ -28,17 +28,21 @@ import {TALK_RANGE, distanceToPerson} from './people.js';
 import {AWAY_LONGEST, BOARD_NEAR, BOARD_SECONDS, BUILD_IDLE_SECONDS, FOOT_BURST, HAMMER_STRIKE_SECONDS, HEN_LOOK, HOME_BOX,
   HOME_CELLS, HOME_CUES, HOME_CURSOR_SPEED, HOME_OFFER, HOME_OFFER_ID, HOME_PIECES, HOME_REACH, HOME_SIZE, HOME_STEP,
   HOME_WORDS, MOSS_HENS_ID, MOSS_TALK, defaultHomeName, HOME_BUILDS, HOME_STAGES, HOME_LOAD_STACK, HOME_CREW_TALK,
-  HOME_TOWER_STAGES, HOME_RAID} from '../content/home-ground.js';
+  HOME_TOWER_STAGES, HOME_RAID, HOME_TANK_STAGES, HOME_TANK, HOME_WELL} from '../content/home-ground.js';
 import {awayFor, boardLines, boardSpot, boxForEgg, boxInLand, boxRefusal, boxRoom, boxSlotInFront, boxesFull, build,
   buildBox, cleanHomeName, crateSpot, cratesLeft, facedThing, gateOf, gatesLeft, gatherBox, giveHens, groundCentre,
   groundPoint, hensWaiting, homeSolids, lift, liftBox, markAt, nameHen, newHome, newsBoardSpot, outlineFor, outsideBy,
   panelsLeft, pieceInLand, readableHome, ripen, slotAt, slotInFront, toGrid, toggleMark, upgradeHome,
   buildBounds, buildInLand, buildingDoor, buildSlot, buildRefusal, markBuild, liftBuild, buildHasLoad, raiseBuild, gatherCoop, shedWords, roostAt,
   homeLoadKg, transferHomeLoad, matchesBuild, crewOffer, handToCrew, ripenHome, standPanel,
-  lootOnBed, cartersBusy, cartersOffer, sendCarters, finishCarters} from '../home-rule.js';
+  lootOnBed, cartersBusy, cartersOffer, sendCarters, finishCarters,
+  canBorrowDrill, wellInLand, wellRefusal, markWell, homeDrillHole, drillHomeWell, fitHomePump, fillHomeTanks, tankWords} from '../home-rule.js';
 import {openHomeSitting, homeRaidDue, startHomeRaid, stepHomeRaid, raidInterval, towerAtLadder, stepHomeTower} from '../home-raid-rule.js';
 import {scablandsSurfaceHeightAt} from '../../scablands-ground.js';
 import {makeRng} from '../../../rng.js';
+import {createDrillRigState, stepDrillRig, drillYardControls, drillMaterialAt} from '../../../machines/drill.js';
+import {machineMoveContact} from '../../../machines/yard-solids.js';
+import {stepMover} from '../../scablands-movers.js';
 
 // He builds while he stands within this many metres of his ground; the gate opens for him within GATE_OPENS.
 const BUILD_NEAR = 4, GATE_OPENS = 7, PROMPT_NEAR = 14, BOARD_REACH = 2.5, CRATE_REACH = 3;
@@ -61,7 +65,7 @@ function begin() {
     namingHen: null, namingKey: '', namingChain: false, offerOpen: false, given: false, opened: null, ripenedAt: 0,
     building: false, idle: 0, tool: null, strike: null, armed: false, onGround: false, flock: [], flockSeed: 1,
     board: null, boardShown: false, crateTalk: false, crewTalk: false, crewLesson: null, crewWalk: 0, crewKey: '', crewPeople: [],
-    loadHeld: null, raid: null, lastDay: null, tower: null};
+    loadHeld: null, raid: null, lastDay: null, tower: null, drillRig: null, drilling: false, drillSoundAt: 0};
 }
 
 // The third speed. It empties in FOOT_BURST.seconds of use; once spent it refills fully before it can be used again.
@@ -228,7 +232,7 @@ export const homePart = {
       const moment = clock === null ? null : clock + now;
       const counted = awayFor(kept.lastSeen, moment);
       const ripe = ripenHome(kept, counted);
-      const returned = finishCarters(ripe.home, moment === null ? kept.lastSeen : Math.max(moment, kept.lastSeen ?? 0));
+      const returned = finishCarters(fillHomeTanks(ripe.home, moment), moment === null ? kept.lastSeen : Math.max(moment, kept.lastSeen ?? 0));
       if (returned.receipt) events.push(cue(HOME_CUES.cartersBack));
       const opened = openHomeSitting({...returned.home,
         lastSeen: moment === null ? ripe.home.lastSeen : Math.max(moment, ripe.home.lastSeen ?? 0)}, context.seed);
@@ -249,6 +253,9 @@ export const homePart = {
       if (ripe.finished) { next.opened = {...next.opened, finished: ripe.finished}; events.push(cue(HOME_CUES.crewDone)); }
       next.ripenedAt = now;
       record = {...ripe.home, lastSeen: next.clockBase === null ? ripe.home.lastSeen : next.clockBase + now - next.openedAt};
+      const filled = record.builds.some(row => row.kind === 'tank' && row.litres === HOME_TANK.litres &&
+        home.builds?.some(old => matchesBuild(old, row) && old.litres < HOME_TANK.litres));
+      if (filled) events.push(cue(HOME_CUES.tankFill));
       const returned = finishCarters(record, record.lastSeen);
       record = returned.home;
       if (returned.receipt) {
@@ -272,7 +279,7 @@ export const homePart = {
       choices.push(choice('laid', record));
     }
 
-    if ((record.crew.job || cartersBusy(record)) && now > next.ripenedAt) {
+    if ((record.crew.job || cartersBusy(record) || record.builds.some(row => row.kind === 'tank' && row.stage === 4)) && now > next.ripenedAt) {
       catchUp();
       choices.push(choice('crew-clock', record));
     }
@@ -318,6 +325,12 @@ export const homePart = {
     }
     next.loadKg = homeLoadKg(record);
     next.flatbedOuting = view.homeVehicle === 'flatbed';
+
+    let drillPrompt = '';
+    if (view.homeVehicle === 'drill' && view.carPosition) {
+      const result = stepHomeRig(state, next, record, view, context.seed, now, dt, events);
+      record = result.record; drillPrompt = result.prompt;
+    } else { next.drillRig = null; next.drilling = false; }
 
     const gate = gateOf(record);
     const gateMiddle = gate && pieceInLand(gate);
@@ -428,7 +441,8 @@ export const homePart = {
         next.crateTalk = true;
         requests.push({type: 'talk', id: MOSS_HENS_ID, scene: MOSS_TALK, person: 'moss', speaker: 'moss', asked: [],
           threadPriority: true, position: {x: crate.x, y: scablandsSurfaceHeightAt(crate.x, crate.z), z: crate.z}, anchorPosition: true});
-      } else if (buildingAt?.stage === 4 && buildingAt.kind !== 'tower' && (buildingAt.kind === 'coop' || distance(fighter.position, buildingDoor(buildingAt)) <= BOARD_REACH)) {
+      } else if (buildingAt?.stage === 4 && buildingAt.kind !== 'tower' &&
+          (['coop', 'tank'].includes(buildingAt.kind) || distance(fighter.position, buildingDoor(buildingAt)) <= BOARD_REACH)) {
         catchUp();
         if (buildingAt.kind === 'coop') {
           const before = record.eggs;
@@ -437,6 +451,9 @@ export const homePart = {
           if (record.eggs > before) events.push(cue(HOME_CUES.gather));
           const gathered = record.eggs - before;
           note = words(gathered === 1 ? 'gatheredOne' : 'gathered', {count: gathered, store: record.eggs});
+        } else if (buildingAt.kind === 'tank') {
+          note = tankWords(record, record.builds.find(row => matchesBuild(row, buildingAt)));
+          choices.push(choice('tank-read', record));
         } else { note = shedWords(record); events.push(cue(HOME_CUES.shedDoor)); choices.push(choice('shed-read', record)); }
         requests.push(say('building', note));
       } else if (facedBox && facedBox.box.eggs > 0) {
@@ -466,7 +483,7 @@ export const homePart = {
       if (state.above) events.push(cue(HOME_CUES.viewDown));
       Object.assign(next, {above: false, hammer: null, outline: null, building: next.naming && near ? next.building : false});
       next.prompt = next.naming ? '' : atNews ? newsPrompt : atBoard ? HOME_WORDS.renameHint :
-        atCrate ? HOME_WORDS.crateWaiting : loadPrompt;
+        atCrate ? HOME_WORDS.crateWaiting : drillPrompt || loadPrompt;
     } else {
       if (pressed('piece')) next.kind = nextKind(state.kind, record);
       if (pressed('turn')) next.turns = (state.turns + 1) % 4;
@@ -484,7 +501,12 @@ export const homePart = {
       if (next.kind === 'gate' && !gatesLeft(record)) next.kind = 'panel';
       if (next.kind === 'box' && cratesLeft(record) <= 0) next.kind = 'panel';
       const kind = next.kind;
-      if (HOME_BUILDS[kind] || (buildingAt && !next.above && !pressed('piece'))) {
+      const atWell = !next.above && record.well && distance(fighter.position, wellInLand(record.well)) <= 2.5;
+      if (kind === 'well' || (atWell && !pressed('piece') && !HOME_BUILDS[kind])) {
+        const changed = stepWell({state, next, record, fighter, keys, pressed, dt, events, seed: context.seed, catchUp,
+          getRecord: () => record});
+        if (changed !== record) { record = changed; choices.push(choice('well', record)); }
+      } else if (HOME_BUILDS[kind] || (buildingAt && !next.above && !pressed('piece'))) {
         stepBuilding({state, next, record, fighter, keys, pressed, dt, events, choices, catchUp,
           getRecord: () => record, setRecord: value => { record = value; }, buildingAt, note});
       } else if (next.above) {
@@ -662,7 +684,8 @@ export const homePart = {
       ? {...next.board, lines: boardLines(next.opened, record)} : null;
 
     // The fence, the gate and the nest boxes are solid; the gate's leaves only while it is shut.
-    const solidsKey = JSON.stringify([record.pieces, record.boxes.map(box => [box.i, box.j]), record.builds, next.gateOpen]);
+    const solidsKey = JSON.stringify([record.pieces, record.boxes.map(box => [box.i, box.j]),
+      record.builds.map(row => [row.kind, row.i, row.j, row.turn, row.stage]), record.well?.pump, next.gateOpen]);
     if (solidsKey !== state.solidsKey) {
       next.solidsKey = solidsKey;
       requests.push({type: 'solids', id: 'home-ground', solids: homeSolids(record, {gateOpen: next.gateOpen, heightAt: scablandsSurfaceHeightAt})});
@@ -675,9 +698,9 @@ export const homePart = {
 
 // G changes what is in his hands: a panel, the gate while he carries it, an old crate while he has one.
 function nextKind(kind, record) {
-  const order = ['panel', 'gate', 'box', 'coop', 'shed', 'tower'];
+  const order = ['panel', 'gate', 'box', 'coop', 'shed', 'tower', 'well', 'tank'];
   const has = row => row === 'panel' || (row === 'gate' && gatesLeft(record) > 0) || (row === 'box' && cratesLeft(record) > 0) ||
-    (!!HOME_BUILDS[row] && record.hens.length > 0 && record.boxes.length > 0);
+    (['well', 'tank'].includes(row) ? canBorrowDrill(record) : !!HOME_BUILDS[row] && record.hens.length > 0 && record.boxes.length > 0);
   for (let n = 1; n <= order.length; n++) {
     const row = order[(order.indexOf(kind) + n) % order.length];
     if (has(row)) return row;
@@ -744,7 +767,8 @@ function stepBuilding({state, next, record, fighter, keys, pressed, dt, events, 
     const step = HOME_CURSOR_SPEED / HOME_STEP * dt;
     next.cursor = {a: Math.max(0, Math.min(HOME_CELLS, next.cursor.a + ((keys.right || keys.turnRight ? 1 : 0) - (keys.left || keys.turnLeft ? 1 : 0)) * step)),
       b: Math.max(0, Math.min(HOME_CELLS, next.cursor.b + ((keys.back ? 1 : 0) - (keys.forward ? 1 : 0)) * step))};
-    slot = {kind, i: Math.floor(next.cursor.a), j: Math.floor(next.cursor.b), turn: next.turns, stage: 0};
+    slot = {kind, i: Math.floor(next.cursor.a), j: Math.floor(next.cursor.b), turn: next.turns, stage: 0,
+      ...(kind === 'tank' ? {litres: 0, filled: null} : {})};
     row = record.builds.find(item => item.kind === kind && item.i === slot.i && item.j === slot.j);
   } else slot = buildSlot(kind, fighter.position, fighter.yaw, next.turns);
   const reason = row ? null : buildRefusal(record, slot);
@@ -778,7 +802,80 @@ function stepBuilding({state, next, record, fighter, keys, pressed, dt, events, 
   next.outline = next.building || next.above ? {piece: row ?? slot, mode: reason ? 'refused' : 'build', reason,
     progress: hammer ? hammer.seconds / HOME_BUILDS[kind].hammer : 0, marked: !!row, shake: !!reason && pressed('build')} : null;
   next.prompt = note || (reason ? HOME_WORDS[reason] : row?.stage === 4 ?
-    (kind === 'tower' ? HOME_WORDS.towerUp : kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
-    row ? next.above ? HOME_WORDS.buildLift : buildHasLoad(record, row) ? words('buildStage', {piece: kind, stage: (kind === 'tower' ? HOME_TOWER_STAGES : HOME_STAGES)[row.stage]}) :
+    (kind === 'tower' ? HOME_WORDS.towerUp : kind === 'tank' ? HOME_WORDS.tankRead : kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
+    row ? next.above ? HOME_WORDS.buildLift : buildHasLoad(record, row) ? words('buildStage', {piece: kind, stage: (kind === 'tower' ? HOME_TOWER_STAGES : kind === 'tank' ? HOME_TANK_STAGES : HOME_STAGES)[row.stage]}) :
       words('buildLoad', {piece: kind}) + ' ' + HOME_WORDS.buildLift : words('buildMark', {piece: kind}));
+}
+
+function stepWell({state, next, record, fighter, keys, pressed, dt, events, seed, catchUp, getRecord}) {
+  let cell;
+  if (next.above) {
+    const step = HOME_CURSOR_SPEED / HOME_STEP * dt;
+    next.cursor = {a: Math.max(0, Math.min(HOME_CELLS - 1, next.cursor.a + ((keys.right || keys.turnRight ? 1 : 0) - (keys.left || keys.turnLeft ? 1 : 0)) * step)),
+      b: Math.max(0, Math.min(HOME_CELLS - 1, next.cursor.b + ((keys.back ? 1 : 0) - (keys.forward ? 1 : 0)) * step))};
+    cell = {i: Math.floor(next.cursor.a), j: Math.floor(next.cursor.b)};
+  } else cell = boxSlotInFront(fighter.position, fighter.yaw);
+  const atWell = record.well && (next.above ? cell.i === record.well.i && cell.j === record.well.j :
+    distance(fighter.position, wellInLand(record.well)) <= 2.5);
+  const well = atWell ? record.well : null, reason = well ? null : wellRefusal(record, cell);
+  let hammer = keys.build && state.hammer?.slotKey === 'pump' && well && !next.above ? state.hammer : null;
+  if (pressed('build') && !well) {
+    if (reason) events.push(cue(HOME_CUES.refused));
+    else { record = markWell(record, cell, seed); events.push(cue(HOME_CUES.mark)); }
+  } else if (well?.depth === 0 && pressed('build')) {
+    record = {...record, well: null}; events.push(cue(HOME_CUES.unmark));
+  } else if (well && well.depth >= well.water && !well.pump && !next.above && keys.build) {
+    const seconds = (hammer?.seconds ?? 0) + dt, strikes = Math.floor(seconds / HAMMER_STRIKE_SECONDS);
+    if (!hammer || strikes > hammer.strikes) events.push(cue(HOME_CUES.hammer));
+    hammer = {slotKey: 'pump', seconds, strikes};
+    if (seconds >= HOME_WELL.pumpSeconds) {
+      catchUp(); record = fitHomePump(getRecord()); hammer = null;
+      events.push(cue(HOME_CUES.pumpFit));
+    }
+  } else hammer = null;
+  next.hammer = hammer;
+  const piece = {kind: 'well', ...(atWell ? record.well ?? cell : cell)};
+  next.outline = next.building || next.above ? {piece, mode: reason ? 'refused' : 'build', reason,
+    progress: hammer ? hammer.seconds / HOME_WELL.pumpSeconds : 0, marked: !!record.well, shake: !!reason && pressed('build')} : null;
+  next.prompt = reason ? HOME_WORDS[reason] : !well ? HOME_WORDS.wellMark : record.well?.pump ? HOME_WORDS.pumpReady :
+    well.depth >= well.water ? words('pumpFit', {depth: Math.round(well.water)}) :
+    well.depth > 0 ? words('wellDepth', {depth: Math.floor(well.depth)}) : HOME_WORDS.wellBring + ' ' + HOME_WORDS.wellLift;
+  return record;
+}
+
+function stepHomeRig(state, next, record, view, seed, now, dt, events) {
+  const keys = view.homeDrillKeys ?? {}, driving = !view.onFoot;
+  let rig = state.drillRig ?? createDrillRigState(seed, {...view.carPosition, heading: view.homeCarHeading ?? 0});
+  const before = {...rig.machine, ...view.carPosition, heading: view.homeCarHeading ?? rig.machine.heading};
+  const atMark = record.well && distance(before, wellInLand(record.well)) <= HOME_WELL.reach;
+  const stopped = Math.abs(before.speedMps) < .01;
+  if (!driving || !atMark || record.well?.pump) next.drilling = false;
+  if (driving && keys.KeyB) {
+    if (next.drilling) next.drilling = false;
+    else if (atMark && stopped && !record.well.pump) { next.drilling = true; events.push(cue(HOME_CUES.drillLower)); }
+    else events.push(cue(HOME_CUES.refused));
+  }
+  const controls = drillYardControls(driving ? keys : {}, next.drilling ? 'work' : 'drive');
+  // Movement and cutting share the yard rig, but only the marked home hole can receive work.
+  rig = stepDrillRig({...rig, machine: before}, {...controls, mastDown: false, feed: 0}, dt).state;
+  const after = rig.machine;
+  const solids = view.peopleGrid?.near(before.x, before.z, after.x, after.z, 8) ?? [];
+  const steep = stepMover(before, after, {solids: false}).blocked;
+  if (!driving || steep || machineMoveContact('drill', before, after, solids))
+    rig = {...rig, machine: {...before, speedMps: 0}};
+  const cut = drillHomeWell(record, seed, {...controls, mastDown: next.drilling && stopped}, dt, state.drillRig?.hole);
+  next.drillRig = {...rig, hole: cut.hole};
+  for (const event of cut.events) {
+    if (event.type === 'water-struck') events.push(cue(HOME_CUES.drillWater));
+    else if (event.type === 'drill-jammed') events.push(cue(HOME_CUES.drillJam));
+    else if (event.type === 'drill-cuttings' && now >= (state.drillSoundAt ?? 0)) {
+      events.push(cue(event.material === 'rock' ? HOME_CUES.drillRock : HOME_CUES.drillGrind));
+      next.drillSoundAt = now + .3;
+    }
+  }
+  const hole = cut.hole;
+  const prompt = !driving ? '' : !atMark || !stopped && !next.drilling ? HOME_WORDS.drillPark :
+    !next.drilling ? HOME_WORDS.drillLower : hole?.struckWater ? words('drillWater', {depth: Math.round(record.well.water)}) :
+    hole?.jammed ? HOME_WORDS.drillJam : words('drillFeed', {material: drillMaterialAt(hole.site, hole.depth), depth: Math.floor(hole.depth)});
+  return {record: cut.home, prompt};
 }

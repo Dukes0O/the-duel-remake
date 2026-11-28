@@ -8,8 +8,10 @@ import {NIGHT_2_SITES} from '../src/world/jobs/night-2-sites.js';
 import {beginLedger} from '../src/story/ledger-save.js';
 import {worldForProfile} from '../src/world/open/open-world.js';
 import {settleOpenWorld} from '../src/world/open/open-save.js';
-import {newHome, markBuild, buildInLand} from '../src/world/open/home-rule.js';
+import {newHome, markBuild, buildInLand, raiseBuild, markWell, wellInLand, groundPoint} from '../src/world/open/home-rule.js';
 import {HOME_LOAD_STACK, HOME_BUILDS} from '../src/world/open/content/home-ground.js';
+import {ringJobVehicleBell} from '../src/arena/modes/world-job.js';
+import {workVehicleToDraw} from '../src/town/view/work-vehicle-view.js';
 
 const memory = new Map();
 globalThis.localStorage = {getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, String(value)),
@@ -192,5 +194,63 @@ flatbedApp.keys.KeyF = false;
 flatbedApp.advance(1 / 60);
 assert.equal(JSON.stringify(flatbedJob.open.world.open.home), homeBeforeOff, 'the disabled hooks leave home progress alone');
 assert.equal(flatbedJob.vehicle.loadKg, 0, 'the disabled hooks cannot load the truck');
+
+// HOME-GROUND-5: the same outing, now with the drill's slow tracks and work controls.
+{
+  const rigApp = freshApp(1);
+  rigApp.duel.featureFlags = homeFlags;
+  assert(rigApp.visitWasteland()); rigApp.advance(8);
+  const rigWall = () => yardHomeScreen({profile: rigApp.profile, playerName: 'Test', escapeHTML: String,
+    panel: 'cards', featureFlags: rigApp.duel.featureFlags});
+  assert.doesNotMatch(rigWall(), /story-open-drill/);
+  assert.equal(rigApp.startOpenRoam('drill'), false, 'the rig is not offered before the coop');
+  const before = worldForProfile(rigApp.profile, rigApp.seed);
+  let home = newHome('Drill test');
+  const coop = {kind: 'coop', i: 2, j: 8, turn: 0, stage: 0};
+  home = markBuild(home, coop); home = {...home, loads: {...home.loads, coop: {i: 2, j: 8}}};
+  for (let n = 0; n < 4; n++) home = raiseBuild(home, coop);
+  home = markWell(home, {i: 13, j: 13}, before.seed);
+  const saved = settleOpenWorld(rigApp.profile, {...before, open: {...before.open, home}}, {atStart: before});
+  assert(saved.ok); rigApp.profile = saved.profile; assert(rigApp._saveProfile());
+  assert.match(rigWall(), /Go out in Tin Town's drill rig/);
+  rigApp.duel.featureFlags = on;
+  assert.doesNotMatch(rigWall(), /story-open-drill/);
+  assert.equal(rigApp.startOpenRoam('drill'), false, 'the home switch gates the rig action');
+  rigApp.duel.featureFlags = homeFlags;
+  const bytes = JSON.stringify(rigApp.profile);
+  assert(rigApp.startOpenRoam('drill'));
+  const state = rigApp.duel.state, job = state.arena.worldJob;
+  assert.equal(job.vehicle.id, 'drill');
+  assert.equal(state.onFoot, true, 'the rig outing starts with the same foot entry as the flatbed');
+  assert.equal(JSON.stringify(rigApp.profile), bytes, 'borrowing the rig never changes the garage or saved progress');
+  assert.equal(workVehicleToDraw(state, homeFlags).id, 'drill', 'the rig view needs Home Ground alone');
+  assert.equal(workVehicleToDraw(state, on), null, 'the rig is not drawn with Home Ground off');
+  rigApp.advance(5);
+  const place = (at, heading = 0) => {
+    const nearest = rigApp.duel.course.nearest(at.x, at.z);
+    Object.assign(state, {s: nearest.s, prevS: nearest.s, lateral: nearest.lateral, prevLateral: nearest.lateral,
+      speedMph: 0, yawVelocity: 0, pushVelocity: 0, onFoot: false,
+      headingError: heading - rigApp.duel.course.at(nearest.s).heading});
+    if (job.open.parts.home.drillRig) job.open.parts.home.drillRig.machine.speedMps = 0;
+  };
+  const pose = () => rigApp.duel.course.worldAt(state.s, state.lateral);
+  place(groundPoint(10, 9));
+  const from = pose();
+  rigApp.keys.KeyW = true; rigApp.advance(3); rigApp.keys.KeyW = false;
+  const travelled = Math.hypot(pose().x - from.x, pose().z - from.z);
+  assert(travelled > 1 && travelled < 4, 'the drill drives at its existing 1.2 m/s track speed');
+  rigApp.advance(1);
+  const at = wellInLand(home.well); place(at);
+  rigApp.advance(1 / 60);
+  assert(ringJobVehicleBell(rigApp.duel), 'B is routed to the drill mast');
+  rigApp.advance(1 / 60);
+  assert.equal(job.open.parts.home.drilling, true);
+  rigApp.keys.Space = true; rigApp.advance(3); rigApp.keys.Space = false;
+  assert(job.open.world.open.home.well.depth > 0, 'Space reaches the drill through the app input and mode');
+  assert(Math.hypot(pose().x - at.x, pose().z - at.z) < .02, 'feeding holds the rig over its mark');
+  const partial = job.open.world.open.home.well.depth;
+  assert(rigApp.leaveWorldJob());
+  assert.equal(rigApp.profile.story.open.home.well.depth, partial, 'leaving saves the partial hole');
+}
 
 console.log('test-open-roam-start: ok');

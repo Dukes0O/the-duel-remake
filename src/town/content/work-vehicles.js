@@ -16,11 +16,17 @@
 // - A truck's front wheels turn about 35 degrees at full lock.
 // - Top speeds are governed, as work trucks of the time were: 80 to 90 km/h.
 
+import {machineDefinition} from '../../machines/content/machines.js';
+
 const row = values => Object.freeze({driveKind:'wheels', joints:Object.freeze([]), maxSteerDeg:35,
   controls:Object.freeze({drive:Object.freeze(['forward', 'steer']), work:Object.freeze(values.work ?? [])}), ...values,
   tools:Object.freeze(values.tools ?? {}), model:Object.freeze(values.model)});
 
 export const WORK_VEHICLES = Object.freeze([
+  // HOME-GROUND-5: this is the Dig's rig and track solver, borrowed for an open outing.
+  row({...machineDefinition('drill'), model:{file:'machines-2.glb', node:'drill-rig'},
+    emptyMassKg:machineDefinition('drill').massKg, engineKw:60, topSpeedKmh:machineDefinition('drill').maxSpeedMps * 3.6,
+    wheelbaseM:3.8, halfWidthM:2.08, halfLengthM:3.41, heightM:3.2, work:['mast', 'feed']}),
   row({id:'fire-truck', name:'Fire truck', model:{file:'trucks-1.glb', node:'fire-truck'},
     emptyMassKg:9_000, engineKw:150, topSpeedKmh:88, wheelbaseM:4.61, halfWidthM:1.26, halfLengthM:3.7, heightM:2.89,
     maxLoadKg:0, tank:Object.freeze({capacityL:3_000, startL:3_000, pumpLpm:1_000}), bell:true,

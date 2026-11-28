@@ -105,7 +105,8 @@ Kyle's rulings of 27 November.
   reach, and a pond, which the well then fills.
 - **The well is drilled by hand** (Kyle). He drives the drill rig in along the lanes, sets it over the spot, lowers
   the auger, feeds it down and listens for the change when it reaches water (`docs/MACHINES.md`: lower, feed, listen).
-  Mr Penny fits the pump afterwards. A lane wide enough for the digger is wide enough for the rig.
+  After hitting water, he steps out and holds B for six seconds to fit the hand pump himself (HOME-GROUND-5).
+  A lane wide enough for the digger is wide enough for the rig.
 - **Seen from above** (Kyle). One key lifts the camera to look straight down on the whole ground, and the same key
   brings it back. From above he sees his layout as a plan, marks where the next things will go, and watches where the
   Rats are coming from. The hammering is still done on the ground.
@@ -436,6 +437,24 @@ go into the real game after step 4.
   The builders' supplied clock and monotonic last-seen moment count time online and away without paying twice.
   The store receives the total less `floor(total / 5)`; this outing's board reports what arrived and their pay.
 - Cues: `home.loot.on`, `home.loot.off`, `home.carters.go`, `home.carters.back`. OPEN-SOUND chooses their sounds.
+
+### Step 5 as built (HOME-GROUND-5, behind the switch `home-ground`)
+
+- Version 7 preserves versions 1 to 6 and adds `well: {i, j, depth, water, pump}` (or null), a tank load, and
+  tank builds with `litres` and `filled` (the last counted real second, or null). The verified career backup gates
+  migration. The disabled switch leaves earlier records unchanged.
+- A finished coop unlocks the borrowed drill outing and G's one-cell well mark. The existing tracked rig and
+  drill view are reused. B lowers its mast within 1.5 m of the mark; Space feeds, W with Space feeds hard, and S
+  clears a rock jam. Water and layers come from `drillSite` at whole metres. Cutting uses one third of the shared
+  drill's time for a roughly three-minute well. Leaving saves depth; the real clock never drills for him.
+- At water, he steps out and holds B for six seconds to fit the pump himself. The tank reuses flatbed delivery and
+  four hand-built stages: stand, legs, drum, lid. Later tanks may use the builders, taking one real hour.
+- A finished 1,000-litre tank within 8 m of the pump fills in 12 real hours, including time away. Its pipe and
+  gauge show the connection and water; F reads the amount. Construction and disconnected time do not fill it.
+  Backward clocks preserve water and counted time; empty tanks wait without loss.
+- Cues: `home.drill.lower`, `home.drill.grind`, `home.drill.rock`, `home.drill.jam`, `home.drill.water`,
+  `home.pump.fit`, `home.tank.fill`; tank stages reuse `home.fence.hammer`. The drill cues play the rig's existing
+  tones. The other home cues await OPEN-SOUND registration, as in earlier steps. Claude's hand drive remains due.
 
 ## 17. Settled with Kyle, 27 November 2026
 

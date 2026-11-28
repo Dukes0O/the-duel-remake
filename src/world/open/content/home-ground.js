@@ -27,10 +27,14 @@ export const HOME_BUILDS = Object.freeze({
   coop: Object.freeze({name: 'coop', width: 2, depth: 2, hammer: 6, hens: 6, kg: 320, cue: 'home.coop.stage'}),
   shed: Object.freeze({name: 'shed', width: 2, depth: 3, hammer: 6, kg: 440, cue: 'home.shed.stage'}),
   tower: Object.freeze({name: 'watchtower', width: 2, depth: 2, hammer: 6, kg: 360, cue: 'home.tower.stage'}),
+  tank: Object.freeze({name: 'water tank', width: 2, depth: 2, hammer: 6, kg: 280, cue: 'home.fence.hammer'}),
 });
 export const HOME_LOAD_STACK = Object.freeze({x: 5975, z: 76});
 export const HOME_STAGES = Object.freeze(['floor', 'frame', 'walls', 'roof']);
 export const HOME_TOWER_STAGES = Object.freeze(['legs', 'platform', 'ladder', 'rail and roof']);
+export const HOME_TANK_STAGES = Object.freeze(['stand', 'legs', 'drum', 'lid']);
+export const HOME_TANK = Object.freeze({litres: 1000, seconds: 12 * 60 * 60, reach: 8});
+export const HOME_WELL = Object.freeze({width: 1, depth: 1, reach: 1.5, pumpSeconds: 6, cuttingTime: 1 / 3});
 export const HOME_TOWER = Object.freeze({platform: 4.4, climbSeconds: 2, reach: 2.5, rocketReach: 1.25});
 // HOME-GROUND-4: demands count supplied play seconds only. No value here is a wall-clock deadline.
 export const HOME_RAID = Object.freeze({
@@ -51,7 +55,7 @@ export const HAMMER_STRIKE_SECONDS = .6;
 // The outline stands this far in front of him.
 export const HOME_REACH = 1.6;
 export const HOME_BOX_REACH = 3;
-export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60, tower: 45 * 60});
+export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60, tower: 45 * 60, tank: 60 * 60});
 export const HOME_LOOT = Object.freeze({
   bike: Object.freeze({worth: 6, kg: 110}),
   buggy: Object.freeze({worth: 15, kg: 480}),
@@ -116,6 +120,8 @@ export const HOME_CUES = Object.freeze({
   fenceFall: 'home.fence.fall', fenceUp: 'home.fence.up', towerClimb: 'home.tower.climb',
   raidWon: 'home.raid.won', raidLost: 'home.raid.lost',
   lootOn: 'home.loot.on', lootOff: 'home.loot.off', cartersGo: 'home.carters.go', cartersBack: 'home.carters.back',
+  drillLower: 'home.drill.lower', drillGrind: 'home.drill.grind', drillRock: 'home.drill.rock',
+  drillJam: 'home.drill.jam', drillWater: 'home.drill.water', pumpFit: 'home.pump.fit', tankFill: 'home.tank.fill',
 });
 
 // What he reads. Every line is a whole sentence.
@@ -200,6 +206,22 @@ export const HOME_WORDS = Object.freeze({
   raidLeft: 'You left the raid. Nothing was lost and nothing was won.',
   panelsDown: '{count} panels of your fence are down. Tap B with the hammer to stand them up.',
   panelDown: 'One panel of your fence is down. Tap B with the hammer to stand it up.',
+  wellMark: 'Press B to mark the ground for your well. Press G to change what you build.',
+  wellLift: 'Press B to clear this well mark before you start drilling.',
+  wellExists: 'You have already marked a place for your well.',
+  wellLocked: 'Finish your coop first, and Auntie Solder will lend you her drill rig.',
+  wellBring: 'Bring Tin Town\'s drill rig over this mark to drill your well.',
+  wellDepth: 'Your well is {depth} metres deep. Bring the drill rig back to carry on.',
+  drillPark: 'Stop the drill rig over your well mark, then press B to lower the mast.',
+  drillLower: 'Press B to lower the mast. Hold Space to feed the auger. Hold W with Space to feed harder.',
+  drillFeed: 'You are drilling through {material} at {depth} metres. Hold Space to feed, S to back off, or press B to raise the mast.',
+  drillJam: 'The auger is jammed in rock. Hold S to back off, then use Space alone to feed gently.',
+  drillWater: "You've hit water at {depth} metres. Raise the mast with B, step out, and hold B at the well to fit the hand pump.",
+  pumpFit: "You've hit water at {depth} metres. Hold B to fit the hand pump.",
+  pumpReady: 'Your hand pump is ready. Build a water tank within 8 metres of it.',
+  tankRead: 'Press F to see how much water is in your tank.',
+  tankFullness: 'Your water tank holds {litres} of its {capacity} litres.',
+  tankWaiting: 'It will fill when a well with a hand pump is within 8 metres.',
 });
 
 // What the board at the gate says (src/world/open/home-rule.js, boardLines). Every line is a whole sentence.
@@ -220,6 +242,8 @@ export const BOARD_WORDS = Object.freeze({
   fenceFirst: 'Close your fence all the way round, and Moss will bring you two hens.',
   crate: 'Moss has left two hens in a crate by your gate.',
   firstBuildings: 'Your hens need a coop before the Rats find them. Auntie Solder has left tin for a coop and a shed at Tin Town\'s gate. Go out in Tin Town\'s flatbed to bring it home.',
+  drillRig: 'Auntie Solder says the land under your ground has water in it somewhere. Her drill rig is yours to borrow.',
+  wellHint: 'Old Tam says water runs shallower near the low corner.',
 });
 
 // Auntie Solder's one talk. The choice gives him the ground (src/world/open/parts/home.js).

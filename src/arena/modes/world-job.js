@@ -1,6 +1,6 @@
 import {reserveRoadRiders, startRoadFight, updateRoadFight, roadRiderGoal,
   checkpointRoadView, applyCheckpointRoadRequest} from './road-riders.js';
-import {syncHomeGround} from './home-ground.js';
+import {syncHomeGround, prepareHomeDrillControls} from './home-ground.js';
 import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createStoryPeople, advanceStoryPeople} from '../../world/jobs/story-people.js';
@@ -381,8 +381,10 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   // TOWN-VEHICLES: a job may name a work vehicle; it is driven instead of the garage car while the town's switch is on.
-  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: duel.featureFlags?.enabled?.('wasteland-town') === true ||
-    (definition.id === 'open-roam' && definition.vehicle === 'flatbed' && duel.featureFlags?.enabled?.('home-ground') === true)});
+  const homeVehicle = definition.id === 'open-roam' && ['flatbed', 'drill'].includes(definition.vehicle) &&
+    duel.featureFlags?.enabled?.('home-ground') === true;
+  worldJob.vehicle = startWorkVehicle(definition.vehicle, {enabled: definition.vehicle === 'drill' ? homeVehicle :
+    duel.featureFlags?.enabled?.('wasteland-town') === true || homeVehicle});
   // SHIPS-DECKS: a car lent for this run (src/world/jobs/job-vehicle.js) is said as the job starts, and is never saved.
   if (definition.vehicleLent?.lineId) sayLine(duel, worldJob, definition.vehicleLent.lineId);
   if(townWorldJob(definition))duel.course.townLayout=definition.layout??null;
@@ -545,7 +547,7 @@ export function prepareWorldJobControls(duel) {
   const input=duel.state.input??{};
   worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true,
     spray:input.spray===true&&worldJob.vehicle?.id==='fire-truck'&&!duel.state.onFoot}; // TOWN-FIRE-JOB: H in the fire truck
-  if(worldJob.vehicle&&!duel.state.onFoot)driveWorkVehicle(duel,worldJob,input);
+  if(worldJob.vehicle&&!duel.state.onFoot && !prepareHomeDrillControls(duel, worldJob, input))driveWorkVehicle(duel,worldJob,input);
   if(step?.kind!=='drivetrain') return false;
   Object.assign(worldJob.controls,{throttle:input.throttle??0,brake:input.brake??0});
   input.throttle=0;input.brake=0;input.steer=0;input.boost=false;
@@ -565,6 +567,10 @@ function driveWorkVehicle(duel, worldJob, input) {
 export function ringJobVehicleBell(duel) {
   const state = duel.state, worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
   if (!worldJob?.vehicle || state.status !== 'racing' || state.paused || state.onFoot) return false;
+  if (worldJob.vehicle.id === 'drill' && worldJob.definition.id === 'open-roam' && duel.featureFlags?.enabled?.('home-ground') === true) {
+    worldJob.homeDrillToggle = true;
+    return true;
+  }
   const rung = ringWorkVehicleBell(worldJob.vehicle);
   worldJob.vehicle = rung.vehicle;
   if (rung.rang) duel.emit({arenaTell: {id: 'town-bell', targetId: 'player', seconds: 0, cue: BELL_CUE,
@@ -2273,7 +2279,9 @@ export function stepWorldJob(duel, dt) {
       // HOME-GROUND-2: and the clock read once as the outing opened (src/app.js).
       ...(openRoam && duel.featureFlags?.enabled('home-ground') === true ? {homeGround: true, homeKeys: homeKeysOf(state),
         homeName: worldJob.homeNameInput ?? null, homeClock: worldJob.definition.open?.homeClock ?? null,
-        homeVehicle: worldJob.vehicle?.id ?? null, homeCarHeading: worldPose(duel, state).heading} : {})}, dt);
+        homeVehicle: worldJob.vehicle?.id ?? null, homeCarHeading: worldPose(duel, state).heading,
+        homeDrillKeys: worldJob.homeDrillKeys ?? null} : {})}, dt);
+    worldJob.homeDrillKeys = null;
     if (worldJob.homeNameInput) worldJob.homeNameInput = null;
     worldJob.ashHit = false;
     const clearings = openStep.open.parts.sites?.clearings;

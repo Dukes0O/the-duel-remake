@@ -65,6 +65,14 @@ export const SOUND_BANK = {
     layers: [{...noise(2400, .14, .22, 'highpass'), endFrequency: 1300, attack: .02}, tone(523, .32, .2, 'sine', .07, 494)]}),
   ...Object.fromEntries(Object.entries(DIG_MACHINE_TONES).map(([name, [frequency, type, duration]]) =>
     [name, cue('vehicle', {flag: 'the-dig', layers: [tone(frequency, duration, 0.06, type)]})])),
+  // HOME-GROUND-5 borrows the rig's existing sounds with its own switch and event names.
+  ...Object.fromEntries(Object.entries({
+    'home.drill.lower': 'drill-feed', 'home.drill.grind': 'drill-gravel', 'home.drill.rock': 'drill-rock',
+    'home.drill.jam': 'drill-jam', 'home.drill.water': 'drill-water',
+  }).map(([name, source]) => {
+    const [frequency, type, duration] = DIG_MACHINE_TONES[source];
+    return [name, cue('vehicle', {flag: 'home-ground', layers: [tone(frequency, duration, 0.06, type)]})];
+  })),
   // The Deep adapter lazy-loads these only during a submerged visit.
   // The helicopter (docs/HELICOPTER.md): radio lines, rotor and cable sounds, behind its switch.
   ...HELI_CUES,

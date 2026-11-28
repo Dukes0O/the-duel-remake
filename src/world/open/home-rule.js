@@ -7,6 +7,7 @@
 // A panel covers one step; the gate covers four, and must stand in the outside fence.
 //
 // THE RECORD kept in the save (world.open.home):
+//   version 7 adds well: {i, j, depth, water, pump} | null and tank builds with litres and filled (real seconds | null).
 //   version 6 adds loot: [{kind, position: {x, z, yaw} | 'bed', worth}], scrap, carters: {began: seconds | null}.
 //   version 5 adds raids, a tower load and fallen panels. Only the enabled part upgrades older records.
 //   version 4 adds crew: {job: {kind, i, j} | null, began: real seconds | null, done: work seconds}.
@@ -27,15 +28,16 @@
 import {AWAY_LONGEST, BOARD_WORDS, BOX_HOLDS, HEN_BREEDS, HEN_SETTLE_SECONDS, HOME_BOX, HOME_CELLS, HOME_CORNER, HOME_CRATES,
   HOME_LANE_CELLS, HOME_NAME_LONGEST, HOME_PANELS, HOME_PIECES, HOME_REACH, HOME_STEP, MOSS_HENS, layInterval,
   HOME_BUILDS, HOME_LOAD_STACK, HOME_WORDS, HOME_BOX_REACH, HOME_CREW_SECONDS, HOME_TOWER,
-  HOME_LOOT, HOME_LOOT_CAPACITY, HOME_CARTER_SECONDS} from './content/home-ground.js';
+  HOME_LOOT, HOME_LOOT_CAPACITY, HOME_CARTER_SECONDS, HOME_TANK, HOME_WELL} from './content/home-ground.js';
+import {drillSite, stepDrill} from '../../machines/drill.js';
 
-export const HOME_RECORD_VERSION = 6;
+export const HOME_RECORD_VERSION = 7;
 const AXES = ['x', 'z'];
 const whole = value => Number.isSafeInteger(value);
 
 export const newHome = (name, lastSeen = null) => ({version: HOME_RECORD_VERSION, name, pieces: [], marks: [], hens: [], boxes: [],
-  eggs: 0, lastSeen, builds: [], loads: {coop: 'stack', shed: 'stack', tower: 'stack'}, flatbed: firstFlatbed(),
-  crew: {job: null, began: null, done: 0}, raids: newRaids(), loot: [], scrap: 0, carters: {began: null}});
+  eggs: 0, lastSeen, builds: [], loads: {coop: 'stack', shed: 'stack', tower: 'stack', tank: 'stack'}, flatbed: firstFlatbed(),
+  crew: {job: null, began: null, done: 0}, raids: newRaids(), loot: [], scrap: 0, carters: {began: null}, well: null});
 export const newRaids = () => ({played: 0, sittings: 0, nextDue: null, testDone: false, won: 0, lost: 0});
 function firstFlatbed() { return {...groundPoint(15, -3), yaw: 0}; }
 // Reading an older record does not upgrade it. Only the enabled part calls this.
@@ -45,7 +47,8 @@ export function upgradeHome(home) {
   if (home.version < 3) kept = {...kept, builds: [], loads: {coop: 'stack', shed: 'stack'}, flatbed: firstFlatbed()};
   if (home.version < 4) kept = {...kept, crew: {job: null, began: null, done: 0}};
   if (home.version < 5) kept = {...kept, loads: {...kept.loads, tower: 'stack'}, raids: newRaids()};
-  return {...kept, version: HOME_RECORD_VERSION, loot: [], scrap: 0, carters: {began: null}};
+  if (home.version < 6) kept = {...kept, loot: [], scrap: 0, carters: {began: null}};
+  return {...kept, version: HOME_RECORD_VERSION, well: null, loads: {...kept.loads, tank: 'stack'}};
 }
 
 // A name he may write: 1 to 24 letters, numbers, spaces and the marks a place name uses.
@@ -58,7 +61,7 @@ export function cleanHomeName(text) {
 // Stage 0 is a movable chalk mark. One unfinished building of each kind can stand beside the completed ones.
 const sameCell = (a, b) => a.i === b.i && a.j === b.j;
 export function buildBounds(row) {
-  const size = HOME_BUILDS[row.kind], turned = row.turn % 2;
+  const size = row.kind === 'well' ? HOME_WELL : HOME_BUILDS[row.kind], turned = row.turn % 2;
   return {i0: row.i, j0: row.j, i1: row.i + (turned ? size.depth : size.width),
     j1: row.j + (turned ? size.width : size.depth)};
 }
@@ -69,16 +72,19 @@ function pieceThroughBuild(piece, row) {
     : piece.i >= b.i0 && piece.i <= b.i1 && piece.j < b.j1 && piece.j + span > b.j0;
 }
 function readableBuild(row) {
-  if (!row || Object.keys(row).length !== 5 || !Object.hasOwn(HOME_BUILDS, row.kind) ||
+  if (!row || Object.keys(row).length !== (row.kind === 'tank' ? 7 : 5) || !Object.hasOwn(HOME_BUILDS, row.kind) ||
       !whole(row.i) || !whole(row.j) || !whole(row.turn) || row.turn < 0 || row.turn > 3 ||
       !whole(row.stage) || row.stage < 0 || row.stage > 4) return false;
+  if (row.kind === 'tank' && (!Number.isFinite(row.litres) || row.litres < 0 || row.litres > HOME_TANK.litres ||
+      !(row.filled === null || Number.isFinite(row.filled) && row.filled >= 0) ||
+      row.stage < 4 && (row.litres !== 0 || row.filled !== null))) return false;
   const b = buildBounds(row);
   return b.i0 >= 0 && b.j0 >= 0 && b.i1 <= HOME_CELLS && b.j1 <= HOME_CELLS;
 }
 const loadPoint = row => row && Object.keys(row).length === 2 && whole(row.i) && whole(row.j) &&
   row.i >= 0 && row.j >= 0 && row.i < HOME_CELLS && row.j < HOME_CELLS;
 function readableBuildings(home) {
-  const kinds = home.version >= 5 ? Object.keys(HOME_BUILDS) : ['coop', 'shed'];
+  const kinds = home.version >= 7 ? Object.keys(HOME_BUILDS) : home.version >= 5 ? ['coop', 'shed', 'tower'] : ['coop', 'shed'];
   if (!Array.isArray(home.builds) || home.builds.length > (home.version === 3 ? 2 : HOME_CELLS * HOME_CELLS) || !home.builds.every(readableBuild) ||
       (home.version >= 4 && new Set(home.builds.map(row => row.i + ':' + row.j)).size !== home.builds.length) ||
       (home.version === 3 && new Set(home.builds.map(row => row.kind)).size !== home.builds.length) ||
@@ -104,12 +110,14 @@ export function buildSlot(kind, position, yaw, turn = 0) {
   const size = HOME_BUILDS[kind], w = (turn % 2 ? size.depth : size.width), d = (turn % 2 ? size.width : size.depth);
   const reach = 2 + (Math.abs(Math.sin(yaw)) * w + Math.abs(Math.cos(yaw)) * d) * HOME_STEP / 2;
   const {a, b} = toGrid(position.x + Math.sin(yaw) * reach, position.z + Math.cos(yaw) * reach);
-  return {kind, i: Math.round(a - w / 2), j: Math.round(b - d / 2), turn, stage: 0};
+  return {kind, i: Math.round(a - w / 2), j: Math.round(b - d / 2), turn, stage: 0,
+    ...(kind === 'tank' ? {litres: 0, filled: null} : {})};
 }
 export function buildRefusal(home, row) {
   if (!readableBuild(row)) return 'offGround';
   if (home.builds.some(other => other.kind === row.kind && other.stage < 4)) return 'buildExists';
   const bounds = buildBounds(row);
+  if (home.well && rectanglesOverlap(bounds, wellBounds(home.well))) return 'onTop';
   if (rectanglesOverlap(bounds, laneOf(gateOf(home)))) return 'lane';
   if (home.builds.some(other => rectanglesOverlap(bounds, buildBounds(other))) ||
       home.pieces.some(piece => pieceThroughBuild(piece, row)) ||
@@ -130,11 +138,12 @@ export function buildHasLoad(home, row) {
 }
 export const matchesBuild = (row, target) => !!target && (typeof target === 'string' ? row.kind === target :
   row.kind === target.kind && sameCell(row, target));
-export function raiseBuild(home, target, byCrew = false) {
+export function raiseBuild(home, target, byCrew = false, moment = home.lastSeen) {
   const row = home.builds.find(item => matchesBuild(item, target) && item.stage < 4);
   const kind = row?.kind;
   if (!row || !buildHasLoad(home, row)) return home;
-  const next = {...home, builds: home.builds.map(item => item === row ? {...row, stage: row.stage + 1} : item)};
+  const next = {...home, builds: home.builds.map(item => item === row ? {...row, stage: row.stage + 1,
+    ...(kind === 'tank' && row.stage === 3 ? {filled: moment} : {})} : item)};
   if (kind === 'coop' && row.stage === 3) next.boxes = [...home.boxes, ...coopBoxes(next).filter(cell =>
     !home.boxes.some(box => sameCell(cell, box))).map(cell => ({...cell, eggs: 0}))];
   if (!byCrew && matchesBuild(row, home.crew?.job)) {
@@ -170,7 +179,7 @@ function readableCrew(home) {
     crew.done >= row.stage * stageSeconds && crew.done < (row.stage + 1) * stageSeconds;
 }
 // `seconds` is supplied by the outing. Never read the real clock here or charge for time twice.
-export function advanceCrew(home, seconds) {
+export function advanceCrew(home, seconds, moment = home.lastSeen) {
   if (!home.crew?.job || !Number.isFinite(seconds) || seconds <= 0) return {home, finished: null};
   const job = home.crew.job, duration = HOME_CREW_SECONDS[job.kind];
   const done = Math.min(duration, home.crew.done + seconds);
@@ -178,7 +187,7 @@ export function advanceCrew(home, seconds) {
   const stage = Math.min(4, Math.floor(done / (duration / 4)));
   let row = next.builds.find(item => matchesBuild(item, job));
   while (row.stage < stage) {
-    next = raiseBuild(next, job, true);
+    next = raiseBuild(next, job, true, moment);
     row = next.builds.find(item => matchesBuild(item, job));
   }
   const finished = row.stage === 4 ? row : null;
@@ -196,8 +205,80 @@ export function ripenHome(home, seconds) {
   const elapsed = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
   const untilRoof = home.crew?.job ? HOME_CREW_SECONDS[home.crew.job.kind] - home.crew.done : elapsed;
   const first = Math.min(elapsed, untilRoof), ripe = ripen(home, first);
-  const worked = advanceCrew(ripe.home, first), rest = ripen(worked.home, elapsed - first);
-  return {home: rest.home, laid: [...ripe.laid, ...rest.laid], finished: worked.finished};
+  const moment = offset => home.lastSeen === null ? null : home.lastSeen + offset;
+  const worked = advanceCrew(fillHomeTanks(ripe.home, moment(first)), first, moment(first));
+  const rest = ripen(worked.home, elapsed - first);
+  return {home: fillHomeTanks(rest.home, moment(elapsed)), laid: [...ripe.laid, ...rest.laid], finished: worked.finished};
+}
+
+// The well is a single cell, sampled at its centre in whole world metres. Its hidden depth is kept with the mark.
+export const canBorrowDrill = home => !!home?.builds?.some(row => row.kind === 'coop' && row.stage === 4);
+export const wellInLand = well => groundPoint(well.i + .5, well.j + .5);
+const wellBounds = well => ({i0: well.i, i1: well.i + 1, j0: well.j, j1: well.j + 1});
+export function wellRefusal(home, cell) {
+  if (!canBorrowDrill(home)) return 'wellLocked';
+  if (home.well) return 'wellExists';
+  if (!loadPoint({i: cell.i, j: cell.j})) return 'offGround';
+  const bounds = wellBounds(cell);
+  if (rectanglesOverlap(bounds, laneOf(gateOf(home)))) return 'lane';
+  if (home.builds.some(row => rectanglesOverlap(bounds, buildBounds(row))) ||
+      home.boxes.some(box => sameCell(box, cell)) ||
+      home.pieces.some(piece => pieceThroughBuild(piece, {...cell, kind: 'well', turn: 0}))) return 'onTop';
+  return null;
+}
+export function markWell(home, cell, seed) {
+  if (wellRefusal(home, cell)) return home;
+  const at = wellInLand(cell), water = drillSite(seed, Math.round(at.x), Math.round(at.z)).depth;
+  return {...home, well: {i: cell.i, j: cell.j, depth: 0, water, pump: false}};
+}
+export function homeDrillHole(home, seed, previous = null) {
+  const well = home.well;
+  if (!well) return null;
+  const at = wellInLand(well), site = drillSite(seed, Math.round(at.x), Math.round(at.z));
+  // Keep the saved water depth if the world's outing seed ever changes, including the layers in the same proportions.
+  const scale = well.water / site.depth;
+  return {site: {...site, depth: well.water, clayEnd: site.clayEnd * scale, gravelEnd: site.gravelEnd * scale},
+    depth: well.depth, struckWater: well.depth >= well.water, mastDown: previous?.mastDown === true,
+    jammed: previous?.site.x === site.x && previous?.site.z === site.z && previous.jammed === true};
+}
+export function drillHomeWell(home, seed, controls, seconds, previous = null) {
+  if (!home.well || home.well.pump) return {home, hole: homeDrillHole(home, seed), events: []};
+  const result = stepDrill(homeDrillHole(home, seed, previous), controls, seconds * HOME_WELL.cuttingTime);
+  return {home: result.state.depth === home.well.depth ? home : {...home, well: {...home.well, depth: result.state.depth}},
+    hole: result.state, events: result.events};
+}
+export function fitHomePump(home) {
+  return home.well && home.well.depth >= home.well.water && !home.well.pump
+    ? {...home, well: {...home.well, pump: true}} : home;
+}
+function readableWell(well) {
+  return well === null || !!well && Object.keys(well).length === 5 && loadPoint({i: well.i, j: well.j}) &&
+    Number.isFinite(well.water) && well.water > 0 && Number.isFinite(well.depth) && well.depth >= 0 && well.depth <= well.water &&
+    typeof well.pump === 'boolean' && (!well.pump || well.depth === well.water);
+}
+export function tankConnected(home, row) {
+  if (row.kind !== 'tank' || row.stage !== 4 || !home.well?.pump) return false;
+  const a = wellInLand(home.well), b = buildInLand(row);
+  return Math.hypot(a.x - b.x, a.z - b.z) <= HOME_TANK.reach;
+}
+// `filled` is a high-water mark in the supplied real clock. A backward clock never drains or counts time twice.
+export function fillHomeTanks(home, moment) {
+  if (!Number.isFinite(moment) || moment < 0) return home;
+  let changed = false;
+  const builds = home.builds.map(row => {
+    if (row.kind !== 'tank' || row.stage !== 4) return row;
+    const filled = Math.max(moment, row.filled ?? moment);
+    const seconds = row.filled === null ? 0 : filled - row.filled;
+    const litres = tankConnected(home, row) ? Math.min(HOME_TANK.litres, row.litres + seconds * HOME_TANK.litres / HOME_TANK.seconds) : row.litres;
+    if (filled === row.filled && litres === row.litres) return row;
+    changed = true;
+    return {...row, litres, filled};
+  });
+  return changed ? {...home, builds} : home;
+}
+export function tankWords(home, row) {
+  const words = HOME_WORDS.tankFullness.replace('{litres}', Math.floor(row.litres)).replace('{capacity}', HOME_TANK.litres);
+  return words + (tankConnected(home, row) ? '' : ' ' + HOME_WORDS.tankWaiting);
 }
 // Built-in nests use the existing egg record and laying rules. Their cells cannot be lifted as crates.
 export function coopBoxes(home) {
@@ -266,7 +347,10 @@ export function transferHomeLoad(home, {vehicle, position, speedKmh}) {
       return {...home, loot: home.loot.map(row => row === piece ? {...row, position: 'bed'} : row)};
   }
   if (cargo.length) return home;
-  const kind = Object.keys(HOME_BUILDS).find(key => {
+  const kinds = Object.keys(HOME_BUILDS).sort((a, b) =>
+    Number(home.builds.some(row => row.kind === b && row.stage === 0)) - Number(home.builds.some(row => row.kind === a && row.stage === 0)));
+  const kind = kinds.find(key => {
+    if (key === 'tank' && !canBorrowDrill(home)) return false;
     if (home.crew?.job?.kind === key) return false;
     if (!home.builds.some(row => row.kind === key && row.stage === 0) && home.builds.some(row => row.kind === key && row.stage > 0)) return false;
     if (home.builds.some(row => row.kind === key && row.stage > 0 && row.stage < 4)) return false;
@@ -302,7 +386,7 @@ function readableBox(box) {
     box.i >= 0 && box.i < HOME_CELLS && box.j >= 0 && box.j < HOME_CELLS && count(box.eggs) && box.eggs <= BOX_HOLDS;
 }
 export function readableHome(home) {
-  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, 4, 5, HOME_RECORD_VERSION].includes(home.version)) return false;
+  if (home === null || typeof home !== 'object' || Array.isArray(home) || ![1, 2, 3, 4, 5, 6, HOME_RECORD_VERSION].includes(home.version)) return false;
   const built = cleanHomeName(home.name) === home.name && Array.isArray(home.pieces) && home.pieces.every(readablePiece) &&
     Array.isArray(home.marks) && home.marks.every(readablePiece) && home.marks.length <= 4 * HOME_CELLS * (HOME_CELLS + 1) &&
     home.pieces.filter(piece => piece.kind === 'gate').length <= 1 &&
@@ -312,6 +396,7 @@ export function readableHome(home) {
   if (home.version >= 4 && !readableCrew(home)) return false;
   if (home.version >= 5 && !readableRaids(home.raids)) return false;
   if (home.version >= 6 && !readableLoot(home)) return false;
+  if (home.version >= 7 && !readableWell(home.well)) return false;
   const builtIn = coopBoxes(home);
   return Array.isArray(home.hens) && home.hens.length <= (builtIn.length ? HOME_BUILDS.coop.hens * builtIn.length / 3 : MOSS_HENS.length) && home.hens.every(readableHen) &&
     Array.isArray(home.boxes) && home.boxes.length <= HOME_CRATES + builtIn.length && home.boxes.every(readableBox) &&
@@ -364,11 +449,13 @@ export function piecesUnder(list, piece) {
 // Why a piece cannot be built here, or null when it can. The reasons are keys of HOME_WORDS.
 export function refusal(home, piece) {
   if (!inBounds(piece)) return 'offGround';
+  if (home.well && pieceThroughBuild(piece, {...home.well, kind: 'well', turn: 0})) return 'onTop';
   if (piece.kind === 'gate' && !onEdge(piece)) return 'gateEdge';
   if (piecesUnder(home.pieces, piece).length) return 'onTop';
   if ((home.builds ?? []).some(row => pieceThroughBuild(piece, row))) return 'onTop';
   if (piece.kind === 'gate') {
     const lane = laneOf(piece);
+    if (home.well && rectanglesOverlap(wellBounds(home.well), lane)) return 'lane';
     if (home.pieces.some(other => stepsOf(other).some(key => crossesLane(key, lane)))) return 'gateLane';
     if ((home.boxes ?? []).some(box => boxInLane(box, lane))) return 'gateLaneBox';
     if ((home.builds ?? []).some(row => rectanglesOverlap(buildBounds(row), lane))) return 'lane';
@@ -450,6 +537,10 @@ export function pieceInLand(piece) {
 export const GATE_POST = .3;
 export function homeSolids(home, {gateOpen = false, heightAt}) {
   const rows = [];
+  if (home?.well?.pump) {
+    const at = wellInLand(home.well);
+    rows.push({id: 'home/well', kind: 'post', ...at, halfX: .25, halfZ: .25, heading: 0, height: 1.2, base: heightAt(at.x, at.z)});
+  }
   for (const row of home?.builds ?? []) {
     if (row.stage < (row.kind === 'tower' ? 1 : 2)) continue;
     const at = buildInLand(row), w = HOME_BUILDS[row.kind].width * HOME_STEP, d = HOME_BUILDS[row.kind].depth * HOME_STEP;
@@ -461,6 +552,10 @@ export function homeSolids(home, {gateOpen = false, heightAt}) {
     };
     if (row.kind === 'tower') {
       for (const x of [-1.2, 1.2]) for (const z of [-1.2, 1.2]) add(`post/${x}/${z}`, x, z, .16, .16, HOME_TOWER.platform);
+      continue;
+    }
+    if (row.kind === 'tank') {
+      add('tank', 0, 0, 1.2, 1.2, row.stage >= 3 ? 2.7 : .8);
       continue;
     }
     for (const x of [-w / 2, w / 2]) for (const z of [-d / 2, d / 2]) add(`post/${x}/${z}`, x, z, .09, .09, 2.1);
@@ -580,6 +675,7 @@ export function boxSlotInFront(position, yaw) {
 export function boxRefusal(home, cell) {
   if (!whole(cell.i) || !whole(cell.j) || cell.i < 0 || cell.j < 0 || cell.i >= HOME_CELLS || cell.j >= HOME_CELLS) return 'offGround';
   if (home.boxes.some(box => box.i === cell.i && box.j === cell.j)) return 'boxCell';
+  if (home.well && sameCell(home.well, cell)) return 'onTop';
   if ((home.builds ?? []).some(row => rectanglesOverlap(buildBounds(row), {i0: cell.i, i1: cell.i + 1, j0: cell.j, j1: cell.j + 1}))) return 'onTop';
   if (boxInLane(cell, laneOf(gateOf(home)))) return 'boxLane';
   if (cratesLeft(home) <= 0) return 'noCrates';
@@ -659,6 +755,10 @@ export function awayWords(seconds) {
 // the outing found when it opened: {away (seconds counted), long (the clock said more than AWAY_LONGEST), laid}.
 export function boardLines(opened, home) {
   const lines = [];
+  if (canBorrowDrill(home) && !home.well?.pump) {
+    lines.push(BOARD_WORDS.drillRig);
+    if (!home.well) lines.push(BOARD_WORDS.wellHint);
+  }
   if (opened?.carters) lines.push(fill(HOME_WORDS.cartersBack, opened.carters));
   if (cartersBusy(home)) lines.push(HOME_WORDS.cartersBusy);
   else if (cartersOffer(home)) lines.push(HOME_WORDS.cartersOffer);

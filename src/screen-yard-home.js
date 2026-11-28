@@ -12,6 +12,7 @@ import {night2Page} from './world/jobs/night-2.js';
 import {ledgerPageMarkup} from './story/ledger-ui.js';
 import {yardThingsToTry} from './yard-things-to-try.js';
 import {savedOpenRecord} from './world/open/open-save.js';
+import {canBorrowDrill} from './world/open/home-rule.js';
 
 const button = (label, action) => `<button type="button" data-action="${action}">${label}</button>`;
 const courseNames = new Map(COURSE.map(course => [course.id, course.name]));
@@ -80,6 +81,8 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
       button('Night 2 · Strangers at the gate', 'story-night-2') + button('Go out into the Scablands', 'story-open-roam') +
       (featureFlags?.enabled('home-ground') === true && savedOpenRecord(profile)?.home ?
         button("Go out in Tin Town's flatbed", 'story-open-flatbed') : '') +
+      (featureFlags?.enabled('home-ground') === true && canBorrowDrill(savedOpenRecord(profile)?.home) ?
+        button("Go out in Tin Town's drill rig", 'story-open-drill') : '') +
       button('What people remember', 'yard-ledger') + '</article>' : '') +
       emberWallMarkup(ember) + waterWallMarkup(water) + (storyWall ? cardWallScreen(profile,escapeHTML) : '');
   } else if (panel === 'ledger' && ledgerAvailable) {
