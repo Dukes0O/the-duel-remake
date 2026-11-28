@@ -456,6 +456,26 @@ go into the real game after step 4.
   `home.pump.fit`, `home.tank.fill`; tank stages reuse `home.fence.hammer`. The drill cues play the rig's existing
   tones. The other home cues await OPEN-SOUND registration, as in earlier steps. Claude's hand drive remains due.
 
+### Step 5B as built (HOME-GROUND-5B, behind the switch `home-ground`)
+
+- G offers six 1 by 2 garden beds after the first coop. Hold B for 2.5 seconds to use Auntie Solder's old timber.
+  F plants the next available seed, rotating spinach, carrots and beans; F harvests a ripe crop into `vegetables`.
+- The 3 by 3 greenhouse uses the existing flatbed load, four six-second stages (base, frame, glass, door), and the
+  crew's one-hour job after the first is built. Six pots take fire peppers or jumping beans, each needing 12 hours.
+  The glass doorway stays open. Code-drawn stems and creased leaves grow from sprouts, with a faint glow when ripe.
+- Crops use `ripen` and the existing supplied clock, including the three-day cap. A tank within 12 metres must have
+  water. Dry time waits without damage; this step does not drain tanks. A new tank waters only after it is finished.
+- Version 8 adds `beds: [{i, j, turn, crop, grown}]`, `pots: [{i, j, slot, crop, grown}]`, `seeds`, `vegetables`,
+  `foods` and a three-slot `tin`, plus the greenhouse load. `grown` counts watered seconds; empty spaces use null
+  crops and zero growth. Versions 1 to 7 stay unchanged until the enabled outing upgrades after the verified backup.
+- The gift starts with six seeds per plain crop and three per power food. Each harvest keeps one seed for replanting.
+  F at the shed packs power food into empty tin slots. Keys 4, 5 and 6 eat on foot; 1 to 3 still choose gear.
+- Fire peppers sustain the existing 15 m/s third speed for 90 play seconds. Jumping beans lift a jump to 6 metres for
+  120 seconds. Both ease down over the last 20 seconds; leaves beside health empty. Eaten powers end with the outing.
+  The walker can land on home walls, roofs and tower platforms and step off again. The tin survives saving.
+- Cues: `home.bed.plant`, `home.bed.harvest`, `home.glass.stage`, `home.pot.glow`, `home.eat`, `home.power.end`.
+  Bed hammering reuses `home.fence.hammer` and `home.box.up`. Sound selection remains with OPEN-SOUND.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.

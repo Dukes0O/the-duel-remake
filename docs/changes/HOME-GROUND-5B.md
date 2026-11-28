@@ -1,0 +1,14 @@
+# HOME-GROUND-5B
+- Built six quick-hammered beds, watered real-clock crops, a four-stage greenhouse with six pots, and the growers' seeds.
+- Added the three-slot lunch tin, keys 4/5/6, 90-second fire peppers, 120-second jumping beans and fading health leaves.
+- Foot hooks: `src/onfoot.js`, `src/onfoot-transition.js`, `src/input-contexts.js`, `src/controls-help.js`; ship deck support preserved; no shared core file changed.
+- Version 8 preserves earlier home records and verifies their backup before upgrading; powers last only for the outing.
+- Save review: fixed malformed crop IDs and null tank timestamps; 27 fixtures/1,145 preservation checks, versions 1-7, populated v8 and 54 damaged variants passed. No findings remain.
+- Guards at `f43f152e3`: 10/10 suites passed; replay fingerprints (306 checks/34 cases) and 65 world checks stayed unchanged.
+- Lane at `026b5d4c9`: 67 passed before the HUD element-order fault; fixed at `16e131b7c` without changing its assertion. Continuation: 152/154 passed; PowerShell/FFmpeg access retries passed 2/2. All 187 selected suites covered.
+- Build at `16e131b7c` passed; three extra backup consumers passed (190 distinct suites in total). Home Ground: 677 checks. Storage: 3.76 MB / 4 MB. Final board/hygiene checks passed.
+- Changed assertions: v8, the added greenhouse load and shed food/tin wording; earlier fields and gear keys remain checked. Claude's written review is due.
+- Browser/frame checks: not run, as instructed; Claude's hand drive is due. `home-ground` stays dev.
+- Cues: `home.bed.plant`, `home.bed.harvest`, `home.glass.stage`, `home.pot.glow`, `home.eat`, `home.power.end`; existing hammer cues reused.
+- Picks and durable rules: `docs/board/questions/HOME-GROUND-5B.md` and `docs/HOME_GROUND.md` section 16. Cockpit sync left to integration: this lane may write only inside its folder.
+- **Removed:** no feature removed; extended the existing build/store flow and replaced its v7-only normalization with backward-compatible v8 handling.

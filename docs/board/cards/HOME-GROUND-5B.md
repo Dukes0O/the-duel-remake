@@ -43,4 +43,14 @@ load unchanged after the verified backup.
   what they say and wear off on time; a version 7 save loads unchanged.
 - The lane tier, the rule 23 guards and `npm run build`. One independent review of the save. Claude drives it by hand.
 
+## Implementation and review
+
+- Independent save review found and confirmed fixes for malformed crop IDs throwing and older null tank timestamps
+  counting different crop growth across split visits. Versions 1 to 7, populated version 8 round trips and damaged
+  garden records passed memory-only review. No outstanding save findings.
+- Existing assertions now expect version 8 and the added greenhouse load; shed text includes food counts and tin
+  instructions. Earlier save fields and gear keys remain asserted. Claude's written assertion review is still due.
+- Implementation picks are in `docs/board/questions/HOME-GROUND-5B.md`; the durable record is section 16 of
+  `docs/HOME_GROUND.md`.
+
 ## Claude answers

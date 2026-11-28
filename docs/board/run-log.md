@@ -1854,3 +1854,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Janitor HOME-RAID-BIKE-LOOK (28 November): 5,842 tracked files, 900.7 MiB; no unused module candidates. Uncertain assets left intact, generated build and QA scratch recycled; one 383 KB comparison sheet retained. Existing size overruns and idle branches remain on STATUS; lane retained for Claude review.
 - Merge HOME-RAID-BIKE-LOOK (Codex Astra, laptop lane): the raid bike, round 2, passes as a worn trail bike (bike-round-2.jpg)
 - Merge HOME-GROUND-5 (Codex Astra, laptop lane): the well he drills with Tin Town's rig, the hand pump and the 1,000-litre tank on the real clock
+- Janitor HOME-GROUND-5B (28 November): no unused module candidates; uncertain assets left intact. Build and QA scratch recycled after checks; existing size overruns and idle branches listed on STATUS. Lane retained for Claude review.
