@@ -2,6 +2,7 @@
 // Like town-rats, hold and fence, this rule takes play seconds and observed actors.
 // The adapter supplies the existing Rat combat bodies; the renderer only reads these poses.
 import {makeRng} from '../../rng.js';
+import {hasHomeFolk, HOME_CROSSBOW} from './content/home-folk.js';
 import {sweepObstacle} from '../../collision.js';
 import {stepMover, TRUCK_GRADE} from '../scablands-movers.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
@@ -229,6 +230,19 @@ export function stepHomeRaid(home, raid, view, dt, seed) {
       health <= row.maxHealth * tune.retreatHealth};
   });
   let next = {...raid, seconds, riders}, events = [];
+  // Finch uses the same raid hit bodies through the adapter. Only this rule changes their health.
+  const tower = hasHomeFolk(home, 'finch') && home.builds.find(row => row.kind === 'tower' && row.stage === 4);
+  if (tower && !raid.test && !(view.homeTower && view.homeTower.row.i === tower.i && view.homeTower.row.j === tower.j)) {
+    const post = buildInLand(tower);
+    const shots = Math.floor(seconds / HOME_CROSSBOW.seconds) - Math.floor(raid.seconds / HOME_CROSSBOW.seconds);
+    for (let n = 0; n < shots; n++) {
+      const target = next.riders.filter(row => row.health > 0 && !row.fled && !row.retreat && gap(post, row.position) <= HOME_CROSSBOW.reach)
+        .sort((a, b) => gap(post, a.position) - gap(post, b.position) || a.id.localeCompare(b.id))[0];
+      if (!target) break;
+      next.riders = next.riders.map(row => row === target ? {...row, health: Math.max(0, row.health - HOME_CROSSBOW.damage)} : row);
+      events.push(cue(HOME_CUES.crossbow));
+    }
+  }
   if (raid.test && !raid.rattled && seconds >= 5) {
     next.rattled = true; events.push(cue(HOME_CUES.raidRam));
   }

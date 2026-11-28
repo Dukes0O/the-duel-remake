@@ -19,6 +19,7 @@ import {createHomeGardenLook} from './home-garden-look.js';
 import {createHomeTowerLook} from './home-tower-look.js';
 import {createHomeRaidersLook} from './home-raiders-look.js';
 import {createDrillCuttingsView} from '../../../machines/drill-view.js';
+import {createHomeFolkLook} from './home-folk-look.js';
 import {createHomeDigLook} from './home-dig-look.js';
 
 const MOST_MARKS = 96;
@@ -188,6 +189,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
   materials.chalk = new THREE.LineBasicMaterial({color: 0xe8e2cf});
   materials.water = std('home tank water gauge', 0x558c98, {roughness: .3, metalness: .1});
   const cylinder = (radius, height, material) => new THREE.Mesh(keep(new THREE.CylinderGeometry(radius, radius, height, 20)), material);
+  const folkLook = createHomeFolkLook(group, (x, z) => ground(x, z));
   const well = new THREE.Group(); well.name = 'home-well'; group.add(well);
   const wellMark = new THREE.LineSegments(keep(new THREE.EdgesGeometry(new THREE.BoxGeometry(HOME_STEP, .03, HOME_STEP))), materials.chalk);
   wellMark.name = 'home-well-mark'; wellMark.position.y = .04; well.add(wellMark);
@@ -305,7 +307,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     };
     tin(2, w, 2.4, 0, .08, -d / 2, Math.PI, 0, 7);
     for (const side of [-1, 1]) tin(2, d, 2.1, side * w / 2, .08, 0, side * Math.PI / 2, 0, 12 + side);
-    if (kind === 'shed') {
+    if (['shed', 'hut'].includes(kind)) {
       for (const side of [-1, 1]) tin(2, 1.3, 2.1, side * 1.35, .08, d / 2, 0, 0, 19 + side);
       tin(2, 1.3, 1.95, .72, .08, d / 2 - .65, Math.PI / 2, 0, 22);
     } else {
@@ -443,9 +445,9 @@ export function createHomeGroundView({course, loadAsset} = {}) {
     Promise.resolve().then(() => loadAsset(HOME_HEN_MODEL)).then(gltf => { henModel = gltf; }).catch(() => { henModel = null; });
   }
   // The first two wear blue and yellow leg bands, so that he can tell them apart.
-  function henDraw(index) {
+  function henDraw(index, breed) {
     if (henDraws[index] || !henModel) return henDraws[index] ?? null;
-    const hen = createHen(henModel, {band: index % 2 ? 'yellow' : 'blue', pose: 'peck', phase: index * 1.7});
+    const hen = createHen(henModel, {breed, band: index % 2 ? 'yellow' : 'blue', pose: 'peck', phase: index * 1.7});
     hens.add(hen.object);
     return (henDraws[index] = hen);
   }
@@ -504,6 +506,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       digging.update(record, state, drawnShift);
       const keptPots = [];
       const waterDt = waterClock === null ? 0 : Math.max(0, Math.min(.25, seconds - waterClock)); waterClock = seconds;
+      folkLook.update(record);
       well.visible = !!record?.well;
       if (record?.well) {
         const at = wellInLand(record.well);
@@ -564,7 +567,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
               const roll = new THREE.Mesh(keep(new THREE.TorusGeometry(.22, .008, 4, 20)), materials.post);
               roll.rotation.y = Math.PI / 2; roll.position.set(.55 + n * .04, .63, .3); load.add(roll);
             }
-          } else if (kind === 'shed') {
+          } else if (['shed', 'hut'].includes(kind)) {
             const door = new THREE.Mesh(keep(buildingTin(.9, 1.9, {seed: 50})), materials.tin);
             door.rotation.x = -Math.PI / 2; door.position.set(0, .85, .95); load.add(door);
           }
@@ -758,7 +761,8 @@ export function createHomeGroundView({course, loadAsset} = {}) {
           drawn.box.position.set(x, ground(x, z, drawnShift), z);
           const shown = Math.min(EGGS_DRAWN, Math.ceil(box.eggs * EGGS_DRAWN / BOX_HOLDS));
           drawn.box.userData.setEgg(shown > 0);
-          drawn.clutch.forEach((egg, n) => { egg.visible = n + 1 < shown; });
+          drawn.box.userData.egg.userData.setBreed(record.hens.some(hen => hen.breed === 'marans') && index % 2 ? 'marans' : 'tin-town-brown');
+          drawn.clutch.forEach((egg, n) => { egg.visible = n + 1 < shown; egg.userData.setBreed(record.hens.some(hen => hen.breed === 'marans') && n % 3 === 0 ? 'marans' : 'tin-town-brown'); });
         }
         let crates = 0;
         const spares = waiting ? 1 : crateAt ? cratesLeft(record) : 0;
@@ -781,7 +785,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       const henCount = waiting ? 2 : flock.length;
       if (henCount) askHen();
       for (let index = 0; index < Math.max(henCount, henDraws.length); index++) {
-        const drawn = index < henCount ? henDraw(index) : henDraws[index];
+        const drawn = index < henCount ? henDraw(index, hensKept[index]?.breed) : henDraws[index];
         if (!drawn) continue;
         drawn.object.visible = index < henCount;
         if (!drawn.object.visible) continue;
@@ -855,6 +859,7 @@ export function createHomeGroundView({course, loadAsset} = {}) {
       }
     },
     dispose() {
+      folkLook.dispose();
       digging.dispose();
       garden.dispose();
       cuttings.dispose();

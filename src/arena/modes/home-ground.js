@@ -31,6 +31,10 @@ export function syncHomeGround(duel, world, dt = 0) {
     return;
   }
   world.updateHomeGround?.(world.open.world.open.home);
+  if (home.mended) {
+    state.armor = state.maxArmor;
+    world.fieldPatched = false;
+  }
   if (state.fighter) state.fighter.homeIronStrength = powerStrength(home.powers?.ironBeets);
   const defender = state.onFoot && state.fighter;
   const garlic = defender && !defender.knockedDown ? powerStrength(home.powers?.stinkGarlic) : 0;

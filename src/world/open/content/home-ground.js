@@ -29,6 +29,7 @@ export const HOME_BUILDS = Object.freeze({
   tower: Object.freeze({name: 'watchtower', width: 2, depth: 2, hammer: 6, kg: 360, cue: 'home.tower.stage'}),
   tank: Object.freeze({name: 'water tank', width: 2, depth: 2, hammer: 6, kg: 280, cue: 'home.fence.hammer'}),
   greenhouse: Object.freeze({name: 'greenhouse', width: 3, depth: 3, hammer: 6, kg: 380, cue: 'home.glass.stage'}),
+  hut: Object.freeze({name: 'hut', width: 2, depth: 2, hammer: 6, kg: 320, cue: 'home.hut.stage'}),
 });
 export const HOME_BED = Object.freeze({width: 1, depth: 2, hammer: 2.5, count: 6, reach: 12});
 export const HOME_GLASS_STAGES = Object.freeze(['base', 'frame', 'glass', 'door']);
@@ -75,7 +76,7 @@ export const HAMMER_STRIKE_SECONDS = .6;
 // The outline stands this far in front of him.
 export const HOME_REACH = 1.6;
 export const HOME_BOX_REACH = 3;
-export const HOME_CREW_SECONDS = Object.freeze({coop: 30 * 60, shed: 60 * 60, tower: 45 * 60, tank: 60 * 60, greenhouse: 60 * 60});
+export const HOME_CREW_SECONDS = Object.freeze({hut: 30 * 60, coop: 30 * 60, shed: 60 * 60, tower: 45 * 60, tank: 60 * 60, greenhouse: 60 * 60});
 export const HOME_LOOT = Object.freeze({
   bike: Object.freeze({worth: 6, kg: 110}),
   buggy: Object.freeze({worth: 15, kg: 480}),
@@ -96,6 +97,7 @@ export const HOME_NAME_LONGEST = 24;
 // box is full the hens wait, and nothing is lost.
 export const HEN_BREEDS = Object.freeze({
   'tin-town-brown': Object.freeze({id: 'tin-town-brown', name: 'Tin Town Brown', egg: 'brown', eggsADay: 6}),
+  marans: Object.freeze({id: 'marans', name: 'Marans', egg: 'dark chocolate brown', eggsADay: 3}),
 });
 export const DAY_SECONDS = 24 * 60 * 60;
 export const layInterval = breed => DAY_SECONDS / HEN_BREEDS[breed].eggsADay;
@@ -127,6 +129,8 @@ export const FOOT_BURST = Object.freeze({seconds: 3, refillSeconds: 6});
 
 // Every event's sound cue. OPEN-SOUND chooses and registers the sounds; until then these are names only.
 export const HOME_CUES = Object.freeze({
+  folkArrive: 'home.folk.arrive', folkGreet: 'home.folk.greet', hutStage: 'home.hut.stage',
+  mastCall: 'home.mast.call', pumpMotor: 'home.pump.motor', crossbow: 'home.crossbow',
   digBite: 'home.dig.bite', digDump: 'home.dig.dump', digTear: 'home.dig.tear', digDitch: 'home.dig.ditch', pondFill: 'home.pond.fill',
   plant: 'home.bed.plant', harvest: 'home.bed.harvest', glassStage: 'home.glass.stage',
   potGlow: 'home.pot.glow', eat: 'home.eat', powerEnd: 'home.power.end',
@@ -150,6 +154,7 @@ export const HOME_CUES = Object.freeze({
 
 // What he reads. Every line is a whole sentence.
 export const HOME_WORDS = Object.freeze({
+  hutOccupied: 'Somebody lives in this hut. Leave their home standing.',
   digger: "Auntie Solder has a digger doing nothing in her yard. It's yours to borrow.",
   digDrive: 'Drive with W, A, S and D. Press B to stop and work the bucket.',
   digWork: 'Press B to drive again. Press G to choose tearing down, a ditch, a cellar or a pond.',

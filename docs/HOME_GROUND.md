@@ -526,6 +526,30 @@ go into the real game after step 4.
 - Cues: `home.dig.bite`, `home.dig.dump`, `home.dig.tear`, `home.dig.ditch`, `home.pond.fill`. OPEN-SOUND chooses
   their sounds. No release or hand-drive verdict is claimed by this implementation.
 
+### Step 7 as built (HOME-GROUND-7, behind the switch `home-ground`)
+
+- Version 11 adds `folk: [{id, hut: {i,j}, arrived}]`, Slack's `shown`, a hut load and the Marans breed in `hens`.
+  Versions 1 to 10 read unchanged. The existing verified career backup precedes the enabled upgrade. Old stores,
+  plants, machines, digging, cargo and crew work stay. The disabled switch never upgrades a home.
+- Existing good story endings and their marks unlock each invitation. No storyline was changed. The news board
+  gives the person's own sentence. Build a 2 by 2 hut with the flatbed and four coop-style stages, then press F
+  at the board to assign it. Later huts use the taught crew's thirty-minute job. An assigned hut stays standing.
+- The existing people mover brings residents from their posts, through the home gate, to their huts. Arrival is
+  saved on reaching the hut. Their old posts stand empty. They keep their work places by day and go inside at dark.
+  F opens their own short talk. Marigold and seven growers share their hut; Finch has his own invitation and hut.
+- After watching one box or coop gathering within six metres, Slack gathers the boxes at each real midnight.
+  Supplied time, including the existing three-day away cap, counts a day only once. Before the lesson he leaves them.
+- Finch uses the first finished tower in real raids, firing a 12-damage crossbow every four play seconds within
+  25 metres. He yields it while Gratian climbs or stands on it. The harmless bike lesson stays harmless.
+- Dace's bay beside the shed mends the outing car when Gratian leaves it there and walks away, and after time away.
+  It uses the existing armour repair and `repair.complete` cue. Hetty's mast calls a due raid a minute before dusk.
+  Mr Penny's motor fills connected tanks in four real hours. Marigold's growers gather ripe beds and pots into the
+  existing stores, without replanting, and bring Truffle and Cocoa, two Marans laying three eggs each per real day.
+- The Marans reuse HOME-HEN-BODY with a darker feather coat, keeping the face, comb and legs. The existing naming
+  boxes give both hens their names. Huts reuse the coop and shed construction; the pump and tower keep their rules.
+- Named cues: `home.folk.arrive`, `home.folk.greet`, `home.hut.stage`, `home.mast.call`, `home.pump.motor`,
+  `home.crossbow`. Automatic eggs and crops reuse `home.egg.gather` and `home.bed.harvest`. No shared core hook was needed.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.

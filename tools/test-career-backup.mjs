@@ -78,7 +78,7 @@ for (const version of [1, 2, 3, 4, 5, 6, 7]) {
   const upgraded = upgradeHome(home);
   assert.equal(upgraded.version, HOME_RECORD_VERSION);
   for (const [key, value] of Object.entries(home)) if (key !== 'version') {
-    if (key === 'loads') assert.deepEqual(upgraded.loads, {...value, ...(version < 5 ? {tower: 'stack'} : {}), ...(version < 7 ? {tank: 'stack'} : {}), greenhouse: 'stack'});
+    if (key === 'loads') assert.deepEqual(upgraded.loads, {...value, ...(version < 5 ? {tower: 'stack'} : {}), ...(version < 7 ? {tank: 'stack'} : {}), greenhouse: 'stack', hut: 'stack'});
     else assert.deepEqual(upgraded[key], value);
   }
   profile.story.open.home = upgraded;
@@ -96,7 +96,7 @@ for (const home of [undefined, newHome('Current'), {...newHome('Future'), versio
   const home = {...newHome('5B garden', 1000), version: 8, eggs: 31,
     seeds: {spinach: 2, carrots: 4, beans: 6, firePeppers: 1, jumpingBeans: 2},
     foods: {firePeppers: 3, jumpingBeans: 4}, tin: ['jumpingBeans', 'firePeppers', null]};
-  delete home.moreSeeds;
+  delete home.moreSeeds; delete home.folk; delete home.shown; delete home.loads.hut;
   const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}, story: {version: 1, open: {home}}};
   const source = memoryStorage({[PLAYERS_KEY]: JSON.stringify({version: 2, activePlayerId: 'home',
     players: [{id: 'home', name: 'Home', profile}]})});
@@ -111,7 +111,26 @@ for (const home of [undefined, newHome('Current'), {...newHome('Future'), versio
   for (const key of ['seeds', 'foods']) for (const [id, count] of Object.entries(home[key]))
     assert.equal(upgraded[key][id], count, 'migration keeps every older food and seed count');
   for (const [key, value] of Object.entries(home)) if (!['version', 'seeds', 'foods'].includes(key))
-    assert.deepEqual(upgraded[key], value, 'migration keeps every other 5B field');
+    assert.deepEqual(upgraded[key], key === 'loads' ? {...value, hut: 'stack'} : value, 'migration keeps every other 5B field');
+}
+// HOME-GROUND-7: a genuine step 6 home is backed up byte for byte before the additive upgrade.
+{
+  const home = {...newHome('Step six', 1000), version: 10, eggs: 31, scrap: 91,
+    ditch: [{i: -1, j: 4}], cellar: {dug: 2}, pond: {i: 12, j: 12, scoops: 2, litres: 0, filled: null}};
+  delete home.folk; delete home.shown; delete home.loads.hut;
+  const profile = {...createProfile(), raceSettings: {footCamera: 'first-person'}, story: {version: 1, open: {home}}};
+  const source = memoryStorage({[PLAYERS_KEY]: JSON.stringify({version: 2, activePlayerId: 'home', players: [{id: 'home', name: 'Home', profile}]})});
+  const before = captureCareer(source), store = memoryBackups();
+  assert.equal(needsCareerMigration(source), true, 'step 6 requires the verified migration backup');
+  await assert.rejects(backupBeforeMigration(source, {save: async () => {}, load: async () => null}), /could not be verified/);
+  assert.deepEqual(captureCareer(source), before, 'failed verification keeps every step 6 byte');
+  const saved = await backupBeforeMigration(source, store);
+  assert.deepEqual((await store.load(saved.id)).entries, before, 'the backup contains the original step 6 bytes');
+  assert.deepEqual(loadPlayers(source).players[0].profile.story.open.home, home, 'loading step 6 does not upgrade it');
+  const upgraded = upgradeHome(home);
+  for (const [key, value] of Object.entries(home)) if (key !== 'version')
+    assert.deepEqual(upgraded[key], key === 'loads' ? {...value, hut: 'stack'} : value, 'step 7 keeps old field ' + key);
+  assert.deepEqual([upgraded.folk, upgraded.shown], [[], false], 'step 7 starts with nobody invited or taught');
 }
 const dir=new URL('./fixtures/saves/',import.meta.url);
 const fixtures=readdirSync(fileURLToPath(dir)).filter(name=>name.endsWith('.json')).sort();

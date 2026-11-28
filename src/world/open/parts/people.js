@@ -26,7 +26,8 @@ import {sitePosition} from '../site-rule.js';
 import {dacePeople} from '../content/dace-goes-looking-places.js';
 import {daceSignIsOut} from '../content/dace-goes-looking-rule.js';
 import {flagPeople} from '../content/somebody-elses-flag-places.js';
-import {outsideGarlic, powerStrength} from '../home-rule.js';
+import {homeFolkRows, homeFolkTalk} from '../home-folk-rule.js';
+import {buildInLand, outsideGarlic, powerStrength} from '../home-rule.js';
 
 export const TALK_RANGE = 2.5;
 export const distanceToPerson = (person, point) => point ? Math.hypot(
@@ -76,7 +77,7 @@ export const peoplePart = {
     const {fighter, onFoot, interact, carPosition, peopleGrid, jobEvents = [], partOfDay = 'day'} = view;
     const driver = fighter?.position;
     let {active, asked, heard} = state;
-    const choices = [];
+    const choices = [], events = [];
     for (const event of jobEvents) {
       if (active && event.type === 'openTalkClosed' && typeof event.scene === 'string' &&
           event.scene.startsWith('market-day/')) active = null;
@@ -144,8 +145,8 @@ export const peoplePart = {
       return {...row, elevation: deckHeight === undefined ? undefined : deckHeight - scablandsActorHeightAt(position.x, position.z),
         routine: {day: {kind: 'post', at: ['ships-in-sand', position.x - ships.x, position.z - ships.z], action: 'stand'}}};
     }) : [];
-    const rows = [...residents.filter(row => (standsHere(row, world) || row.id === learner) && !stageAt(row) &&
-      !storyPeople.some(person => person.id === row.id)), ...[...extras, ...mallPeople, ...lightsRows].filter(row => !stageAt(row)), ...market, ...runaways];
+    const rows = homeFolkRows(world, view, [...residents.filter(row => (standsHere(row, world) || row.id === learner) && !stageAt(row) &&
+      !storyPeople.some(person => person.id === row.id)), ...[...extras, ...mallPeople, ...lightsRows].filter(row => !stageAt(row)), ...market, ...runaways]);
     let cast = rows.flatMap(row => {
       if (row.absent || !Object.hasOwn(STORY_FIGURES, row.figure)) return [];
       if (row.position) {
@@ -159,8 +160,30 @@ export const peoplePart = {
         (plan.at ?? plan.around)?.length === 2);
       const plan = row.routine[partOfDay] ?? row.routine.day;
       if (hasNamedSpot(plan)) return [];
-      const target = targetFor(row, context, partOfDay);
-      const person = state.cast.find(item => item.id === row.id);
+      let target = targetFor(row, context, partOfDay);
+      let person = state.cast.find(item => item.id === row.id);
+      if (row.homeFolk) {
+        if (!person || !person.homeFolk) person = firstPose(row, row.homeArrived ? target : {...row.homeSource, yaw: 0, task: 'stand'}, peopleGrid);
+        let leg = person.homeLeg ?? (row.homeArrived ? 3 : 0);
+        if (leg < 3) {
+          if (Math.hypot(person.position.x - row.homeRoute[leg].x, person.position.z - row.homeRoute[leg].z) < .8) leg++;
+          if (leg < 3) target = {...row.homeRoute[leg], task: 'walk'};
+        }
+        if (leg === 3 && !row.homeArrived && (row.id === row.homeFolk || row.id === 'marigold'))
+          events.push({type: 'homeFolkArrived', id: row.homeFolk});
+        const moved = active?.person === row.id ? faceDriver(person, driver, dt) : followRoutine(person, target, dt,
+          {pace: STORY_FIGURES[row.figure].pace * 1.15, radius: person.radius, car: carPosition, grid: peopleGrid, returnBounds: leg === 0 ? townEdges : null});
+        if (row.homeFolk === 'finch' && row.homeArrived && partOfDay !== 'dark') {
+          const tower = world.open.home.builds.find(row => row.kind === 'tower' && row.stage === 4);
+          if (tower) {
+            const top = buildInLand(tower), occupied = driver && Math.hypot(driver.x - top.x, driver.z - top.z) < 3 &&
+              driver.y > scablandsActorHeightAt(top.x, top.z) + 3;
+            if (!occupied && Math.hypot(moved.position.x - target.x, moved.position.z - target.z) < .8)
+              moved.position = {...top, y: scablandsActorHeightAt(top.x, top.z) + 4.4};
+          }
+        }
+        return [{...moved, homeFolk: row.homeFolk, homeLeg: leg}];
+      }
       if (!person || row.elevation !== undefined || row.home === 'ships-in-sand' ||
           stageAt(row) && stageAt(row) !== state.staged?.[row.id]) return [firstPose(row, target, peopleGrid)];
       if (active?.person === row.id) return [faceDriver(person, driver, dt)];
@@ -186,15 +209,17 @@ export const peoplePart = {
         const thread = view.checkpointsEnabled && (TALK_TABLES[person.id] ?? []).find(row =>
           row.scene.startsWith('runaway/later/') && !heard.includes(row.scene) &&
           (!row.needs || isTrue(row.needs, world)) && runawayTalkScene(row.scene, context));
-        const talk = thread ? {id: thread.scene, scene: runawayTalkScene(thread.scene, context)} : talkFor(rows.find(row => row.id === person.id), world,
-          id => id === PARROT_TALK ? PARROT_SCENE : (view.checkpointsEnabled ? runawayTalkScene(id, context) : null) ?? haulerTalkScene(id, context) ?? lightsTalkScene(id, context) ?? TOWN_SCENES[id], heard);
+        const homeTalk = homeFolkTalk(rows.find(row => row.id === person.id)?.talk);
+        const talk = homeTalk ?? (thread ? {id: thread.scene, scene: runawayTalkScene(thread.scene, context)} : talkFor(rows.find(row => row.id === person.id), world,
+          id => id === PARROT_TALK ? PARROT_SCENE : (view.checkpointsEnabled ? runawayTalkScene(id, context) : null) ?? haulerTalkScene(id, context) ?? lightsTalkScene(id, context) ?? TOWN_SCENES[id], heard));
         if (!talk) continue;
         active = {person: person.id, scene: talk.id};
+        if (homeTalk) events.push({type: 'homeCue', cue: 'home.folk.greet'});
         cast = cast.map(item => item === person ? faceDriver(item, driver, 1) : item);
         requests.push({type: 'talk', person: person.id, speaker: person.id, ...talk, asked: asked[talk.id] ?? []});
         break;
       }
     }
-    return {state: {cast, active, asked, heard, useHeld: !!interact, ...(market.length ? {staged} : {})}, choices, requests};
+    return {state: {cast, active, asked, heard, useHeld: !!interact, ...(market.length ? {staged} : {})}, choices, requests, events};
   },
 };
