@@ -1844,3 +1844,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Janitor HOME-GROUND-3 (27 November): 5,840 tracked files, 900.4 MiB, no unused module candidates; no binary additions or target changes. Generated QA output recycled; unfinished lane kept, with idle branches and existing size overruns on STATUS.
 - Merge HOME-GROUND-3 (Codex Astra, laptop lane, two rounds): the first coop and shed, raised by hand in four stages from a load brought on Tin Town's flatbed; Claude added the flatbed's drawing gate at the merge
 - Merge HOME-GROUND-3B (Codex Sol, laptop lane): Rook and Wren raise the next coop or shed on the real clock, with the step 2 drive's four fixes
+- Merge HOME-GROUND-3-DRIVE (Codex Sol, laptop lane): the eight fixes from Claude's drive of step 3; Claude updated test-open-roam-start's taps to press and release at the merge

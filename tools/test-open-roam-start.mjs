@@ -158,7 +158,10 @@ placeTruck(HOME_LOAD_STACK);
 flatbedApp.keys.KeyF = false;
 flatbedApp.advance(1 / 60);
 assert.match(flatbedJob.open.parts.home.prompt, /Press F to load the tin for the coop/);
+// HOME-GROUND-3-DRIVE: a load moves on a short tap's release; a held F only gets him out.
 flatbedApp.keys.KeyF = true;
+flatbedApp.advance(1 / 60);
+flatbedApp.keys.KeyF = false;
 flatbedApp.advance(1 / 60);
 assert.equal(flatbedJob.open.world.open.home.loads.coop, 'bed');
 assert.equal(flatbedJob.vehicle.loadKg, HOME_BUILDS.coop.kg);
@@ -169,7 +172,10 @@ assert.equal(flatbedState.onFoot, false, 'a tap loads without changing the foot 
 flatbedApp.keys.KeyF = false;
 placeTruck(buildInLand(coop));
 flatbedApp.advance(1 / 60);
+// HOME-GROUND-3-DRIVE: a load moves on a short tap's release; a held F only gets him out.
 flatbedApp.keys.KeyF = true;
+flatbedApp.advance(1 / 60);
+flatbedApp.keys.KeyF = false;
 flatbedApp.advance(1 / 60);
 assert.deepEqual(flatbedJob.open.world.open.home.loads.coop, {i: coop.i, j: coop.j});
 assert.equal(flatbedJob.vehicle.loadKg, 0);
@@ -179,7 +185,10 @@ flatbedApp.duel.featureFlags = on;
 const homeBeforeOff = JSON.stringify(flatbedJob.open.world.open.home);
 placeTruck(HOME_LOAD_STACK);
 flatbedApp.advance(1 / 60);
+// HOME-GROUND-3-DRIVE: a load moves on a short tap's release; a held F only gets him out.
 flatbedApp.keys.KeyF = true;
+flatbedApp.advance(1 / 60);
+flatbedApp.keys.KeyF = false;
 flatbedApp.advance(1 / 60);
 assert.equal(JSON.stringify(flatbedJob.open.world.open.home), homeBeforeOff, 'the disabled hooks leave home progress alone');
 assert.equal(flatbedJob.vehicle.loadKg, 0, 'the disabled hooks cannot load the truck');
