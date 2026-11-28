@@ -21,3 +21,11 @@ and a short review note. More rounds while each improves it.
 Checks: `tools/test-home-ground.mjs`, the rule 23 guards and `npm run build`. No frame check.
 
 ## Claude answers
+
+## Builder handoff (28 November 2026)
+
+Round 2 is ready for the art verdict: `docs/board/looks/home-ground/bike-round-2.jpg` and its review note.
+Card checks and build passed; independent code review passed. See `docs/changes/HOME-RAID-BIKE-LOOK.md`.
+The placement check rejects this card's required sheet name: `tools/test-repo-hygiene.mjs:75` allows only
+`hens-round` or `step` prefixes in this family. Please authorize adding `bike-round` to that rule at review;
+the single 382,519-byte comparison sheet meets the existing size limit. No test assertion was changed here.

@@ -1,0 +1,14 @@
+# HOME-RAID-BIKE-LOOK
+- Rebuilt the bike as a worn trail bike; spoked wheels, tube frame, tank, finned engine, mudguards and jerrycan.
+- Fitted the existing lookout Rat to bars and pegs; repeatable pose and one-to-one rider matching.
+- Checked working tree on `08817bd4b`; final source blob `925165bfb5cd817bd4a6cbf56e7bf9e2fe592cea`.
+- Rule 23 set passed once: core 804, home-ground 528, replay 306, combat replay 12, world composition 65 checks.
+- `npm run build` passed; replay fingerprints and world signatures unchanged. No changed assertions.
+- Chrome: eight views on port 5198, memory-only storage, no errors; 3 m/20 m ridden and wrecked, both sides and detail.
+- Frozen-frame pose drift zero; input state unchanged; overlapping riders kept independent headings and fittings.
+- Independent code review confirmed the overlap fix and found no remaining faults in the final source blob.
+- Bike: five draws, 11,810 triangles; sheet 382,519 bytes. No frame check, as the card requires.
+- Board: 611 checks passed. Hygiene fails only because its name allow-list rejects the card-required `bike-round-2.jpg`; Claude question on card.
+- Claude's art verdict is pending; comparison and reproducible view settings are in `docs/board/looks/home-ground/bike-round-2-review.md`.
+- Cockpit T-121 is In Review; session sync and local presentation rebuild completed.
+- Sound: no new event or cue. **Removed:** old box-frame bike geometry, solid wheel discs and bike-mounted lamp figure.

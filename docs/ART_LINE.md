@@ -137,6 +137,18 @@ the game.
 
 ### Vehicles
 
+- **Measure a bike by its empty spaces as well as its outline** (HOME-RAID-BIKE-LOOK, 28 November 2026).
+  Grid the reference's wheel centres, radii, saddle, tank and steering head first. The TC90's wheelbase is about
+  four wheel radii. Thin round tubes, small hubs and crossed spokes made the raid bike read; darker box bars did not.
+  Merge the spokes and rims per wheel, and the tread blocks with the tyre: the detailed bike needs only five draws.
+- **A mounted prop can belong to the person, not the vehicle.** The raid bike's tall lamp came from the lamp-carrying
+  Rat. Use the existing lookout figure on bikes. Wait for the figure group's `userData.ready` before each picture,
+  including after a wreck-to-ridden change; a loaded source asset does not mean its new figure has been assembled.
+- **A seated person is not fitted to a motorcycle.** Place the hips on the saddle, then fit the arms and legs to the
+  actual grips and pegs in the drawing. Start each fit from the shared pose and reset unanimated wrists, or repeated
+  fits turn the hands a little further each frame. Check both sides, the boot soles and repeated identical frames.
+  Keep aluminium cases grey and dirty; the painted steel tank can carry brown rust.
+
 - **A part that stands on a different side in each photo** (Old Smoke's chimney: left in the rear view, right in the
   overhead view, centred in the front view) is carved away to nothing. Cut it from every mask and build it as its
   own piece wearing the side photo (`old-smoke-photo.py`).
