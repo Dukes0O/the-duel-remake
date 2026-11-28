@@ -69,11 +69,23 @@ unchanged and gains the fields the first time the part runs with its switch on.
 
 ## Claude answers
 
-## Builder handoff
+**27 November 2026, the flatbed question** (`docs/board/questions/HOME-GROUND-3.md`): neither option. No handoff
+between two vehicles in one outing. **He goes out in the flatbed.** The open outing already starts in a work vehicle
+from its job definition (`src/arena/modes/world-job.js`, `startWorkVehicle(definition.vehicle, ...)`) and already puts
+the haul step's `loadKg` on it. So:
+- `src/world/open/roam-job.js` takes an optional `vehicle`; the yard's "Go out into the Scablands" gains a second
+  button, "Go out in Tin Town's flatbed", shown while the home ground is his and the switch is on
+  (`src/screen-yard-home.js`, `src/screen-router.js`, and the app's open-roam start, narrowly).
+- `startWorkVehicle`'s gate in `world-job.js` also accepts `home-ground` for this outing; nothing else in that file
+  changes. The flatbed is never parked at his gate and he never changes vehicle mid-outing.
+- Driving any other car, the prompt at a load says: "This needs a truck with a bed. Go out in Tin Town's flatbed to
+  bring it home." The design's "parked beside your gate" and "F gets him in" lines are replaced by this.
+- Shared files (`game.js`, `main.js`, `render3d.js`, `app.js`, `config.js`) are touched only to pass the chosen vehicle
+  through, if at all; say which in the change note.
+This keeps the step playable end to end in one card. A mid-outing change of vehicle can be its own card later, if
+play asks for it.
 
-The version 3 record, load rules, footprints, hand-raised stages, coop care and shed store are implemented. The
-flatbed handoff and the migration backup hook need the scope decision in `docs/board/questions/HOME-GROUND-3.md`.
-The real-key scenario includes the delivery and coop stages but cannot pass before that vehicle bridge exists.
+## Builder handoff
 
 Changed assertions for Claude's written review: two version 1 upgrade expectations now require version 3 and its
 added fields; the exact board text now includes the settled building invitation; the board's reread check compares

@@ -1838,3 +1838,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - Merge HOME-HEN-BODY (Claude session): the brown hen's own round, low body passes at 4 of 5 (hens-round-5)
 - Merge HOME-GROUND-2-DRIVE (Codex Sol, laptop lane): the step 2 drive's seven fixes; Claude kept the hen at scale 1 (her new body is real size) and guarded the box placing
 - Merge QA-AUDIO-UNDER-LOAD (Codex Sol, laptop lane, five rounds): p4-audio and skyline-audio trust their sample witness, record through the worklet and name a disturbed capture; P4 5/5 and Skyline 5/5 alone, four-job stage 4/4
+- Claude's drive of Home Ground step 2 with its fixes (drive-3.md): six fixes seen in play, four carried to HOME-GROUND-3B. Closed MAP-NO-WAY-WRAP (seen on one line), QA-WAVE1-AUDIO-FLIGHT (passes alone), QA-NIGHT-19-NOV and QA-NIGHT-20-NOV (all sorted; wildlife-view cured 19 November)
