@@ -1,8 +1,8 @@
 // The invitation reads the existing story ledger. These are outcomes, never shortcuts through a story.
 import {COMBAT_TUNING, WEAPONS} from '../../../wasteland-tuning.js';
 export const HOME_FOLK = Object.freeze([
-  {id: 'slack', name: 'Slack', thread: 'runaway', ends: ['kept', 'paid', 'hidden'],
-    marks: ['runaway/kept', 'runaway/paid', 'runaway/kept-ahead', 'runaway/hidden'],
+  {id: 'slack', name: 'Slack', thread: 'runaway', ends: ['kept', 'paid', 'hidden', 'sent-on'],
+    marks: ['runaway/kept', 'runaway/paid', 'runaway/kept-ahead', 'runaway/hidden', 'runaway/sent-on'],
     offer: "If you've a corner and a roof, I'll keep your hens.",
     greet: "Show me which eggs you take, and I'll take them the same way."},
   {id: 'finch', name: 'Finch', thread: 'burned-camp', ends: ['freed', 'bought-back'],
@@ -29,6 +29,7 @@ export const HOME_FOLK = Object.freeze([
 ]);
 export const homeFolkOffer = (world, id) => {
   const row = HOME_FOLK.find(row => row.id === id), story = row && world.open.threads[row.thread];
+  if (id === 'slack' && story?.end === 'sent-on' && world.ledger.marks.includes('runaway/told-where')) return false;
   return !!story && row.ends.includes(story.end) && row.marks.some(mark => world.ledger.marks.includes(mark));
 };
 export const hasHomeFolk = (home, id) => !!home?.folk?.some(row => row.id === id && row.arrived &&

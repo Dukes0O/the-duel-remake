@@ -1712,6 +1712,13 @@ const memory = values => {
   const goodWorld = row => ({...baseWorld, ledger: {...baseWorld.ledger, marks: [row.marks[0]]},
     open: {...baseWorld.open, threads: {[row.thread]: {beat: row.ends[0], end: row.ends[0]}}}});
   const hut = {kind: 'hut', i: 1, j: 2, turn: 0, stage: 4};
+  const haven = {...baseWorld, ledger: {...baseWorld.ledger, marks: ['runaway/sent-on']},
+    open: {...baseWorld.open, threads: {runaway: {beat: 'sent-on', end: 'sent-on', cast: {haven: 'radio-hill'}}}}};
+  check(homeFolkOffer(haven, 'slack'), 'Slack may come from a safe haven after his good road ending');
+  check(!homeFolkOffer({...haven, ledger: {...haven.ledger, marks: [...haven.ledger.marks, 'runaway/told-where']}}, 'slack'),
+    'telling Clinker where Slack went does not count as a safe road ending');
+  check(!homeFolkOffer({...haven, ledger: {...haven.ledger, marks: ['runaway/sent-alone']}}, 'slack'),
+    'an uncertain road alone does not bring Slack');
   const bare = {...newHome('People', 1000), pieces: [{kind: 'gate', i: 8, j: 0, axis: 'x'}], builds: [hut]};
   for (const row of HOME_FOLK) {
     const world = goodWorld(row);

@@ -531,7 +531,8 @@ go into the real game after step 4.
 - Version 11 adds `folk: [{id, hut: {i,j}, arrived}]`, Slack's `shown`, a hut load and the Marans breed in `hens`.
   Versions 1 to 10 read unchanged. The existing verified career backup precedes the enabled upgrade. Old stores,
   plants, machines, digging, cargo and crew work stay. The disabled switch never upgrades a home.
-- Existing good story endings and their marks unlock each invitation. No storyline was changed. The news board
+- Existing good story endings and their marks unlock each invitation. Slack may also come from a safe haven,
+  provided the player did not tell Clinker where he went. No storyline was changed. The news board
   gives the person's own sentence. Build a 2 by 2 hut with the flatbed and four coop-style stages, then press F
   at the board to assign it. Later huts use the taught crew's thirty-minute job. An assigned hut stays standing.
 - The existing people mover brings residents from their posts, through the home gate, to their huts. Arrival is
