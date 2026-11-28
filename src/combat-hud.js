@@ -310,14 +310,14 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const footHealth = document.createElement('div');
   footHealth.className = 'combat-foot-health';
   footHealth.hidden = true;
+  const homePowerIds = Object.keys(HOME_CROPS).filter(id => HOME_CROPS[id].power);
   footHealth.innerHTML = `<span><b>FIGHTER HEALTH</b><strong></strong></span><div class="combat-armor-track"><i></i></div>
-    <div class="combat-home-powers" hidden></div>`;
+    <div class="combat-home-powers" hidden>${homePowerIds.map(id =>
+      `<span class="combat-home-leaf" data-home-power="${id}" hidden><i></i></span>`).join('')}</div>`;
   root.querySelector('.race-health').append(footHealth);
   const powerLeaves = footHealth.querySelector('.combat-home-powers');
-  const leaves = Object.keys(HOME_CROPS).filter(id => HOME_CROPS[id].power).map(id => {
-    const leaf = document.createElement('span');
-    leaf.className = 'combat-home-leaf'; leaf.dataset.homePower = id; leaf.hidden = true;
-    leaf.innerHTML = '<i></i>'; powerLeaves.append(leaf);
+  const leaves = homePowerIds.map(id => {
+    const leaf = powerLeaves.querySelector(`[data-home-power="${id}"]`);
     return {id, leaf, fill: leaf.querySelector('i')};
   });
 

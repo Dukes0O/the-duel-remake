@@ -476,6 +476,35 @@ go into the real game after step 4.
 - Cues: `home.bed.plant`, `home.bed.harvest`, `home.glass.stage`, `home.pot.glow`, `home.eat`, `home.power.end`.
   Bed hammering reuses `home.fence.hammer` and `home.box.up`. Sound selection remains with OPEN-SOUND.
 
+### Step 5C as built (HOME-GROUND-5C, behind the switch `home-ground`)
+
+- The first greenhouse harvest brings three seeds each of super spinach (3 hours), night carrots (8 hours), iron
+  beets and stink garlic (16 hours each). `moreSeeds` keeps the gift from paying twice. The board names the gift.
+- Version 9 adds their seed and food counts and `moreSeeds`. Version 8 loads unchanged; its verified career backup
+  precedes the enabled upgrade. Every older count, plant, tin slot, building, hen and piece stays. Powers are outing
+  state only. The input hook in `game.js` narrowly forwards 4, 5, 6 and T, which the existing whitelist had dropped.
+- Spinach lasts 120 seconds. F at the unused panel stack lifts the whole bundle; he can run with it and set it down.
+  F within 2.8 metres throws a raid bike four metres or overturns a buggy. Carrots mark living raiders and places up
+  to 1,500 metres away for 180 seconds with the existing through-cover lights. Beets halve fighter damage for 120
+  seconds through `damageFighter`, including a fast car knock. A single car overlap counts once until separation.
+- Garlic keeps approaching riders and people five metres away for 120 seconds. Raiders on foot turn back. Reach,
+  protection and sight ease down over the last 20 seconds; every food has the existing emptying leaf beside health.
+- Foods eaten within 10 seconds form pairs until either food ends. Spinach and peppers flatten contacted home tin
+  panels, repaired with B. Peppers and beans carry a running jump at 20 m/s. Spinach and beans tip every raid bike
+  within six metres on a real landing. Another meal preserves a pair that is already active.
+- E remains the right strafe. Press T within five seconds of eating to spend one stored egg and add half that food's
+  original duration. One meal takes one egg; talk, naming, driving and the view from above cannot eat food or eggs.
+- Cues: `home.power.spinach`, `home.power.sight`, `home.power.iron`, `home.power.stink`, `home.power.pair`,
+  `home.power.protein`; carrying reuses `home.load.on` and `.off`, fallen fences reuse `home.fence.fall` and `.up`.
+- The controlled ground sample won 12/20 on Easy without food and 12/20 with each of spinach, carrots, beets and garlic.
+  Seeds 1 to 20; step 4's closed fence, north gate, coop (3,7), defender (10,10); three normal rockets at 8, 11 and 14
+  seconds; nearest non-retreating rider; aim updated every eight 30 Hz ticks, without leading, with seeded errors
+  of 0.08 radians in yaw and 0.025 in pitch (`makeRng(seed + 175)`), target at 0.9 m and eye at 1.4 m; real Scablands
+  and memory saves. This static script does not use melee or sight and receives no home-raider fire. The foods'
+  practical advantage remains for Claude's planned hand drive; `docs/board/questions/HOME-GROUND-5C.md` records it.
+- One independent save and fight review found repeated car-contact damage and a cancelled pair after eating again.
+  Both were fixed and confirmed. The reviewer found no further save, input or fight-number faults.
+
 ## 17. Settled with Kyle, 27 November 2026
 
 1. The ground is beside Tin Town.

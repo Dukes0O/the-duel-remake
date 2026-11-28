@@ -45,3 +45,9 @@ load unchanged after the verified backup.
   `npm run build`. One independent review of the save and the fight numbers. Claude drives it by hand.
 
 ## Claude answers
+
+## Builder's assertion review request
+
+`tools/test-home-hens.mjs` now expects version 9 instead of version 8 after the enabled migration from step 1.
+Its exact checks of every fence piece, mark and name are unchanged. This follows the additive 5C save version; no
+tolerance or behavior assertion was loosened. Claude's written assertion review is due before merge under rule 18.
