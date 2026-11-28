@@ -361,8 +361,8 @@ go into the real game after step 4.
 - Claude's outing decision replaces the parked truck and mid-outing vehicle change. With owned ground and the
   switch on, the Story Wall offers "Go out in Tin Town's flatbed". The normal foot controls enter the outing's truck
   at Tin Town's gate. The chosen vehicle is job data only; it never changes the saved garage car or race fields.
-- The existing work-vehicle view still requires `wasteland-town` to draw the truck. HOME-GROUND-3's question file
-  requests the matching narrow Home Ground drawing gate; until it lands, both switches are needed for its model.
+- The work-vehicle view (`workVehicleToDraw` in `src/town/view/work-vehicle-view.js`) draws the flatbed on an
+  open outing with `home-ground` alone; every other work vehicle still needs `wasteland-town`.
 - On an enabled open outing, the mode passes the work vehicle id and car heading to the home part. A fresh F press
   loads or sets down one bundle while the flatbed is stopped within 4 m. Holding F keeps the existing foot entry
   and exit controls. An ordinary car gets the sentence explaining that it needs Tin Town's flatbed.

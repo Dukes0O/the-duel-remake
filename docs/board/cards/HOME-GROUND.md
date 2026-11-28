@@ -39,3 +39,7 @@ is HOME-HEN-BODY (Claude), merged the same day: a laying hen's own body, round, 
 
 **27 November 2026, step 3 cut ahead of the try (Kyle):** HOME-GROUND-3 (the first coop and shed, raised by hand
 from a load on Tin Town's flatbed, Codex Astra) and then HOME-GROUND-3B (Rook and Wren, the builders, Codex Sol).
+
+**27 November 2026, Claude's drive of step 3 and the builders** (docs/board/looks/home-ground/drive-4.md): the
+flatbed loop and the coop work; eight fixes are card HOME-GROUND-3-DRIVE (Codex Sol), the two that matter most being
+that getting out of the truck reloads the tin and that Rook and Wren stop outside the fence.

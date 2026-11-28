@@ -1154,6 +1154,19 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
+  - id: HOME-GROUND-3-DRIVE
+    title: "Home Ground step 3: the eight fixes from Claude's drive by hand"
+    owner: "codex"
+    model: "sol"
+    lane: "SIM"
+    size: "S"
+    status: "building"
+    claimed_by: "Codex Sol, laptop lane, 27 November 2026"
+    needs: []
+    locks: ["home-ground"]
+    flag: "home-ground"
+    details: "docs/board/cards/HOME-GROUND-3-DRIVE.md"
+
   - id: HOME-GROUND
     title: "Home Ground: the player's own ground in the Scablands, built by hand, with hens, raids and a real clock (Kyle, 27 November)"
     owner: "claude"
