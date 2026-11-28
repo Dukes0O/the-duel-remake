@@ -47,3 +47,16 @@ Nothing bad happens while the game is off.
 - The lane tier, the rule 23 guards and `npm run build`. One independent review of the save. Claude drives it by hand.
 
 ## Claude answers
+
+## Assertions for Claude to review
+
+Existing assertions now expect version 4, the nest box one cell farther ahead, and the newly added crew field.
+The backward-clock assertion keeps the last counted moment so putting the clock right cannot count work twice.
+First-tick timestamp assertions include the outing's current seconds so acquiring ground late cannot count earlier
+play as builder time. No replay, world signature, count tolerance or player-progress assertion was loosened.
+
+## Independent save review
+
+A fresh Codex reviewer found three faults: the flatbed could reload stage-zero assigned tin, late acquisition used
+the outing's start time, and offline coop completion missed eggs laid in the new nests. All three were fixed and
+confirmed with memory-only reproductions. The reviewer found no remaining required save or clock issue.
