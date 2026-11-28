@@ -1739,12 +1739,13 @@ const memory = values => {
   const rows = homeFolkRows(world, {homeGround: true, partOfDay: 'day'}, []);
   const path = rows[0].homeRoute, start = {...path[0], z: path[0].z - 2};
   let people = {...peoplePart.begin(), cast: [{id: 'slack', figure: 'tin-child', position: {...start, y: scablandsSurfaceHeightAt(start.x, start.z)},
-    yaw: 0, task: 'stand', distance: 0, radius: .2, height: 1.2, homeFolk: 'slack', homeLeg: 0}]};
+    yaw: 0, task: 'stand', distance: 0, radius: .2, height: 1.2}]};
   let crossed = false, reached = false;
   for (let tick = 0; tick < 200 && !reached; tick++) {
     const out = peoplePart.step(people, {world, seed, seconds: tick, view: {openRoam: true, homeGround: true, partOfDay: 'day'}}, 1);
     people = out.state;
     const actor = people.cast.find(row => row.id === 'slack');
+    if (tick === 0) check(Math.hypot(actor.position.x - start.x, actor.position.z - start.z) < 2, 'an invitation keeps the person at his current feet before he starts walking');
     crossed ||= actor.homeLeg >= 2;
     reached = out.events.some(event => event.type === 'homeFolkArrived' && event.id === 'slack');
   }

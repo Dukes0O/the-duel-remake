@@ -163,7 +163,7 @@ export const peoplePart = {
       let target = targetFor(row, context, partOfDay);
       let person = state.cast.find(item => item.id === row.id);
       if (row.homeFolk) {
-        if (!person || !person.homeFolk) person = firstPose(row, row.homeArrived ? target : {...row.homeSource, yaw: 0, task: 'stand'}, peopleGrid);
+        if (!person) person = firstPose(row, row.homeArrived ? target : {...row.homeSource, yaw: 0, task: 'stand'}, peopleGrid);
         let leg = person.homeLeg ?? (row.homeArrived ? 3 : 0);
         if (leg < 3) {
           if (Math.hypot(person.position.x - row.homeRoute[leg].x, person.position.z - row.homeRoute[leg].z) < .8) leg++;
