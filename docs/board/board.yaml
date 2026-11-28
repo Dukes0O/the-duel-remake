@@ -1099,7 +1099,8 @@ tasks:
     model: "astra"
     lane: "SIM"
     size: "M"
-    status: "building"
+    status: "review"
+    waiting_on: "claude"
     claimed_by: "Codex Astra, laptop lane, 28 November 2026"
     needs: []
     locks: ["home-ground"]

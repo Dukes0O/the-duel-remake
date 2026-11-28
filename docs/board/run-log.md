@@ -1,5 +1,7 @@
 # Wasteland run log
 
+28 November (HOME-GROUND-6 lane sweep): audit found no unused module candidates; asset candidates remain advisory; no assets or branches removed. Sizes and branch activity recorded in STATUS; generated QA scratch and build output recycled after checks.
+
 28 November (HOME-GROUND-5C lane sweep): repo audit candidates remain advisory; no assets or branches removed; sizes and cached branch activity in STATUS, other lane inspections skipped; generated build and QA scratch recycled after checks.
 
 28 November (EASY-YOUNG-DRIVER lane sweep): audit candidates advisory; no asset or branch removals; sizes and idle branches in STATUS; generated build, QA scratch and evidence recycled after checks.

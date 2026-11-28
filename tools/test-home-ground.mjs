@@ -1170,7 +1170,7 @@ const memory = values => {
   out = stepOpenLand(land(kept), viewOf(reader, {}, {homeClock: completedAt + HOME_TANK.seconds}), 0, parts);
   equal(homeOf(out.open).builds.at(-1).litres, HOME_TANK.litres, 'two separate outings total twelve real hours without double counting');
   // A crew-built tank starts filling only after its lid is complete, even when both events happened offline.
-  const second = {...tank, i: 14, j: 9};
+  const second = {...tank, i: 14, j: 9, turn: 1};
   let crew = {...home, lastSeen: 1000, builds: home.builds.map(row => row.kind === 'tank' ? {...row, filled: 1000} : row)};
   crew = markBuild(crew, second); crew = {...crew, loads: {...crew.loads, tank: {i: second.i, j: second.j}}};
   crew = handToCrew(crew, second, 1000);
@@ -1619,7 +1619,7 @@ const memory = values => {
   const bed = {i: 2, j: 12, turn: 0, crop: 'spinach', grown: 321};
   const moved = moveHomeBed({...base, beds: [bed]}, bed, {i: 5, j: 12, turn: 1});
   equal(moved.beds, [{...bed, i: 5, turn: 1}], 'moving a bed keeps its crop and growth');
-  equal(buildRefusal({...base, builds: [shed]}, {kind: 'tower', i: 3, j: 8, turn: 0, stage: 0}), 'doorLane', 'an outline cannot block the machine-width door apron');
+  equal(buildRefusal({...base, builds: [shed]}, {kind: 'tower', i: 3, j: 9, turn: 0, stage: 0}), 'doorLane', 'an outline cannot block the machine-width door apron');
   let pond = {...base, well: {i: 10, j: 10, depth: 10, water: 10, pump: true}};
   const pondCell = {i: 12, j: 10};
   for (let n = 0; n < HOME_DIG.scoops; n++) {

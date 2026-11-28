@@ -294,13 +294,13 @@ export function buildRefusal(home, row) {
   if (home.builds.some(other => other.kind === row.kind && other.stage < 4)) return 'buildExists';
   const bounds = buildBounds(row);
   if (home.pond && rectanglesOverlap(bounds, pondBounds(home.pond))) return 'onTop';
-  if (blocksHomeDoors(home, bounds)) return 'doorLane';
   if ((home.beds ?? []).some(bed => rectanglesOverlap(bounds, buildBounds({...bed, kind: 'bed'})))) return 'onTop';
   if (home.well && rectanglesOverlap(bounds, wellBounds(home.well))) return 'onTop';
   if (rectanglesOverlap(bounds, laneOf(gateOf(home)))) return 'lane';
   if (home.builds.some(other => rectanglesOverlap(bounds, buildBounds(other))) ||
       home.pieces.some(piece => pieceThroughBuild(piece, row)) ||
       home.boxes.some(box => rectanglesOverlap(bounds, {i0: box.i, i1: box.i + 1, j0: box.j, j1: box.j + 1}))) return 'onTop';
+  if (blocksHomeDoors(home, bounds)) return 'doorLane';
   const door = doorBounds(row);
   if (door.i0 < 0 || door.j0 < 0 || door.i1 > HOME_CELLS || door.j1 > HOME_CELLS ||
       home.builds.some(other => rectanglesOverlap(door, buildBounds(other))) ||
@@ -581,7 +581,7 @@ function readableDig(home) {
       new Set(home.ditch.map(cell => `${cell.i}/${cell.j}`)).size !== home.ditch.length ||
       !home.cellar || Object.keys(home.cellar).length !== 1 || !whole(home.cellar.dug) || home.cellar.dug < 0 || home.cellar.dug > HOME_DIG.scoops) return false;
   const pond = home.pond;
-  if (pond !== null && (!pond || Object.keys(pond).length !== 6 || !whole(pond.i) || !whole(pond.j) || pond.i < 0 || pond.j < 0 ||
+  if (pond !== null && (!pond || Object.keys(pond).length !== 5 || !whole(pond.i) || !whole(pond.j) || pond.i < 0 || pond.j < 0 ||
       pond.i + 2 > HOME_CELLS || pond.j + 2 > HOME_CELLS || !whole(pond.scoops) || pond.scoops < 1 || pond.scoops > HOME_DIG.scoops ||
       !Number.isFinite(pond.litres) || pond.litres < 0 || pond.litres > HOME_POND.litres || !momentOK(pond.filled) ||
       pond.scoops < HOME_DIG.scoops && (pond.litres !== 0 || pond.filled !== null))) return false;

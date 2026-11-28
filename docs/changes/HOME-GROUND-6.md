@@ -3,10 +3,13 @@
 - Salvaged piles keep building water and plants through flatbed delivery and crew rebuilding; hens leave before a coop scoop.
 - Beds move free; door aprons and the gate lane stay open; raider wheels route around ditches; the cellar protects half the store.
 - Version 10 preserves older fields and uses the existing verified backup. Pond filling uses monotonic real time, online and away.
-- Independent save review: fixed pond clock omission without a standing tank and pile validation after crew access; reviewer confirmed both.
-- Checks: pending until 06:30 local, Kyle's reserved night-check window. No test, build, browser, frame or balance result claimed yet.
-- Changed assertions: town vehicle list adds excavator; hen migration expects approved v10 instead of v9. Claude's written review owed.
-- Race fingerprints: pending replay and world guards; no signature regenerated.
+- Independent save review confirmed fixes for the tank-free pond clock, safe pile validation and the five-field pond record; no outstanding findings.
+- Shared files: app.js admits the borrowed digger; game.js forwards its existing machine controls. No other shared core file changed.
+- Initial lane at 647025c63: 148/152 passed; three sandbox/tool failures passed on retry; the placement refusal failure is fixed.
+- Rule 19 follow-up since 647025c63, with this commit's rule/fixture fixes: 88/88 passed; Home Ground passed 1,130 checks.
+- Machine/excavator and save-fixture checks, all career-backup readers, seven final guard/document suites, combat-balance --check and npm run build passed (bundle warnings only).
+- Changed assertions: town list adds excavator; hen migration expects approved v10. Two fixture layouts keep doors clear without changing assertions. Claude's written review is owed.
+- Race and combat replay fingerprints and world signatures passed unchanged; none regenerated.
 - Cues: home.dig.bite, home.dig.dump, home.dig.tear, home.dig.ditch, home.pond.fill; sound selection remains OPEN-SOUND.
 - Claude's hand drive remains due. No browser or frame check in this lane; home-ground remains dev.
 - **Removed:** no released feature removed; teardown consumes standing buildings and rebuilding consumes their saved piles.

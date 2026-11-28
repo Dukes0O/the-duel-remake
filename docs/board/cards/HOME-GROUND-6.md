@@ -66,6 +66,9 @@ Older versions load unchanged after the verified backup.
   Its exact checks of all original pieces, hens, eggs and clocks remain.
 - The independent save review found a missing pond clock trigger after the last tank was dismantled and pile
   validation occurring after crew access. Both are fixed and confirmed by the same reviewer on a second reading.
+- Runtime checks caught the pond validator counting six fields instead of its five saved fields; corrected and
+  confirmed by the save reviewer. Placement now reports overlap before door access. Two test layouts keep their
+  doors clear; their original water, timing and refusal assertions remain unchanged.
 - Kyle reserved the laptop until 06:30 local. No tests, build, browser, frame or balance run before then.
 
 ## Claude answers
