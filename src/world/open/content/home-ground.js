@@ -140,6 +140,7 @@ export const HOME_CUES = Object.freeze({
 export const HOME_WORDS = Object.freeze({
   bedTimber: "Auntie Solder left old timber with the tank for six garden beds. Press G to choose a bed.",
   seedsGift: "Marigold's growers sent you seeds: fire peppers and jumping beans. They only grow under glass.",
+  glassReady: 'Walk inside to plant your power food seeds in the pots.',
   glassLoad: "Auntie Solder left glass and frame at Tin Town's gate. Bring them home on the flatbed for your greenhouse.",
   bedHold: 'Hold B to hammer up this garden bed.',
   bedsUsed: 'You have used all six beds of old timber.',

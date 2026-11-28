@@ -1235,6 +1235,10 @@ const memory = values => {
   equal(home.pots.length, 6, 'the fourth greenhouse stage provides exactly six pots');
   home = plantCrop(home, 0, true, 'firePeppers'); home = plantCrop(home, 1, true, 'jumpingBeans');
   check(readableHome(home), 'beds, greenhouse and planted pots form a readable version 8 record');
+  const doorVisit = stepOpenLand(land(home), viewOf({...buildingDoor(glass), yaw: glass.turn * Math.PI / 2 + Math.PI}, {},
+    {homeClock: home.lastSeen, interact: true}), 0, parts);
+  check(doorVisit.open.parts.home.prompt === HOME_WORDS.glassReady && !doorVisit.requests.some(row => row.type === 'say' && !row.text),
+    'the greenhouse door invites planting and never reads the shed or an empty sentence');
   const powersRipe = after(home, 1000 + 43200);
   equal(powersRipe.pots.slice(0, 2).map(row => row.grown), [43200, 43200], 'both power foods need twelve watered real hours');
   const chunked = after(after(home, 1000 + 12345), 1000 + 43200);

@@ -469,7 +469,7 @@ export const homePart = {
           note = words(row.crop ? 'cropGathered' : 'cropPlanted', {crop: HOME_CROPS[id].name});
           requests.push(say('crop', note));
         }
-      } else if (buildingAt?.stage === 4 && buildingAt.kind !== 'tower' &&
+      } else if (buildingAt?.stage === 4 && ['coop', 'tank', 'shed'].includes(buildingAt.kind) &&
           (['coop', 'tank'].includes(buildingAt.kind) || distance(fighter.position, buildingDoor(buildingAt)) <= BOARD_REACH)) {
         catchUp();
         if (buildingAt.kind === 'coop') {
@@ -878,7 +878,7 @@ function stepBuilding({state, next, record, fighter, keys, pressed, dt, events, 
   next.outline = next.building || next.above ? {piece: row ?? slot, mode: reason ? 'refused' : 'build', reason,
     progress: hammer ? hammer.seconds / HOME_BUILDS[kind].hammer : 0, marked: !!row, shake: !!reason && pressed('build')} : null;
   next.prompt = note || (reason ? HOME_WORDS[reason] : row?.stage === 4 ?
-    (kind === 'tower' ? HOME_WORDS.towerUp : kind === 'tank' ? HOME_WORDS.tankRead : kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
+    (kind === 'tower' ? HOME_WORDS.towerUp : kind === 'tank' ? HOME_WORDS.tankRead : kind === 'greenhouse' ? HOME_WORDS.glassReady : kind === 'coop' ? HOME_WORDS.gatherCoop : distance(fighter.position, buildingDoor(row)) <= BOARD_REACH ? HOME_WORDS.shedDoor : words('buildDone', {piece: kind})) :
     row ? next.above ? HOME_WORDS.buildLift : buildHasLoad(record, row) ? words('buildStage', {piece: kind, stage: (kind === 'tower' ? HOME_TOWER_STAGES : kind === 'tank' ? HOME_TANK_STAGES : kind === 'greenhouse' ? HOME_GLASS_STAGES : HOME_STAGES)[row.stage]}) :
       words('buildLoad', {piece: kind}) + ' ' + HOME_WORDS.buildLift : words('buildMark', {piece: kind}));
 }
