@@ -1012,6 +1012,12 @@ const memory = values => {
   const version5 = {...old, version: 5};
   equal(JSON.stringify(homeOf(stepOpenLand(land(version5), {...read, homeGround: false}, 100, parts).open)), JSON.stringify(version5),
     'the off switch preserves version 5 byte for byte');
+  for (const piece of [null, {...loot[0], kind: {toString: null}}, {...loot[0], kind: ['bike']}]) {
+    const damaged = {...home, loot: [piece]};
+    check(!readableHome(damaged), 'damaged loot kinds are rejected without throwing');
+    equal(savedOpenRecord({story: {version: 1, open: {...world.open, home: damaged}}}), null, 'a damaged version 6 save refuses cleanly');
+    check(!settleOpenWorld({}, {...world, open: {...world.open, home: damaged}}).ok, 'a damaged version 6 record cannot replace a save');
+  }
   for (const record of [saved, mid, homeOf(away.open)]) {
     const settled = settleOpenWorld({}, {...world, open: {...world.open, home: record}});
     check(settled.ok, 'version 6 settles through the actual save writer');

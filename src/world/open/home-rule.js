@@ -240,7 +240,7 @@ function readableLoot(home) {
   if (cartersBusy(home) && (!home.loot.length || !Number.isFinite(home.lastSeen) || home.carters.began > home.lastSeen)) return false;
   const bed = lootOnBed(home);
   if (bed.length > HOME_LOOT_CAPACITY || bed.length && Object.values(home.loads).includes('bed')) return false;
-  return home.loot.every(row => row && Object.keys(row).length === 3 && Object.hasOwn(HOME_LOOT, row.kind) &&
+  return home.loot.every(row => row && Object.keys(row).length === 3 && typeof row.kind === 'string' && Object.hasOwn(HOME_LOOT, row.kind) &&
     row.worth === HOME_LOOT[row.kind].worth && (row.position === 'bed' || row.position && Object.keys(row.position).length === 3 &&
       ['x', 'z', 'yaw'].every(key => Number.isFinite(row.position[key]))));
 }

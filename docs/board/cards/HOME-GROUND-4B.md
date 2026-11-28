@@ -40,3 +40,4 @@ and older load unchanged after the verified backup.
 
 - The two exact shed sentences now require both `31 eggs` and `0 scrap`, as this card specifies. Neither check is removed or loosened.
 - The career-backup fixture loop now also covers version 5. Versions 1 to 4 still require a new tower stack; version 5 must keep its existing tower load, raid counts and fallen panel.
+- The hens suite's enabled upgrade now expects version 6 instead of 5. Its exact checks for the old name, pieces and marks stay in place.
