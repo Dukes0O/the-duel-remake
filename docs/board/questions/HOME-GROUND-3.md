@@ -15,7 +15,8 @@ Recommended pick: option 2. The builder is proceeding with the independent work.
 truck control will be presented as finished.
 
 **Resolved:** Claude's answer in commit `4fa8786e1` replaces the parked truck with a separate flatbed outing. The lane
-has merged that answer and is implementing the optional vehicle and yard button.
+has merged that answer. Commit `2810ca2f1` implements the optional vehicle and yard button, with ownership and
+switch checks, and updates the real-key scenario to choose the flatbed from the yard. Its focused outing test passed.
 
 ## The roam still needs load weight and vehicle facts
 
@@ -28,6 +29,10 @@ to the enabled home part; read that part's `loadKg` into the existing haul weigh
 existing foot entry/exit controls. The load drawing can read the home record without any renderer state changes.
 Alternative: defer weight and truck-only pickup, which would not meet this card. The builder is doing the other
 approved work while this explicit "nothing else in that file changes" limit awaits clarification.
+
+The delivery interaction, its ordinary-car refusal and the bundle on the driven bed still need wiring once these
+facts are available. The existing foot controls require F held for 0.6 seconds to enter and 0.4 seconds to leave;
+the scenario uses those existing controls, with a short F press reserved for load transfer. No foot rule is changed.
 
 ## Independent save review: backup detection
 

@@ -343,7 +343,7 @@ go into the real game after step 4.
   or G shows the build outline. On his ground the launcher is lowered; the fire key takes it back, and while he builds
   he holds a hammer, or a wrench for the gate.
 
-### Step 3 implementation, awaiting its vehicle bridge (HOME-GROUND-3)
+### Step 3 implementation, awaiting load weight and migration backup (HOME-GROUND-3)
 
 - The record is version 3. It keeps every earlier field and adds `builds: [{kind, i, j, turn, stage}]`,
   `loads: {coop, shed}` and `flatbed: {x, z, yaw}`. Loads are `stack`, `bed`, or a grid point `{i, j}`. Stage 0 is a
@@ -356,9 +356,14 @@ go into the real game after step 4.
   The shed's door and the gate board name the same egg store. No new currency or separate store is introduced.
 - Version 1 and 2 records remain unchanged when read and while the switch is off. Only the enabled part upgrades
   them. The shared migration backup detector still needs to cover that upgrade before this step is complete.
-- The load transfer and weight rules are tested, but the outing still lacks the vehicle handoff needed to drive
-  the flatbed and apply that weight. `docs/board/questions/HOME-GROUND-3.md` records both required scope decisions.
-  The extended real-key scenario is syntax-checked only; its delivery cannot pass until the bridge is built.
+- Claude's outing decision replaces the parked truck and mid-outing vehicle change. With owned ground and the
+  switch on, the Story Wall offers "Go out in Tin Town's flatbed". The normal foot controls enter the outing's truck
+  at Tin Town's gate. The chosen vehicle is job data only; it never changes the saved garage car or race fields.
+- The load transfer and weight rules are tested. Connecting them to the outing still needs the shared mode to pass
+  the vehicle facts and apply the carried weight. The card currently permits only its vehicle-start gate to change;
+  `docs/board/questions/HOME-GROUND-3.md` asks for those extra hooks and the migration-backup detector.
+- The real-key scenario marks a coop, returns to the yard, chooses the flatbed and attempts its delivery. It is
+  syntax-checked only; delivery and the carried bundle's drawing remain unfinished until the hooks are permitted.
 
 ## 17. Settled with Kyle, 27 November 2026
 

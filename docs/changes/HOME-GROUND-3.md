@@ -1,0 +1,14 @@
+# HOME-GROUND-3: in review, delivery hooks still blocked
+- Version 3 keeps old progress and adds building stages, loads and truck pose; coop/shed rules, stage drawing, roosting and eggs are implemented.
+- Claude's answer is implemented: an owned, enabled home adds a separate flatbed outing; the choice never changes the saved garage car.
+- Shared file: `src/app.js` only passes and validates the chosen vehicle. The mode changes only its approved work-vehicle start gate.
+- Incomplete: live load interaction/refusal, weight sync and bundle on the driven bed; migration backup detection. See the card's question file.
+- Runtime tested at `2810ca2f1`; build passed (`npm.cmd run build -- --outDir .qa-dist/home-ground-3/build`). Later changes are docs only.
+- Lane: all 128 selected suites passed across the initial run and continuation; sandbox-blocked PowerShell check passed with access. Core was inadvertently repeated once.
+- Focused passes: Home Ground 178, hens 1,256, hen look, outing gates, board 623 and repo hygiene. Scenario syntax passes; browser delivery is not run.
+- Guards: 306 replay checks, 12 combat replay checks, 65 world-composition checks passed; no fingerprints or signatures changed.
+- Independent review: no new progress-loss or outing fault; full save approval waits for pre-migration backup coverage. Memory-only saves throughout.
+- Changed assertions for Claude: two v1 upgrades now expect v3's additive fields; board text adds the building invitation and checks all lines instead of four.
+- Cues: `home.load.on`, `home.load.off`, `home.coop.stage`, `home.shed.stage`, `home.hens.roost`, `home.shed.door`.
+- Cockpit: T-119, In Review, linked to this card. The feature stays `dev`; no merge or release.
+- **Removed:** superseded parked-flatbed scenario route, replaced by selecting an outing from the yard. No old progress or assets removed.
