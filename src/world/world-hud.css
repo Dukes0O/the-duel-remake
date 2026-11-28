@@ -81,7 +81,7 @@
    sits just above it and is shown only while it is used or filling; the name box is a small form in the middle. */
 /* The home part owns the tool in his hands. Hide the launcher panel only while that tool is shown. */
 #stage:has(> .world-hud.is-home-building:not([hidden])) .combat-foot-gear{display:none}
-.world-map-open .world-hud-home,.world-map-open .world-hud-burst,.world-map-open .world-hud-board,.world-map-open .world-hud-name,.world-map-open .combat-foot-gear{display:none}
+.world-map-open .world-hud-home,.world-map-open .world-hud-burst,.world-map-open .world-hud-board,.world-map-open .world-hud-name,.world-map-open .combat-upgraded-hud.on-foot .combat-foot-gear{display:none}
 .world-hud-home{position:absolute;left:50%;bottom:128px;transform:translateX(-50%);max-width:min(70vw,40rem);padding:8px 16px;background:#171711dc;border:1px solid #e4d4b255;border-left:4px solid #b8c88a;border-radius:4px;text-align:center;font-size:15px;font-weight:700;letter-spacing:.02em}
 .world-hud-burst{position:absolute;left:50%;bottom:184px;transform:translateX(-50%);width:200px;padding:4px 9px;background:#171711dc;border:1px solid #e4d4b255;border-radius:3px;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;font-size:10px;font-weight:800;letter-spacing:.12em;color:#9fd8ff}
 .world-hud-burst span{height:9px;background:#0c0b0a;border:1px solid #3d5566;border-radius:2px;overflow:hidden}
