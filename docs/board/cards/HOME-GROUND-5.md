@@ -51,3 +51,9 @@ goes wrong while it is empty; it simply waits.
   review of the save. Claude drives it by hand.
 
 ## Claude answers
+
+**28 November 2026, the four choices** (the questions file, commit `5b9f8688e`): all approved. A 1,000-litre tank, the
+crew raising later tanks in one real hour after he has built the first by hand. Drilling at home takes about three minutes
+at a steady feed, with the drill's layers, jamming and reverse unchanged everywhere else. He fits the hand pump himself, as
+this card says; Mr Penny's part becomes a motor pump when people move in (step 7). The drill joins the work vehicles and the
+yard's action through the existing hooks, with the shared change kept to the app's outing gate.
