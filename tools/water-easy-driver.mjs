@@ -20,6 +20,7 @@
 // test, not a child.
 globalThis.cancelAnimationFrame ??= () => {};
 import {sweepObstacle} from '../src/collision.js';
+import {FIGHTER_RULES} from '../src/onfoot.js';
 import {Duel} from '../src/game.js';
 import {makeRng} from '../src/rng.js';
 import {DRIVE, COURSE} from '../src/config.js';
@@ -235,6 +236,28 @@ function board(duel, child, hands) {
   return true;
 }
 
+// The fort's native pile also blocks the return to the car. A single simple
+// detour keeps every Ambush walk on the same keys, with no pathfinding or sprint.
+function walkFort(duel, hands, point, stopMetres = 1, destination = 'target') {
+  const fighter = duel.state.fighter, course = duel.course;
+  const metres = Math.hypot(point.x - fighter.x, point.z - fighter.z);
+  if (hands.footRoute?.destination !== destination) hands.footRoute = {destination, around: null};
+  const route = hands.footRoute, core = duel.state.arena.ambushAlley.fort.core;
+  if (core && sweepObstacle(fighter, {...point, y: fighter.y}, core, fighter.yaw,
+      {halfWidth: FIGHTER_RULES.radius, halfLength: FIGHTER_RULES.radius, height: FIGHTER_RULES.height})) {
+    const at = course.nearest(fighter.x, fighter.z, fighter.s);
+    const there = course.nearest(point.x, point.z, at.s);
+    route.around ??= Math.sign(ringDistance(course, at.s, there.s)) || 1;
+    const waypoint = course.worldAt(at.s + route.around * 12,
+      Math.max(course.def.pit.pileRadius + 14, Math.hypot(fighter.x, fighter.z)) - course.def.pit.radius);
+    walk(duel, waypoint, 0);
+  } else {
+    route.around = null;
+    walk(duel, point, stopMetres);
+  }
+  return metres; // Repair and interact always measure the real destination.
+}
+
 // Ambush Alley: on foot at the fort; rockets at the nearest raider (or the buggy), back to the car to reload.
 function holdFort(duel, child, hands, view) {
   const state = duel.state, alley = state.arena.ambushAlley, weapons = state.footWeapons;
@@ -249,7 +272,7 @@ function holdFort(duel, child, hands, view) {
   if (fighter.knockedDown) return;
   if (weapons.ammo <= 0) {
     const car = duel.course.groundAt(state.s, state.lateral);
-    walk(duel, car, 2);
+    walkFort(duel, hands, car, 2, 'reload');
     duel.setInput({interact: fighterDistanceToCar(duel) < 3});
     return;
   }
@@ -271,7 +294,7 @@ function holdFort(duel, child, hands, view) {
       if (weapons.selected !== 'wrench') duel.selectFootGear(2);
       const cover = fort.cover.reduce((best, item) => Math.hypot(item.x - fighter.x, item.z - fighter.z) <
         Math.hypot(best.x - fighter.x, best.z - fighter.z) ? item : best);
-      const metres = walk(duel, cover, 2.2);
+      const metres = walkFort(duel, hands, cover, 2.2, cover.id);
       hands.mend = metres < 3 && !(weapons.repairBlockedUntilRelease && hands.mend);
       duel.setFighterInput({fire: hands.mend, aim: false});
       return;
@@ -300,7 +323,7 @@ function holdFort(duel, child, hands, view) {
       goal = course.worldAt(at.s + hands.fortAround * 12,
         Math.max(course.def.pit.pileRadius + 14, Math.hypot(fighter.x, fighter.z)) - course.def.pit.radius);
     }
-    walk(duel, goal, 2);
+    walkFort(duel, hands, goal, 2, target.raider?.id ?? 'buggy');
     duel.setFighterInput({fire: false, aim: car});
     hands.fired = false;
     return;
