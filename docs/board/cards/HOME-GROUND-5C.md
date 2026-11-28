@@ -45,3 +45,8 @@ load unchanged after the verified backup.
   `npm run build`. One independent review of the save and the fight numbers. Claude drives it by hand.
 
 ## Claude answers
+
+**28 November 2026, the raid sample** (the questions file, commit `5911e7dfe`): the pick is approved. Keep step 4's raid
+rules and the comparable sample (12 of 20 from the ground without food, the six-in-ten baseline); add no attacks or bonuses
+to move a number. The scripted defender stands still, so it cannot show what the foods add; Claude judges that by hand
+before the step goes live, and notes that step 4's raiders do not shoot at him, so iron beets have little to resist yet.
