@@ -47,6 +47,9 @@ import {machineMoveContact} from '../../../machines/yard-solids.js';
 import {stepMover} from '../../scablands-movers.js';
 import {stepHomeDigger} from '../home-digger.js';
 import {moveHomeBed, tearingBuild} from '../home-rule.js';
+import {HOME_FOLK, hasHomeFolk} from '../content/home-folk.js';
+import {folkInvitation, spareHomeHut, inviteHomeFolk, arriveHomeFolk, slackSawEggs, homeFolkWork} from '../home-folk-rule.js';
+import {daySecondsOf, DUSK_START} from '../day-rule.js';
 
 // He builds while he stands within this many metres of his ground; the gate opens for him within GATE_OPENS.
 const BUILD_NEAR = 4, GATE_OPENS = 7, PROMPT_NEAR = 14, BOARD_REACH = 2.5, CRATE_REACH = 3;
@@ -271,6 +274,8 @@ export const homePart = {
       const job = record.crew.job;
       const before = job && record.builds.find(row => matchesBuild(row, job));
       const ripe = ripenHome(record, now - next.ripenedAt);
+      if (ripe.home.eggs > record.eggs) events.push(cue(HOME_CUES.gather));
+      if (['foods', 'vegetables'].some(key => Object.keys(record[key]).some(id => ripe.home[key][id] > record[key][id]))) events.push(cue(HOME_CUES.harvest));
       if (record.pots.some((pot, n) => pot.crop && pot.grown < HOME_CROPS[pot.crop].seconds && ripe.home.pots[n].grown === HOME_CROPS[pot.crop].seconds)) events.push(cue(HOME_CUES.potGlow));
       if (before && ripe.home.builds.find(row => matchesBuild(row, job)).stage > before.stage) events.push(cue(HOME_CUES.crewHammer));
       if (ripe.finished) { next.opened = {...next.opened, finished: ripe.finished}; events.push(cue(HOME_CUES.crewDone)); }
@@ -289,6 +294,22 @@ export const homePart = {
       }
       return ripe.laid;
     };
+    for (const event of context.events ?? []) if (event.type === 'homeFolkArrived') {
+      catchUp();
+      const arrived = arriveHomeFolk(record, event.id);
+      if (arrived !== record) {
+        record = arrived;
+        events.push(cue(HOME_CUES.folkArrive));
+        if (event.id === 'mr-penny' && record.well?.pump) events.push(cue(HOME_CUES.pumpMotor));
+        requests.push(say('folk-arrived/' + event.id, HOME_FOLK.find(row => row.id === event.id).greet));
+        if (event.id === 'growers') Object.assign(next, {naming: true, namingHen: record.hens.length - 2,
+          namingKey: 'hen-' + (record.hens.length - 2), namingChain: true});
+      }
+    }
+    next.mended = hasHomeFolk(record, 'dace') && record.builds.some(row => row.kind === 'shed' && row.stage === 4) &&
+      ((!state.opened && next.opened.away > 0) || fighter && view.carPosition &&
+        distance(view.carPosition, homeFolkWork(record, 'dace')) <= 4 && distance(fighter.position, view.carPosition) > 6);
+    if (next.mended && !state.mended) events.push(cue('repair.complete'));
     next.powers = stepHomePowers(state.powers, dt);
     for (const id of Object.keys(next.powers)) if (state.powers[id] > 0 && next.powers[id] === 0) {
       events.push(cue(HOME_CUES.powerEnd)); requests.push(say('power-end', words('powerEnded', {crop: HOME_CROPS[id].name})));
@@ -360,7 +381,7 @@ export const homePart = {
     }
 
     if ((record.beds.some(row => row.crop) || record.pots.some(row => row.crop) || record.crew.job || cartersBusy(record) ||
-        record.pond || record.builds.some(row => row.kind === 'tank' && row.stage === 4)) && now > next.ripenedAt) {
+        record.folk.some(row => row.arrived) || record.pond || record.builds.some(row => row.kind === 'tank' && row.stage === 4)) && now > next.ripenedAt) {
       catchUp();
       choices.push(choice('crew-clock', record));
     }
@@ -422,7 +443,8 @@ export const homePart = {
 
     const gate = gateOf(record);
     const gateMiddle = gate && pieceInLand(gate);
-    next.gateOpen = !!gateMiddle && !!where && Math.hypot(where.x - gateMiddle.x, where.z - gateMiddle.z) < GATE_OPENS;
+    next.gateOpen = !!gateMiddle && (!!where && distance(where, gateMiddle) < GATE_OPENS ||
+      (view.people ?? []).some(person => record.folk.some(row => row.id === person.id || row.id === 'growers' && person.id === 'marigold') && distance(person.position, gateMiddle) < GATE_OPENS));
     const ladder = fighter && !fighter.knockedDown ? towerAtLadder(record, fighter.position) : null;
     next.ladderAvailable = !!ladder;
     next.tower = fighter && !fighter.knockedDown ? stepHomeTower(state.tower, ladder, pressed('interact'), dt) : null;
@@ -431,6 +453,16 @@ export const homePart = {
     record = {...record, raids: {...record.raids, played: record.raids.played + Math.max(0, dt)}};
     const dusk = state.lastDay !== null && state.lastDay !== 'dusk' && view.partOfDay === 'dusk';
     next.lastDay = view.partOfDay ?? state.lastDay;
+    const daySeconds = daySecondsOf(world) + now;
+    const early = hasHomeFolk(record, 'hetty') && !next.raid && next.mastNight !== world.ledger.night &&
+      daySeconds >= DUSK_START - 60 && daySeconds < DUSK_START &&
+      homeRaidDue({...record, raids: {...record.raids, played: record.raids.played + 60}}) &&
+      where && outsideBy(where.x, where.z) <= HOME_RAID.near;
+    if (early) {
+      next.mastNight = world.ledger.night;
+      requests.push(say('mast-call', "Hetty says, 'Riders are coming, driver. You have a minute before dusk.'"));
+      events.push(cue(HOME_CUES.mastCall));
+    }
     const due = dusk && !next.raid && homeRaidDue(record);
     if (due && where && outsideBy(where.x, where.z) <= HOME_RAID.near && !context.leave) {
       next.raid = startHomeRaid(record, context.seed, due === 'test', view.difficulty);
@@ -438,11 +470,14 @@ export const homePart = {
       if (due === 'real') record = {...record, raids: {...record.raids,
         nextDue: record.raids.played + raidInterval(context.seed, record.raids.won + record.raids.lost)}};
       const crewHere = record.builds.some(row => row.stage === 4);
-      requests.push(say('raid-call', crewHere ? HOME_WORDS.raidWren : HOME_WORDS.raidCall));
-      events.push(cue(HOME_CUES.raidCall), cue(HOME_CUES.raidBike));
+      if (next.mastNight !== world.ledger.night) {
+        requests.push(say('raid-call', crewHere ? HOME_WORDS.raidWren : HOME_WORDS.raidCall));
+        events.push(cue(HOME_CUES.raidCall));
+      }
+      events.push(cue(HOME_CUES.raidBike));
     }
     if (next.raid) {
-      const stepped = stepHomeRaid(record, next.raid, {...view, homePowers: next.powers, gateOpen: next.gateOpen, leaving: !!context.leave}, dt, context.seed);
+      const stepped = stepHomeRaid(record, next.raid, {...view, homePowers: next.powers, homeTower: next.tower, gateOpen: next.gateOpen, leaving: !!context.leave}, dt, context.seed);
       record = stepped.home; next.raid = stepped.raid;
       events.push(...stepped.events);
       if (stepped.news) {
@@ -511,19 +546,25 @@ export const homePart = {
 
     const offer = crewOffer(record);
     const collect = cartersOffer(record);
-    const newsPrompt = collect ? HOME_WORDS.cartersOffer : offer ? words('crewHand', {piece: offer.kind}) :
+    const invitation = folkInvitation(world, record), hut = spareHomeHut(record);
+    const folkLines = invitation ? [invitation.name + ': ' + invitation.offer, hut ?
+      'Press F to mark the empty hut for ' + invitation.name + '.' : 'Build a hut, then press F here to mark it for ' + invitation.name + '.'] : [];
+    const newsPrompt = invitation ? folkLines.join(' ') : collect ? HOME_WORDS.cartersOffer : offer ? words('crewHand', {piece: offer.kind}) :
       cartersBusy(record) ? HOME_WORDS.cartersBusy : record.crew.job ? words('crewBusy', {piece: record.crew.job.kind}) : HOME_WORDS.boardHint;
     let note = '';
     if (fighter && !powerUsed && !next.naming && !next.tower && !state.tower && !ladder && pressed('interact')) {
       if (atNews) {
-        if (collect) {
+        if (invitation && hut) {
+          catchUp(); record = inviteHomeFolk(world, record, invitation.id, hut);
+          choices.push(choice('folk-invite', record));
+        } else if (collect) {
           catchUp(); record = sendCarters(record, record.lastSeen);
           choices.push(choice('carters-go', record)); events.push(cue(HOME_CUES.cartersGo));
         } else if (offer) {
           catchUp(); record = handToCrew(record, offer, record.lastSeen);
           choices.push(choice('crew-hand', record)); events.push(cue(HOME_CUES.crewArrive));
         }
-        next.board = {lines: boardLines(next.opened, record), until: now + BOARD_SECONDS};
+        next.board = {lines: [...boardLines(next.opened, record), ...folkLines], until: now + BOARD_SECONDS};
         events.push(cue(HOME_CUES.boardRead));
       } else if (atBoard) Object.assign(next, {naming: true, namingHen: null, namingKey: 'ground'});
       else if (atCrate && !state.crateTalk) {
@@ -548,6 +589,7 @@ export const homePart = {
         if (buildingAt.kind === 'coop') {
           const before = record.eggs;
           record = gatherCoop(record);
+          if (record.eggs > before) record = {...record, shown: slackSawEggs(record, view.people, fighter.position)};
           choices.push(choice('coop-gather', record));
           if (record.eggs > before) events.push(cue(HOME_CUES.gather));
           const gathered = record.eggs - before;
@@ -561,6 +603,7 @@ export const homePart = {
         catchUp();
         const gathered = record.boxes[facedBox.index].eggs;
         record = gatherBox(record, facedBox.index);
+        record = {...record, shown: slackSawEggs(record, view.people, fighter.position)};
         choices.push(choice('gather', record));
         events.push(cue(HOME_CUES.gather));
         note = gathered === 1 ? words('gatheredOne', {store: record.eggs}) : words('gathered', {count: gathered, store: record.eggs});
@@ -797,7 +840,7 @@ export const homePart = {
       events.push(cue(HOME_CUES.boardRead));
     }
     if (next.board) next.board = canReadBoard && now <= next.board.until
-      ? {...next.board, lines: boardLines(next.opened, record)} : null;
+      ? {...next.board, lines: [...boardLines(next.opened, record), ...folkLines]} : null;
 
     // The fence, the gate and the nest boxes are solid; the gate's leaves only while it is shut.
     const solidsKey = JSON.stringify([record.pieces, record.boxes.map(box => [box.i, box.j]),
@@ -876,7 +919,7 @@ function stepBed({state, next, record, fighter, keys, pressed, dt, events, catch
   return record;
 }
 function nextKind(kind, record) {
-  const order = ['panel', 'gate', 'box', 'coop', 'shed', 'tower', 'well', 'tank', 'bed', 'greenhouse'];
+  const order = ['panel', 'gate', 'box', 'coop', 'shed', 'tower', 'well', 'tank', 'bed', 'greenhouse', 'hut'];
   const has = row => row === 'panel' || (row === 'gate' && gatesLeft(record) > 0) || (row === 'box' && cratesLeft(record) > 0) ||
     (['well', 'tank', 'bed', 'greenhouse'].includes(row) ? canBorrowDrill(record) : !!HOME_BUILDS[row] && record.hens.length > 0 && record.boxes.length > 0);
   for (let n = 1; n <= order.length; n++) {

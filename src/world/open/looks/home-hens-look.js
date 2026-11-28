@@ -426,6 +426,7 @@ export function createEgg({name = HOME_HENS_PARTS.egg.name} = {}) {
   const egg = new THREE.Mesh(geometry, shell);
   egg.name = name; egg.castShadow = true; egg.receiveShadow = true;
   egg.userData.rest = b;
+  egg.userData.setBreed = breed => shell.color.setHex(breed === 'marans' ? (shell.map ? 0x503228 : 0x40241a) : (shell.map ? 0xffffff : 0xa8683c));
   return egg;
 }
 
@@ -693,8 +694,9 @@ function coatAt(x, y, z, part) {
 }
 
 // Repaint the model once; every hen shares the result. In Node (no canvas) the model is used as it is.
-function henLook(model) {
-  if (model.userData.henLook) return model.userData.henLook;
+function henLook(model, breed = 'tin-town-brown') {
+  const key = breed === 'marans' ? 'henLookMarans' : 'henLook';
+  if (model.userData[key]) return model.userData[key];
   let source = null;
   model.scene.traverse(node => { if (node.isSkinnedMesh && !source) source = node; });
   if (!source) throw Error('The hen model has no skinned mesh.');
@@ -773,7 +775,10 @@ function henLook(model) {
           colour = COAT.red.map(value => value * fold * (kind === 'face' ? .92 : 1));
         } else if (kind === 'bill') colour = COAT.horn.map((value, i) => value * .7 + (was?.[i] ?? value) * .3);
         else if (kind === 'eye') colour = Math.hypot(y - HEN.eye.y, x - HEN.eye.x) < .0022 ? [20, 14, 10] : COAT.eye;
-        else colour = coatAt(x, y, z, kind === 'leg' ? 'leg' : part);
+        else {
+          colour = coatAt(x, y, z, kind === 'leg' ? 'leg' : part);
+          if (breed === 'marans' && kind !== 'leg') colour = colour.map((value, index) => value * [.25, .3, .35][index]);
+        }
         const at = (flip ? height - 1 - py : py) * width + px;
         // A texel already painted by a triangle that covers it properly keeps its colour.
         const inside = w1 >= 0 && w2 >= 0 && w3 >= 0;
@@ -801,8 +806,8 @@ function henLook(model) {
     map = new THREE.CanvasTexture(canvas); map.colorSpace = THREE.SRGBColorSpace; map.flipY = source.material.map.flipY;
     map.anisotropy = 4;
   }
-  const coat = material('home hen coat', map ? 0xffffff : 0x74321a, {map, roughness: .86});
-  return (model.userData.henLook = {geometry, material: coat});
+  const coat = material('home hen coat', map ? 0xffffff : breed === 'marans' ? 0x241b16 : 0x74321a, {map, roughness: .86});
+  return (model.userData[key] = {geometry, material: coat});
 }
 
 const LATERAL = new THREE.Vector3(0, 0, 1), UP = new THREE.Vector3(0, 1, 0);
@@ -821,8 +826,8 @@ const kick = t => t <= 0 || t >= 1 ? 0 : Math.sin(Math.PI * Math.min(1, t * 1.6)
 
 // One hen. `object` is placed and turned by the caller (her feet at its origin, her beak along its +x); `pose` is one
 // of HOME_HEN_POSES; `update(seconds)` draws her at that moment of the pose, the same for the same seconds.
-export function createHen(model, {name = HOME_HENS_PARTS.hen.name, band = 'blue', pose = 'peck', phase = 0} = {}) {
-  const look = henLook(model);
+export function createHen(model, {name = HOME_HENS_PARTS.hen.name, band = 'blue', pose = 'peck', phase = 0, breed = 'tin-town-brown'} = {}) {
+  const look = henLook(model, breed);
   const object = new THREE.Group(); object.name = name;
   const body = cloneSkeleton(model.scene);
   object.add(body);

@@ -1093,19 +1093,6 @@ tasks:
     flag: "wasteland-cars"
     details: "docs/board/cards/WASTE-CARS-IN-CHASES.md"
 
-  - id: HOME-GROUND-7
-    title: "Home Ground step 7: people move in when their storylines end well, each with a hut and a skill"
-    owner: "codex"
-    model: "sol"
-    lane: "SIM"
-    size: "M"
-    status: "building"
-    claimed_by: "Codex Sol, laptop lane, 28 November 2026"
-    needs: []
-    locks: ["home-ground"]
-    flag: "home-ground"
-    details: "docs/board/cards/HOME-GROUND-7.md"
-
   - id: HOME-GROUND-7B
     title: "Home Ground step 7: the order board at the gate"
     owner: "codex"
@@ -1113,7 +1100,7 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "ready"
-    needs: ["HOME-GROUND-7"]
+    needs: []
     locks: ["home-ground"]
     flag: "home-ground"
     details: "docs/board/cards/HOME-GROUND-7B.md"

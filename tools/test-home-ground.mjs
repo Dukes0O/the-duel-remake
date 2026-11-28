@@ -62,6 +62,10 @@ import {machineDefinition} from '../src/machines/content/machines.js';
 import {createMachineState, machineToolPosition} from '../src/machines/machine.js';
 import {sweepObstacle} from '../src/collision.js';
 
+import {HOME_FOLK, HOME_MARANS, homeFolkOffer} from '../src/world/open/content/home-folk.js';
+import {inviteHomeFolk, arriveHomeFolk, homeFolkRows, slackSawEggs, homeFolkTalk, homeFolkWork} from '../src/world/open/home-folk-rule.js';
+import {peoplePart} from '../src/world/open/parts/people.js';
+import {validateTalkScene} from '../src/story/talk.js';
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
 const equal = (a, b, message) => { assert.deepEqual(a, b, message); checks++; };
@@ -164,14 +168,14 @@ const parts = [homePart];
     {...loaded, carters: {began: Infinity}}, {...loaded, loot: [...loaded.loot, {...extra, position: 'bed'}]},
     {...loaded, loads: {...loaded.loads, coop: 'bed'}}]) check(!readableHome(bad), 'damaged version 6 loot is rejected');
   const {loot, scrap, carters, well: _well, ...older} = loaded;
-  older.loads = {...older.loads}; delete older.loads.tank; delete older.loads.greenhouse;
+  older.loads = {...older.loads}; delete older.loads.tank; delete older.loads.greenhouse; delete older.loads.hut;
   const legacy = {...older, version: 5, raids: {...older.raids, won: 7}, loads: {...older.loads, tower: 'bed'}};
   const bytes = JSON.stringify(legacy);
   check(readableHome(legacy), 'version 5 remains readable');
   const upgraded = upgradeHome(legacy);
   equal(JSON.stringify(legacy), bytes, 'loading version 5 does not mutate it');
   const {loot: freshLoot, scrap: freshScrap, carters: freshCarters, well: freshWell, ...kept} = upgraded;
-  kept.loads = {...kept.loads}; delete kept.loads.tank; delete kept.loads.greenhouse;
+  kept.loads = {...kept.loads}; delete kept.loads.tank; delete kept.loads.greenhouse; delete kept.loads.hut;
   equal(freshWell, null, 'the version 7 well starts unmarked');
   equal({...kept, version: 5}, legacy, 'version 6 preserves every version 5 field including raids and the tower load');
   equal([freshLoot, freshScrap, freshCarters], [[], 0, {began: null}], 'only the three new fields are added');
@@ -588,7 +592,7 @@ const memory = values => {
   equal(transferHomeLoad(home, {...drive, vehicle: 'rattler'}), home, 'only the flatbed carries the building loads');
   equal(transferHomeLoad(home, {...drive, speedKmh: 2}), home, 'the flatbed must stop to load');
   home = transferHomeLoad(home, drive);
-  equal(home.loads, {coop: 'bed', shed: 'stack', tower: 'stack', tank: 'stack', greenhouse: 'stack'}, 'one press loads the coop and leaves the other stacks');
+  equal(home.loads, {coop: 'bed', shed: 'stack', tower: 'stack', tank: 'stack', greenhouse: 'stack', hut: 'stack'}, 'one press loads the coop and leaves the other stacks');
   equal(homeLoadKg(home), HOME_BUILDS.coop.kg, 'the bed exposes its loadKg for the existing haul weight bridge');
   equal(transferHomeLoad(home, drive), home, 'a full bed cannot take the second load');
   home = transferHomeLoad(home, {...drive, position: buildInLand(coop)});
@@ -730,11 +734,11 @@ const memory = values => {
   equal(handToCrew(home, first, 1000), home, 'the crew refuses an untaught kind');
   for (let n = 0; n < 4; n++) home = raiseBuild(home, first);
   const legacy = {...home, version: 3, loads: {...home.loads}};
-  delete legacy.crew; delete legacy.raids; delete legacy.loads.tower; delete legacy.loads.tank; delete legacy.loads.greenhouse;
+  delete legacy.crew; delete legacy.raids; delete legacy.loads.tower; delete legacy.loads.tank; delete legacy.loads.greenhouse; delete legacy.loads.hut;
   const original = JSON.stringify(legacy);
   check(readableHome(legacy), 'a completed version 3 coop remains readable');
   const upgraded = upgradeHome(legacy), {crew: _crew, raids: _raids, ...oldFields} = upgraded;
-  const {tower: _tower, tank: _tank, greenhouse: _greenhouse, ...oldLoads} = oldFields.loads;
+  const {tower: _tower, tank: _tank, greenhouse: _greenhouse, hut: _hut, ...oldLoads} = oldFields.loads;
   equal({...oldFields, loads: oldLoads, version: 3}, legacy, 'version 3 loses no field, nest or stored egg when upgraded');
   equal(JSON.stringify(legacy), original, 'upgrading leaves the old record unchanged');
   const second = {...first, i: 5};
@@ -1180,11 +1184,11 @@ const memory = values => {
   // Version 6 is read unchanged, including loot and a carter contract, then gains only the two new fields.
   const legacy = {...home, version: 6, builds: home.builds.filter(row => row.kind !== 'tank'),
     loot: [{kind: 'crate', position: 'bed', worth: 4}], scrap: 123, carters: {began: home.lastSeen - 10}, loads: {...home.loads}};
-  delete legacy.well; delete legacy.loads.tank; delete legacy.loads.greenhouse;
+  delete legacy.well; delete legacy.loads.tank; delete legacy.loads.greenhouse; delete legacy.loads.hut;
   const bytes = JSON.stringify(legacy);
   check(readableHome(legacy), 'a real version 6 home remains readable');
   const upgraded = upgradeHome(legacy), {well: freshWell, ...old} = upgraded;
-  old.loads = {...old.loads}; delete old.loads.tank; delete old.loads.greenhouse;
+  old.loads = {...old.loads}; delete old.loads.tank; delete old.loads.greenhouse; delete old.loads.hut;
   equal({...old, version: 6}, legacy, 'version 7 preserves every version 6 value, including the active carters and cargo');
   equal(freshWell, null, 'old homes gain no automatic well');
   equal(JSON.stringify(legacy), bytes, 'upgrading version 6 never mutates the source');
@@ -1285,13 +1289,13 @@ const memory = values => {
   equal(savedOpenRecord(settled.profile).home, lunch, 'the saved beds, pots, seeds, stores and tin round-trip exactly');
   const legacy = {...home, version: 7, builds: home.builds.filter(row => row.kind !== 'greenhouse'), loads: {...home.loads},
     well: {i: 10, j: 10, depth: 7, water: 12, pump: false}, scrap: 87, carters: {began: 950}, loot: [{kind: 'crate', position: 'bed', worth: 4}]};
-  delete legacy.loads.greenhouse;
+  delete legacy.loads.greenhouse; delete legacy.loads.hut;
   for (const key of Object.keys(newGarden())) delete legacy[key];
   const bytes = JSON.stringify(legacy);
   check(readableHome(legacy), 'a genuine version 7 record remains readable');
   const upgraded = upgradeHome(legacy);
   for (const [key, value] of Object.entries(legacy)) if (key !== 'version')
-    equal(upgraded[key], key === 'loads' ? {...value, greenhouse: 'stack'} : value, 'version 8 preserves version 7 field ' + key);
+    equal(upgraded[key], key === 'loads' ? {...value, greenhouse: 'stack', hut: 'stack'} : value, 'version 8 preserves version 7 field ' + key);
   equal(JSON.stringify(legacy), bytes, 'migration never mutates the original version 7 record');
   equal(homeOf(stepOpenLand(land(legacy), viewOf(me, {}, {homeGround: false}), 10, parts).open), legacy, 'the off switch keeps version 7 byte-for-byte');
   for (const bad of [{...home, tin: [{toString: null}, null, null]},
@@ -1400,6 +1404,7 @@ const memory = values => {
     seeds: {spinach: 2, carrots: 3, beans: 4, firePeppers: 1, jumpingBeans: 2},
     foods: {firePeppers: 4, jumpingBeans: 5}, tin: ['jumpingBeans', null, 'firePeppers']};
   delete old.moreSeeds;
+  delete old.loads.hut; delete old.folk; delete old.shown;
   const bytes = JSON.stringify(old);
   check(readableHome(old), 'a genuine 5B record remains readable');
   const upgraded = upgradeHome(old);
@@ -1407,7 +1412,7 @@ const memory = values => {
     if (key === 'version') continue;
     if (['seeds', 'foods'].includes(key)) for (const [id, amount] of Object.entries(value))
       equal(upgraded[key][id], amount, '5C keeps the older ' + key + ' count for ' + id);
-    else equal(upgraded[key], value, '5C keeps the older ' + key);
+    else equal(upgraded[key], key === 'loads' ? {...value, hut: 'stack'} : value, '5C keeps the older ' + key);
   }
   equal(JSON.stringify(old), bytes, 'migration does not alter the original 5B bytes');
   check(readableHome(upgraded), 'the additive version 9 garden is readable');
@@ -1679,7 +1684,8 @@ const memory = values => {
   const high = {...machine, jointAngles: {...machine.jointAngles, boom: .95}};
   check(homeDigTarget(cellar, high, 'tear', () => 0).reason, 'a bucket high above the roof cannot work');
   for (const version of [8, 9]) {
-    const legacy = {...base, version};
+    const legacy = {...base, version, loads: {...base.loads}};
+    delete legacy.loads.hut; delete legacy.folk; delete legacy.shown;
     for (const key of ['ditch', 'cellar', 'pond', 'piles']) delete legacy[key];
     if (version === 8) {
       delete legacy.moreSeeds;
@@ -1690,7 +1696,7 @@ const memory = values => {
     check(readableHome(legacy), 'the genuine prior save version stays readable');
     const upgraded = upgradeHome(legacy);
     for (const [key, value] of Object.entries(legacy)) if (!['version', 'seeds', 'foods'].includes(key))
-      equal(upgraded[key], value, 'digging migration preserves old field ' + key);
+      equal(upgraded[key], key === 'loads' ? {...value, hut: 'stack'} : value, 'digging migration preserves old field ' + key);
     for (const key of ['seeds', 'foods']) for (const [id, count] of Object.entries(legacy[key]))
       equal(upgraded[key][id], count, 'digging migration preserves every existing crop count');
     equal(JSON.stringify(legacy), bytes, 'migration never mutates the older record');
@@ -1699,4 +1705,133 @@ const memory = values => {
     readBack(upgraded);
   }
 }
+// Step 7: existing story endings, huts, arrivals, skills and additive step 6 migration.
+{
+  const seed = 43, baseWorld = newWorld({seed, night: 4});
+  const readBack = home => equal(savedOpenRecord({story: {version: 1, open: {...baseWorld.open, home}}}).home, home, 'the resident record saves and loads unchanged');
+  const goodWorld = row => ({...baseWorld, ledger: {...baseWorld.ledger, marks: [row.marks[0]]},
+    open: {...baseWorld.open, threads: {[row.thread]: {beat: row.ends[0], end: row.ends[0]}}}});
+  const hut = {kind: 'hut', i: 1, j: 2, turn: 0, stage: 4};
+  const haven = {...baseWorld, ledger: {...baseWorld.ledger, marks: ['runaway/sent-on']},
+    open: {...baseWorld.open, threads: {runaway: {beat: 'sent-on', end: 'sent-on', cast: {haven: 'radio-hill'}}}}};
+  check(homeFolkOffer(haven, 'slack'), 'Slack may come from a safe haven after his good road ending');
+  check(!homeFolkOffer({...haven, ledger: {...haven.ledger, marks: [...haven.ledger.marks, 'runaway/told-where']}}, 'slack'),
+    'telling Clinker where Slack went does not count as a safe road ending');
+  check(!homeFolkOffer({...haven, ledger: {...haven.ledger, marks: ['runaway/hidden', 'runaway/sent-alone']}}, 'slack'),
+    'an uncertain road alone does not bring Slack');
+  const bare = {...newHome('People', 1000), pieces: [{kind: 'gate', i: 8, j: 0, axis: 'x'}], builds: [hut]};
+  for (const row of HOME_FOLK) {
+    const world = goodWorld(row);
+    check(homeFolkOffer(world, row.id), row.name + ' has an existing good ending');
+    check(!homeFolkOffer(baseWorld, row.id), row.name + ' cannot come from no story');
+    check(!homeFolkOffer({...world, open: {...world.open, threads: {[row.thread]: {end: 'taken'}}}}, row.id),
+      row.name + ' cannot come from a bad ending even with an earlier good mark');
+    check(!homeFolkOffer({...world, open: {...world.open, threads: {[row.thread]: {beat: row.ends[0]}}}}, row.id),
+      row.name + ' waits for the storyline to end');
+    equal(inviteHomeFolk(world, {...bare, builds: []}, row.id, hut).folk, [], row.name + ' needs a finished hut');
+    const invited = inviteHomeFolk(world, bare, row.id, hut);
+    equal(invited.folk, [{id: row.id, hut: {i: 1, j: 2}, arrived: false}], row.name + ' is marked for one hut');
+    equal(inviteHomeFolk(world, invited, row.id, hut), invited, row.name + ' cannot be invited twice');
+    const arrived = arriveHomeFolk(invited, row.id);
+    check(arrived.folk[0].arrived && readableHome(arrived), row.name + ' arrives into a valid save');
+    equal(arriveHomeFolk(arrived, row.id), arrived, row.name + ' cannot arrive twice');
+    validateTalkScene(homeFolkTalk('home-folk/' + row.id).scene);
+    check(row.offer.endsWith('.') && row.greet.endsWith('.') && ![row.offer, row.greet].some(text => text.includes('?')),
+      row.name + ' speaks in whole plain sentences');
+    readBack(arrived);
+  }
+  // Use the real people mover to walk Slack through the gate, then let the home part record his arrival.
+  const slack = HOME_FOLK[0], invited = inviteHomeFolk(goodWorld(slack), bare, slack.id, hut);
+  const world = {...goodWorld(slack), open: {...goodWorld(slack).open, home: invited}};
+  const rows = homeFolkRows(world, {homeGround: true, partOfDay: 'day'}, []);
+  const path = rows[0].homeRoute, start = {...path[0], z: path[0].z - 2};
+  let people = {...peoplePart.begin(), cast: [{id: 'slack', figure: 'tin-child', position: {...start, y: scablandsSurfaceHeightAt(start.x, start.z)},
+    yaw: 0, task: 'stand', distance: 0, radius: .2, height: 1.2}]};
+  let crossed = false, reached = false;
+  for (let tick = 0; tick < 200 && !reached; tick++) {
+    const out = peoplePart.step(people, {world, seed, seconds: tick, view: {openRoam: true, homeGround: true, partOfDay: 'day'}}, 1);
+    people = out.state;
+    const actor = people.cast.find(row => row.id === 'slack');
+    if (tick === 0) check(Math.hypot(actor.position.x - start.x, actor.position.z - start.z) < 2, 'an invitation keeps the person at his current feet before he starts walking');
+    crossed ||= actor.homeLeg >= 2;
+    reached = out.events.some(event => event.type === 'homeFolkArrived' && event.id === 'slack');
+  }
+  check(crossed && reached, 'Slack walks through both gate waypoints before reaching his hut');
+  const homeOut = homePart.step(homePart.begin(), {world, seed, seconds: 0, events: [{type: 'homeFolkArrived', id: 'slack'}],
+    view: viewOf(null, {}, {homeClock: 1000})}, 0);
+  check(homeOut.choices.at(-1).effects[0].record.folk[0].arrived, 'the arrival event is saved by the home rule');
+  check(homeOut.events.some(row => row.cue === 'home.folk.arrive'), 'arrival names its sound cue');
+  const here = arriveHomeFolk(invited, 'slack');
+  const hens = [{name: 'Clover', breed: 'tin-town-brown', due: 14400}];
+  const laying = {...here, shown: true, lastSeen: 0, hens, boxes: [{i: 15, j: 15, eggs: 0}]};
+  equal(ripenHome({...laying, shown: false}, 86400).home.eggs, 0, 'Slack waits until he has watched a box gathered');
+  equal(ripenHome(laying, 86399).home.eggs, 0, 'Slack waits for the real day');
+  const day = ripenHome(laying, 86400).home;
+  equal([day.eggs, day.boxes[0].eggs], [6, 0], 'Slack gathers a day of eggs into the store');
+  const split = ripenHome({...ripenHome(laying, 43200).home, lastSeen: 43200}, 43200).home;
+  equal(split.eggs, day.eggs, 'Slack counts a real day once however play is divided');
+  equal(ripenHome({...day, lastSeen: 86400}, 0).home.eggs, 6, 'reopening at the same moment pays no eggs twice');
+  check(slackSawEggs(here, [{id: 'slack', position: groundPoint(2, 5)}], groundPoint(2, 5)), 'Slack can watch a nearby gathering');
+  check(!slackSawEggs(here, [{id: 'slack', position: groundPoint(2, 5)}], groundPoint(19, 19)), 'Slack cannot watch a distant gathering');
+  const growers = arriveHomeFolk(inviteHomeFolk(goodWorld(HOME_FOLK[5]), bare, 'growers', hut), 'growers');
+  equal(growers.hens, HOME_MARANS, 'the growers bring exactly two named Marans');
+  const marans = ripenHome({...growers, lastSeen: 0, boxes: [{i: 15, j: 15, eggs: 0}]}, 86400).home;
+  equal(marans.boxes[0].eggs, 6, 'two Marans lay three dark eggs each per real day');
+  const greenhouse = {kind: 'greenhouse', i: 10, j: 2, turn: 0, stage: 4};
+  const garden = {...growers, beds: [{i: 15, j: 15, turn: 0, crop: 'beans', grown: HOME_CROPS.beans.seconds}],
+    builds: [...growers.builds, greenhouse], pots: Array.from({length: 6}, (_, slot) =>
+      ({i: 10, j: 2, slot, crop: slot === 0 ? 'firePeppers' : null, grown: slot === 0 ? HOME_CROPS.firePeppers.seconds : 0}))};
+  const harvested = ripenHome(garden, 1).home;
+  equal([harvested.vegetables.beans, harvested.foods.firePeppers, harvested.beds[0].crop, harvested.pots[0].crop], [1, 1, null, null],
+    'the growers harvest ripe beds and greenhouse pots into the existing stores');
+  equal(ripenHome(harvested, 1).home.vegetables.beans, 1, 'an automatic harvest cannot pay twice');
+  const penny = arriveHomeFolk(inviteHomeFolk(goodWorld(HOME_FOLK[4]), bare, 'mr-penny', hut), 'mr-penny');
+  const water = {...penny, well: {i: 15, j: 14, depth: 10, water: 10, pump: true}, builds: [...penny.builds,
+    {kind: 'tank', i: 16, j: 14, turn: 0, stage: 4, litres: 0, filled: 1000}]};
+  equal(fillHomeTanks(water, 15400).builds.at(-1).litres, 1000, 'Mr Penny fills a connected tank in four real hours');
+  equal(fillHomeTanks(fillHomeTanks(water, 8200), 7000).builds.at(-1).litres, 500, 'a backward pump clock loses no water');
+  const finch = arriveHomeFolk(inviteHomeFolk(goodWorld(HOME_FOLK[1]), bare, 'finch', hut), 'finch');
+  const tower = {kind: 'tower', i: 10, j: 8, turn: 0, stage: 4};
+  const defended = {...finch, builds: [...finch.builds, tower]}, top = buildInLand(tower);
+  const raid = startHomeRaid(defended, seed, false, 'hard');
+  raid.riders = raid.riders.map((row, n) => ({...row, position: {x: top.x + 10 + n, z: top.z}, entered: true}));
+  const view = {onFoot: true, fighter: {position: groundPoint(5, 5)}, difficulty: 'hard'};
+  const shot = stepHomeRaid(defended, raid, view, 4, seed);
+  check(shot.events.some(row => row.cue === 'home.crossbow') && shot.raid.riders[0].health < raid.riders[0].health,
+    'Finch fires at a raider within twenty-five metres');
+  check(!stepHomeRaid(defended, raid, {...view, homeTower: {row: tower}}, 4, seed).events.some(row => row.cue === 'home.crossbow'),
+    'Finch leaves the occupied tower to Gratian');
+  check(!stepHomeRaid(defended, raid, {...view, fighter: {position: {...top, y: scablandsSurfaceHeightAt(top.x, top.z) + 4.4}}}, 4, seed)
+    .events.some(row => row.cue === 'home.crossbow'), 'Finch also yields when Gratian jumps onto the tower');
+  const distant = {...raid, riders: raid.riders.map(row => ({...row, position: {x: top.x + 30, z: top.z}}))};
+  check(!stepHomeRaid(defended, distant, view, 4, seed).events.some(row => row.cue === 'home.crossbow'), 'the crossbow cannot reach beyond twenty-five metres');
+  check(!stepHomeRaid(defended, {...raid, test: true}, view, 4, seed).events.some(row => row.cue === 'home.crossbow'), 'the harmless lesson stays harmless');
+  const hetty = arriveHomeFolk(inviteHomeFolk(goodWorld(HOME_FOLK[3]), bare, 'hetty', hut), 'hetty');
+  const warningWorld = {...baseWorld, open: {...baseWorld.open, home: {...hetty, raids: {...hetty.raids, sittings: 4, played: 7000, nextDue: 7000}},
+    day: {night: 4, seconds: 900}}};
+  const warned = homePart.step(homePart.begin(), {world: warningWorld, seed, seconds: 0, view: viewOf({...groundPoint(5, 5), yaw: 0}, {}, {partOfDay: 'day', homeClock: 1000})}, 0);
+  check(warned.events.some(row => row.cue === 'home.mast.call'), 'Hetty calls sixty play seconds before dusk');
+  const dace = arriveHomeFolk(inviteHomeFolk(goodWorld(HOME_FOLK[2]), bare, 'dace', hut), 'dace');
+  const withBay = {...dace, builds: [...dace.builds, {kind: 'shed', i: 5, j: 10, turn: 0, stage: 4}]};
+  const bay = homeFolkWork(withBay, 'dace');
+  const repairWorld = {...baseWorld, open: {...baseWorld.open, home: withBay}};
+  const mended = homePart.step(homePart.begin(), {world: repairWorld, seed, seconds: 0,
+    view: {...viewOf({...groundPoint(1, 19), yaw: 0}, {}, {homeClock: 1000}), carPosition: bay}}, 0);
+  check(mended.state.mended, 'Dace mends the car in his bay while Gratian is away from it');
+  const old = {...newHome('Step six', 1000), version: 10, eggs: 47, scrap: 23,
+    loot: [{kind: 'crate', worth: 4, position: {x: 5920, z: 110, yaw: .4}}],
+    ditch: [{i: -1, j: 3}], cellar: {dug: 2}, pond: {i: 10, j: 10, scoops: 2, litres: 0, filled: null}};
+  delete old.folk; delete old.shown; delete old.loads.hut;
+  check(readableHome(old), 'a genuine step 6 record is readable before migration');
+  const bytes = JSON.stringify(old), upgraded = upgradeHome(old);
+  equal(JSON.stringify(old), bytes, 'step 6 migration never mutates the source bytes');
+  for (const [key, value] of Object.entries(old)) if (key !== 'version')
+    equal(upgraded[key], key === 'loads' ? {...value, hut: 'stack'} : value, 'step 7 preserves step 6 field ' + key);
+  check(readableHome(upgraded), 'the additive step 7 record is readable');
+  readBack(upgraded);
+  for (const bad of [{...upgraded, folk: [{id: 'stranger', hut: {i: 1, j: 2}, arrived: true}]},
+    {...upgraded, shown: 1}, {...here, folk: [here.folk[0], here.folk[0]]}, {...here, builds: []}])
+    check(!readableHome(bad), 'damaged resident fields refuse without dropping an earlier field');
+}
+
 console.log(`Home ground: ${checks} checks passed.`);
