@@ -1,0 +1,15 @@
+# HOME-GROUND-4B
+- Code and review commit: `771c979ae`; later changes are handoff documents only. Behind `home-ground`.
+- Won real raids keep wrecked bikes (6), buggies (15) and one or two seeded crates (4); losses and the lesson add none.
+- Flatbed: tap F within 4 m, three pieces maximum, one shed tap stores full worth. Wrecks reuse the raider look, dented and dark.
+- Carters: the supplied real clock counts one hour online or away; all loot is reserved, pay is `floor(total / 5)`, completion clears it once.
+- Save v6 adds loot, scrap and `{began}` carters; v1–5 keep earlier fields, verified backup and switch-off bytes. The shed names eggs and scrap.
+- Cues: `home.loot.on`, `home.loot.off`, `home.carters.go`, `home.carters.back`; sound selection remains with OPEN-SOUND.
+- Independent Astra save review approved `771c979ae`: malformed loot-kind crash fixed and independently verified; no remaining findings.
+- Focused home-ground: 528 checks pass. Reviewer: 1,145 historical-save checks, storage/career budgets and 176 damaged-data probes pass.
+- Required guards pass across the final lane and named-suite run: core 804; race fingerprints 306/34 cases and combat 12/4 encounters unchanged; world signatures unchanged.
+- Lane `--tier lane --changed --jobs 2 --keep-going` at `771c979ae`: 78/80 pass; full-check and hygiene-rules pass on targeted retries with PowerShell permission and fixture Git isolation. No game-code failure remains.
+- Every suite naming career-backup or the changed home files ran; five extra named suites pass. Lane leaves convoy-tanker-art and first-person-polish to night. No browser scenario or frame check requested.
+- Production build passes (`npm.cmd run build -- --outDir=.qa-dist/home-ground-4b-build`); final board 634 checks and repository hygiene pass. Own QA output recycled; no evidence retained.
+- Changed assertions: shed sentences now include scrap; hens expect v6; backup fixtures add v5 and preserve its tower load. Reasons await Claude's written review on the card.
+- **Removed:** the empty post-raid ground and eggs-only shed sentence are replaced behind `home-ground`; no released feature or test is removed.
