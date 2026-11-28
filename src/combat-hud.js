@@ -1,3 +1,4 @@
+import {HOME_CROPS} from './world/open/content/home-ground.js';
 import {WEAPONS, ufoDestination} from './combat.js';
 import {arenaMarker} from './screen-arena.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
@@ -311,6 +312,13 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   footHealth.hidden = true;
   footHealth.innerHTML = `<span><b>FIGHTER HEALTH</b><strong></strong></span><div class="combat-armor-track"><i></i></div>`;
   root.querySelector('.race-health').append(footHealth);
+  const powerLeaves = document.createElement('div'); powerLeaves.className = 'combat-home-powers';
+  powerLeaves.hidden = true; footHealth.append(powerLeaves);
+  const leaves = ['firePeppers', 'jumpingBeans'].map(id => {
+    const leaf = document.createElement('span'); leaf.className = 'combat-home-leaf'; leaf.hidden = true;
+    const fill = document.createElement('i'); leaf.append(fill); powerLeaves.append(leaf);
+    return {id, leaf, fill};
+  });
 
   const layer = host.querySelector('.combat-opponent-layer');
   const bountyArrow = host.querySelector('.bounty-screen-arrow');
@@ -432,6 +440,15 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const health = Math.max(0, Math.min(maxHealth, Number(state.fighter.health) || 0));
       setText(footHealthValue, `${Math.round(health)} / ${Math.round(maxHealth)}`);
       setFraction(footHealthFill, health / maxHealth);
+      const powers = worldJob?.open?.parts.home?.on ? worldJob.open.parts.home.powers : null;
+      powerLeaves.hidden = !leaves.some(({id}) => powers?.[id] > 0);
+      for (const {id, leaf, fill} of leaves) {
+        const left = powers?.[id] ?? 0; leaf.hidden = left <= 0;
+        leaf.title = `${HOME_CROPS[id].name}: ${Math.ceil(left)} seconds left.`;
+        leaf.setAttribute('aria-label', leaf.title);
+        fill.style.height = `${Math.max(0, Math.min(1, left / HOME_CROPS[id].lasts)) * 100}%`;
+        leaf.classList.toggle('is-ending', left > 0 && left <= 20);
+      }
       footHealth.classList.toggle('is-critical', health <= maxHealth*.25);
       footHealth.classList.toggle('is-knocked-down', !!state.fighter.knockedDown);
       if (!carPointer.hidden) {

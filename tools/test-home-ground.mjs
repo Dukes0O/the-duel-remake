@@ -2,6 +2,11 @@
 // lifting, the lane from the gate, marks made from above, the solids, the burst, a save and a reload, the save made
 // before this card, and the switch off. Memory-only storage: no real save is read or written.
 import assert from 'node:assert/strict';
+import {HOME_CROPS} from '../src/world/open/content/home-ground.js';
+import {buildBed, bedRefusal, cropInLand, plantCrop, harvestCrop, packTin, eatFromTin, stepHomePowers, powerStrength,
+  homeFootPlatforms, newGarden, tinWords} from '../src/world/open/home-rule.js';
+import {footControlInput} from '../src/input-contexts.js';
+import {createFighter, stepFighter, FIGHTER_STEP_SECONDS, FIGHTER_RULES} from '../src/onfoot.js';
 import {readFileSync} from 'node:fs';
 import {PLAYERS_KEY, activePlayer, loadPlayers, replacePlayerProfile, savePlayers} from '../src/progression.js';
 import {beginOpenLand, stepOpenLand} from '../src/world/open/open-land.js';
@@ -147,14 +152,14 @@ const parts = [homePart];
     {...loaded, carters: {began: Infinity}}, {...loaded, loot: [...loaded.loot, {...extra, position: 'bed'}]},
     {...loaded, loads: {...loaded.loads, coop: 'bed'}}]) check(!readableHome(bad), 'damaged version 6 loot is rejected');
   const {loot, scrap, carters, well: _well, ...older} = loaded;
-  older.loads = {...older.loads}; delete older.loads.tank;
+  older.loads = {...older.loads}; delete older.loads.tank; delete older.loads.greenhouse;
   const legacy = {...older, version: 5, raids: {...older.raids, won: 7}, loads: {...older.loads, tower: 'bed'}};
   const bytes = JSON.stringify(legacy);
   check(readableHome(legacy), 'version 5 remains readable');
   const upgraded = upgradeHome(legacy);
   equal(JSON.stringify(legacy), bytes, 'loading version 5 does not mutate it');
   const {loot: freshLoot, scrap: freshScrap, carters: freshCarters, well: freshWell, ...kept} = upgraded;
-  kept.loads = {...kept.loads}; delete kept.loads.tank;
+  kept.loads = {...kept.loads}; delete kept.loads.tank; delete kept.loads.greenhouse;
   equal(freshWell, null, 'the version 7 well starts unmarked');
   equal({...kept, version: 5}, legacy, 'version 6 preserves every version 5 field including raids and the tower load');
   equal([freshLoot, freshScrap, freshCarters], [[], 0, {began: null}], 'only the three new fields are added');
@@ -571,7 +576,7 @@ const memory = values => {
   equal(transferHomeLoad(home, {...drive, vehicle: 'rattler'}), home, 'only the flatbed carries the building loads');
   equal(transferHomeLoad(home, {...drive, speedKmh: 2}), home, 'the flatbed must stop to load');
   home = transferHomeLoad(home, drive);
-  equal(home.loads, {coop: 'bed', shed: 'stack', tower: 'stack', tank: 'stack'}, 'one press loads the coop and leaves the other stacks');
+  equal(home.loads, {coop: 'bed', shed: 'stack', tower: 'stack', tank: 'stack', greenhouse: 'stack'}, 'one press loads the coop and leaves the other stacks');
   equal(homeLoadKg(home), HOME_BUILDS.coop.kg, 'the bed exposes its loadKg for the existing haul weight bridge');
   equal(transferHomeLoad(home, drive), home, 'a full bed cannot take the second load');
   home = transferHomeLoad(home, {...drive, position: buildInLand(coop)});
@@ -602,10 +607,10 @@ const memory = values => {
   check(!Object.hasOwn(CARS, 'flatbed') && !ARENA_FIELD.includes('flatbed'),
     'the flatbed is absent from the race cars and arena field');
   home = {...home, eggs: 31, hens: [{name: 'Clover', breed: 'tin-town-brown', due: 120}]};
-  check(boardLines({}, home).includes('Your shed holds 31 eggs and 0 scrap.'), 'the board names both stores once the shed stands');
+  check(boardLines({}, home).includes(shedWords(home)) && shedWords(home).startsWith('Your shed holds 31 eggs and 0 scrap.'), 'the board names both stores once the shed stands');
   const world = newWorld({seed: 5, night: 2}), door = buildingDoor(home.builds[1]);
   const out = run(openLand({...world, open: {...world.open, home}}), viewOf({...door, yaw: Math.PI}, {}, {interact: true}), DT);
-  check(out.requests.some(row => row.text === 'Your shed holds 31 eggs and 0 scrap.'), 'one press at the shed door reads both stores');
+  check(out.requests.some(row => row.text === shedWords(home) + ' ' + tinWords(home)), 'one press at the shed door reads both stores');
   check(cues(out.events).includes(HOME_CUES.shedDoor), 'the shed door has its sound cue');
 }
 
@@ -713,11 +718,11 @@ const memory = values => {
   equal(handToCrew(home, first, 1000), home, 'the crew refuses an untaught kind');
   for (let n = 0; n < 4; n++) home = raiseBuild(home, first);
   const legacy = {...home, version: 3, loads: {...home.loads}};
-  delete legacy.crew; delete legacy.raids; delete legacy.loads.tower; delete legacy.loads.tank;
+  delete legacy.crew; delete legacy.raids; delete legacy.loads.tower; delete legacy.loads.tank; delete legacy.loads.greenhouse;
   const original = JSON.stringify(legacy);
   check(readableHome(legacy), 'a completed version 3 coop remains readable');
   const upgraded = upgradeHome(legacy), {crew: _crew, raids: _raids, ...oldFields} = upgraded;
-  const {tower: _tower, tank: _tank, ...oldLoads} = oldFields.loads;
+  const {tower: _tower, tank: _tank, greenhouse: _greenhouse, ...oldLoads} = oldFields.loads;
   equal({...oldFields, loads: oldLoads, version: 3}, legacy, 'version 3 loses no field, nest or stored egg when upgraded');
   equal(JSON.stringify(legacy), original, 'upgrading leaves the old record unchanged');
   const second = {...first, i: 5};
@@ -1163,14 +1168,204 @@ const memory = values => {
   // Version 6 is read unchanged, including loot and a carter contract, then gains only the two new fields.
   const legacy = {...home, version: 6, builds: home.builds.filter(row => row.kind !== 'tank'),
     loot: [{kind: 'crate', position: 'bed', worth: 4}], scrap: 123, carters: {began: home.lastSeen - 10}, loads: {...home.loads}};
-  delete legacy.well; delete legacy.loads.tank;
+  delete legacy.well; delete legacy.loads.tank; delete legacy.loads.greenhouse;
   const bytes = JSON.stringify(legacy);
   check(readableHome(legacy), 'a real version 6 home remains readable');
   const upgraded = upgradeHome(legacy), {well: freshWell, ...old} = upgraded;
-  old.loads = {...old.loads}; delete old.loads.tank;
+  old.loads = {...old.loads}; delete old.loads.tank; delete old.loads.greenhouse;
   equal({...old, version: 6}, legacy, 'version 7 preserves every version 6 value, including the active carters and cargo');
   equal(freshWell, null, 'old homes gain no automatic well');
   equal(JSON.stringify(legacy), bytes, 'upgrading version 6 never mutates the source');
+}
+
+
+// Step 5B: the same crops and water across outings, time partitions, save versions and the real controls.
+{
+  let home = newHome('Garden', 1000);
+  home = {...home, builds: [{kind: 'tank', i: 5, j: 5, turn: 0, stage: 4, litres: 10, filled: 1000}]};
+  home = buildBed(home, {i: 3, j: 5, turn: 0});
+  home = plantCrop(home, 0);
+  equal(home.beds[0].crop, 'spinach', 'the first available seed plants spinach');
+  equal(plantCrop({...home, beds: [{...home.beds[0], crop: null, grown: 0}]}, 0, false, 'firePeppers').beds[0].crop, null,
+    'a power food cannot be planted outside glass');
+  const world = newWorld({seed: 5, night: 2}), land = saved => openLand({...world, open: {...world.open, home: saved}});
+  const me = {...groundPoint(18, 18), yaw: 0};
+  const after = (saved, moment) => homeOf(stepOpenLand(land(saved), viewOf(me, {}, {homeClock: moment}), 0, parts).open);
+  const ripe = after(home, 4600);
+  equal(ripe.beds[0].grown, 3600, 'spinach ripens across a closed game through the actual supplied clock');
+  equal(after(ripe, 4600).beds, ripe.beds, 'reopening at the same moment cannot grow twice');
+  equal(after(ripe, 500).beds, ripe.beds, 'a backward clock preserves a ripe crop');
+  const dry = {...home, builds: home.builds.map(row => ({...row, litres: 0}))};
+  equal(after(dry, 90000).beds, dry.beds, 'a dry bed waits for a whole day and never dies');
+  const unclockedTank = {...dry, well: {i: 6, j: 8, depth: 10, water: 10, pump: true},
+    builds: dry.builds.map(row => ({...row, filled: null}))};
+  equal(after(unclockedTank, 4600).beds, after(after(unclockedTank, 2800), 4600).beds,
+    'an older tank with no fill stamp starts at the known interval and gives identical split growth');
+  equal(after(unclockedTank, 4600).beds[0].grown, 3600, 'the null-stamp tank begins watering at the known interval start');
+  const far = {...home, builds: home.builds.map(row => ({...row, i: 17, j: 17}))};
+  equal(after(far, 90000).beds, far.beds, 'water farther than twelve metres cannot grow a bed');
+  const gathered = harvestCrop(ripe, 0);
+  equal([gathered.vegetables.spinach, gathered.beds[0].crop, gathered.seeds.spinach], [1, null, 6], 'harvesting stores food and returns its seed');
+  equal(harvestCrop(gathered, 0), gathered, 'an empty bed cannot be harvested twice');
+  let growing = plantCrop(gathered, 0);
+  equal(growing.beds[0].crop, 'carrots', 'the next planting rotates to carrots');
+  equal(after(growing, 4600 + 14400).beds[0].grown, 14400, 'carrots need four watered hours');
+  growing = plantCrop({...gathered, beds: [{...gathered.beds[0]}]}, 0, false, 'beans');
+  equal(after(growing, 4600 + 28800).beds[0].grown, 28800, 'plain beans need eight watered hours');
+  equal(bedRefusal(home, {i: 4, j: 5, turn: 1}), 'onTop', 'turned beds cannot overlap existing beds');
+  equal(buildRefusal(home, {kind: 'greenhouse', i: 2, j: 4, turn: 0, stage: 0}), 'onTop', 'a greenhouse cannot cover a bed');
+  equal(refusal(home, {kind: 'panel', i: 3, j: 5, axis: 'x'}), 'onTop', 'a later fence cannot cross a bed');
+  // Construction time is excluded, even when the tank finishes halfway through one closed-game catch-up.
+  let crew = {...dry, well: {i: 6, j: 8, depth: 10, water: 10, pump: true}};
+  const tank = {kind: 'tank', i: 7, j: 6, turn: 0, stage: 0, litres: 0, filled: null};
+  crew = {...crew, builds: crew.builds.map(row => ({...row, i: 17, j: 17}))};
+  crew = markBuild(crew, tank); crew = {...crew, loads: {...crew.loads, tank: {i: tank.i, j: tank.j}}};
+  crew = handToCrew(crew, tank, 1000);
+  const once = after(crew, 1000 + 5400), split = after(after(crew, 1000 + 3600), 1000 + 5400);
+  equal(once.beds[0].grown, 1800, 'a crew-built tank waters only the time after completion');
+  equal(once.beds, split.beds, 'splitting at tank completion preserves the same crop sums');
+  const glass = {kind: 'greenhouse', i: 7, j: 4, turn: 1, stage: 0};
+  home = markBuild(home, glass);
+  home = transferHomeLoad(home, {vehicle: 'flatbed', position: HOME_LOAD_STACK, speedKmh: 0});
+  equal(home.loads.greenhouse, 'bed', 'the greenhouse load uses the existing flatbed');
+  home = transferHomeLoad(home, {vehicle: 'flatbed', position: buildInLand(glass), speedKmh: 0});
+  for (let n = 0; n < 3; n++) home = raiseBuild(home, glass);
+  equal(home.pots, [], 'unfinished glass has no working pots');
+  home = raiseBuild(home, glass);
+  equal(home.pots.length, 6, 'the fourth greenhouse stage provides exactly six pots');
+  home = plantCrop(home, 0, true, 'firePeppers'); home = plantCrop(home, 1, true, 'jumpingBeans');
+  check(readableHome(home), 'beds, greenhouse and planted pots form a readable version 8 record');
+  const powersRipe = after(home, 1000 + 43200);
+  equal(powersRipe.pots.slice(0, 2).map(row => row.grown), [43200, 43200], 'both power foods need twelve watered real hours');
+  const chunked = after(after(home, 1000 + 12345), 1000 + 43200);
+  equal(chunked.pots, powersRipe.pots, 'separate closed-game visits give identical pot growth');
+  let stocked = harvestCrop(harvestCrop(powersRipe, 0, true), 1, true);
+  stocked = {...stocked, foods: {...stocked.foods, firePeppers: 3}};
+  const packed = packTin(stocked);
+  equal(packed.tin.length, 3, 'the tin holds exactly three foods');
+  equal(Object.values(packed.foods).reduce((a, b) => a + b, 0), 1, 'packing takes only the three foods put in the tin');
+  equal(packTin(packed), packed, 'packing a full tin cannot spend food');
+  const lunch = {...packed, tin: ['firePeppers', 'jumpingBeans', null]};
+  let ate = eatFromTin(lunch, 0, {firePeppers: 0, jumpingBeans: 0});
+  equal([ate.home.tin[0], ate.powers.firePeppers], [null, 90], 'eating consumes one pepper and starts ninety play seconds');
+  ate = eatFromTin(ate.home, 1, ate.powers);
+  equal(ate.powers.jumpingBeans, 120, 'jumping beans last two play minutes');
+  equal(stepHomePowers(ate.powers, 90), {firePeppers: 0, jumpingBeans: 30}, 'both powers count down independently');
+  equal(stepHomePowers(ate.powers, 120), {firePeppers: 0, jumpingBeans: 0}, 'both powers end without another key');
+  equal([powerStrength(20), powerStrength(10), powerStrength(0)], [1, .5, 0], 'the final twenty seconds ease powers back to normal');
+  const controls = footControlInput({Digit4: true, Digit5: true, Digit6: true}, {});
+  check(controls.homeEat1 && controls.homeEat2 && controls.homeEat3, 'the three free number keys reach foot input');
+  let outing = stepOpenLand(land(lunch), viewOf(me, {eat1: true}, {homeClock: lunch.lastSeen}), 0, parts);
+  equal(homeOf(outing.open).tin[0], null, 'the real home part eats a tin slot on a fresh key press');
+  check(cues(outing.events).includes(HOME_CUES.eat), 'eating names its sound cue');
+  outing = stepOpenLand(outing.open, viewOf(me, {eat1: true, burst: true, forward: true}), 5, parts);
+  check(outing.open.parts.home.burst.active && outing.open.parts.home.powers.firePeppers === 85, 'a pepper keeps the third speed beyond three seconds');
+  outing = stepOpenLand(outing.open, viewOf(me), 85, parts);
+  check(cues(outing.events).includes(HOME_CUES.powerEnd) && outing.open.parts.home.powers.firePeppers === 0, 'the part ends the power with its cue');
+  const talking = stepOpenLand(land(lunch), viewOf(me, {eat1: true}, {homeTalking: true}), 0, parts);
+  equal(homeOf(talking.open).tin, lunch.tin, 'talk cannot eat a lunch slot');
+  const settled = settleOpenWorld({}, {...world, open: {...world.open, home: lunch}});
+  check(settled.ok, 'version 8 settles through the real save writer');
+  equal(savedOpenRecord(settled.profile).home, lunch, 'the saved beds, pots, seeds, stores and tin round-trip exactly');
+  const legacy = {...home, version: 7, builds: home.builds.filter(row => row.kind !== 'greenhouse'), loads: {...home.loads},
+    well: {i: 10, j: 10, depth: 7, water: 12, pump: false}, scrap: 87, carters: {began: 950}, loot: [{kind: 'crate', position: 'bed', worth: 4}]};
+  delete legacy.loads.greenhouse;
+  for (const key of Object.keys(newGarden())) delete legacy[key];
+  const bytes = JSON.stringify(legacy);
+  check(readableHome(legacy), 'a genuine version 7 record remains readable');
+  const upgraded = upgradeHome(legacy);
+  for (const [key, value] of Object.entries(legacy)) if (key !== 'version')
+    equal(upgraded[key], key === 'loads' ? {...value, greenhouse: 'stack'} : value, 'version 8 preserves version 7 field ' + key);
+  equal(JSON.stringify(legacy), bytes, 'migration never mutates the original version 7 record');
+  equal(homeOf(stepOpenLand(land(legacy), viewOf(me, {}, {homeGround: false}), 10, parts).open), legacy, 'the off switch keeps version 7 byte-for-byte');
+  for (const bad of [{...home, tin: [{toString: null}, null, null]},
+    {...home, beds: [{...home.beds[0], crop: {toString: null}}]}, {...home, tin: [null, null, null, null]}, {...home, seeds: {...home.seeds, spinach: -1}},
+    {...home, beds: [{...home.beds[0], crop: 'firePeppers'}]}, {...home, pots: home.pots.slice(1)},
+    {...home, pots: home.pots.map((row, n) => n ? row : {...row, grown: Infinity})}])
+    check(!readableHome(bad), 'a malformed garden record cannot overwrite a good save');
+  const drawnOpen = stepOpenLand(land(powersRipe), viewOf(me, {}, {homeClock: powersRipe.lastSeen}), 0, parts).open;
+  const beforeDraw = JSON.stringify(drawnOpen), look = createHomeGroundView(); look.update({open: drawnOpen}, null, 1);
+  check(look.group.getObjectByName('home-greenhouse')?.visible && look.group.getObjectByName('home-pot/7/4/0')?.visible,
+    'the greenhouse and its pots are drawn at their saved places');
+  equal(JSON.stringify(drawnOpen), beforeDraw, 'drawing crops never advances their clock or changes the save'); look.dispose();
+  check(homeFootPlatforms(powersRipe, () => 0).some(row => row.y === 3.1), 'the finished greenhouse roof can receive a jumping fighter');
+}
+
+
+
+// G, held hammering and F complete the bed loop with the same real home part used in play.
+{
+  let home = newHome('Hand Garden', 1000);
+  const coop = {kind: 'coop', i: 2, j: 8, turn: 0, stage: 0};
+  home = markBuild(home, coop); home = {...home, loads: {...home.loads, coop: {i: coop.i, j: coop.j}}};
+  for (let n = 0; n < 4; n++) home = raiseBuild(home, coop);
+  home = {...home, builds: [...home.builds, {kind: 'tank', i: 12, j: 13, turn: 0, stage: 4, litres: 10, filled: 1000}]};
+  const world = newWorld({seed: 5, night: 2}), land = saved => openLand({...world, open: {...world.open, home: saved}});
+  const me = {...groundPoint(14, 12), yaw: 0};
+  let out = stepOpenLand(land(home), viewOf(me, {}, {homeClock: 1000}), 0, parts);
+  for (let n = 0; n < 10 && out.open.parts.home.kind !== 'bed'; n++) {
+    out = run(out.open, viewOf(me, {piece: true}), DT); out = run(out.open, viewOf(me), DT);
+  }
+  equal(out.open.parts.home.kind, 'bed', 'G offers the garden bed after the tank');
+  out = run(out.open, viewOf(me, {build: true}), 2.6);
+  equal(homeOf(out.open).beds.length, 1, 'holding B hammers up a one-by-two-cell bed in seconds');
+  const at = cropInLand(homeOf(out.open), homeOf(out.open).beds[0]);
+  const tending = {x: at.x, z: at.z - 2.5, yaw: 0};
+  out = run(out.open, viewOf(tending, {}, {interact: true}), DT);
+  equal(homeOf(out.open).beds[0].crop, 'spinach', 'F at the empty bed plants the next seed');
+  check(cues(out.events).includes(HOME_CUES.plant), 'planting uses the named bed cue');
+  const planted = homeOf(out.open);
+  out = stepOpenLand(land(planted), viewOf(tending, {}, {homeClock: planted.lastSeen + 3600, interact: true}), 0, parts);
+  equal(homeOf(out.open).vegetables.spinach, 1, 'F at the ripe bed harvests into the vegetable store');
+  check(cues(out.events).includes(HOME_CUES.harvest), 'harvesting uses the named bed cue');
+  let stored = homeOf(out.open);
+  const shed = {kind: 'shed', i: 6, j: 10, turn: 0, stage: 0};
+  stored = markBuild(stored, shed); stored = {...stored, loads: {...stored.loads, shed: {i: shed.i, j: shed.j}}};
+  for (let n = 0; n < 4; n++) stored = raiseBuild(stored, shed);
+  stored = {...stored, foods: {firePeppers: 1, jumpingBeans: 1}};
+  out = stepOpenLand(land(stored), viewOf({...buildingDoor(shed), yaw: Math.PI}, {}, {homeClock: stored.lastSeen, interact: true}), 0, parts);
+  equal(homeOf(out.open).tin, ['firePeppers', 'jumpingBeans', null], 'F at the shed packs harvested power food into the tin');
+  check(out.requests.some(row => row.text?.includes('Press 4, 5 or 6')), 'the shed explains the free eating keys');
+}
+
+// Power foods reach the fixed-step walker, including safe landings and the walk off a roof.
+{
+  const course = {def: {}, groundAt: (s, lateral) => ({x: lateral, y: 0, z: s, heading: 0}),
+    nearest: (x, z) => ({s: z, lateral: x}), obstaclesNear: () => []};
+  const car = {s: 0, lateral: 0};
+  for (const height of [1.8, 2.5, 4.4]) {
+    const fighter = createFighter(course, car, {s: 0, lateral: 0});
+    const platforms = [{x: 0, z: 5, halfX: 2, halfZ: height === 1.8 ? .12 : 2, heading: 0, y: height}];
+    let peak = 0;
+    for (let n = 0; n < 360; n++) {
+      stepFighter(course, car, fighter, {jump: n === 0, forward: fighter.z < 5, homeJumpMeters: 6, homePlatforms: platforms});
+      peak = Math.max(peak, fighter.y);
+    }
+    check(peak > 5.9 && peak < 6.1, 'jumping beans lift the real walker six metres');
+    equal(fighter.y, height, 'the walker lands on the wall, roof or tower rather than falling through it');
+    for (let n = 0; n < 240; n++) stepFighter(course, car, fighter, {forward: true, homePlatforms: platforms});
+    equal(fighter.y, 0, 'walking off the raised surface returns to the ground');
+  }
+  const game = new LegacyRoadsideDuel({seed: 5});
+  game.startCampaign({mode: 'wasteland', car: 'falcone_f42', startStage: 0, discoveredGate: true, seed: 5});
+  Object.assign(game.state, {status: 'racing', countdown: 0, speedMph: 0});
+  game.state.input.interact = true;
+  for (let n = 0; n < 25; n++) stepFootTransition(game, DT);
+  game.state.input.interact = false;
+  const home = {on: true, powers: {firePeppers: 90, jumpingBeans: 120}, burst: {active: true, strength: 1}};
+  game.course = course; game.state.fighter = createFighter(course, car, {s: 0, lateral: 0});
+  Object.assign(game.state, {s: 0, lateral: 0, arena: {mode: 'world-job', worldJob: {job: {steps: [{kind: 'roam'}], stepIndex: 0}, open: {parts: {home}, world: {...newWorld({seed: 5, night: 2}), open: {...newWorld({seed: 5, night: 2}).open, home: newHome('Power')}}}}, participants: []}, opponents: []});
+  game.state.fighterInput = {forward: true, jump: true};
+  let peak = 0;
+  for (let n = 0; n < 150; n++) { stepFootTransition(game, DT); peak = Math.max(peak, game.state.fighter.y); }
+  check(peak > 5.9 && game.state.fighter.z > 37, 'the actual foot adapter applies both the pepper speed and bean jump');
+  equal(game.state.fighter.speed, FIGHTER_RULES.burstMetersPerSecond, 'the pepper uses the existing third speed');
+  home.burst.strength = powerStrength(10); game.state.fighterInput = {forward: true};
+  stepFootTransition(game, DT);
+  check(game.state.fighter.speed < FIGHTER_RULES.burstMetersPerSecond && game.state.fighter.speed > FIGHTER_RULES.sprintMetersPerSecond,
+    'the fixed-step walker slows during the final twenty seconds');
+  home.burst.active = false; home.powers = {firePeppers: 0, jumpingBeans: 0}; stepFootTransition(game, DT);
+  check(Math.abs(game.state.fighter.speed - FIGHTER_RULES.walkMetersPerSecond) < 1e-9, 'expired powers restore ordinary walking');
 }
 
 console.log(`Home ground: ${checks} checks passed.`);

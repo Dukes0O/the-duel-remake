@@ -1,3 +1,5 @@
+import {homeFootPlatforms, powerStrength} from './world/open/home-rule.js';
+import {scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {combatArmorEnabled, completeCombatRecovery} from './combat-armor.js';
 import {createFighter, damageFighter, FIGHTER_STEP_SECONDS,
   stepFighter} from './onfoot.js';
@@ -82,12 +84,15 @@ function stepFighterInFixedTime(duel, dt) {
   const carryingValve = activeMission?.mission.kind === 'heist' && activeMission.state.carrying;
   // HOME-GROUND-1: while he looks down on his ground from above he stands still, and a burst runs at the third speed.
   const home = state.arena?.worldJob?.open?.parts.home;
+  const footInput = home?.on ? {...state.fighterInput,
+    homeJumpMeters: 1.1 + 4.9 * powerStrength(home.powers?.jumpingBeans),
+    homePlatforms: homeFootPlatforms(state.arena.worldJob.open.world.open?.home, scablandsSurfaceHeightAt)} : state.fighterInput;
   const input = carryingValve ? {...state.fighterInput, sprint: false, walkScale: .5}
     : home?.tower ? {lookX: state.fighterInput.lookX, lookY: state.fighterInput.lookY,
       turnLeft: state.fighterInput.turnLeft, turnRight: state.fighterInput.turnRight,
       fire: state.fighterInput.fire, aim: state.fighterInput.aim}
     : home?.above ? {lookX: state.fighterInput.lookX, lookY: state.fighterInput.lookY}
-    : home?.burst?.active ? {...state.fighterInput, burst: true} : state.fighterInput;
+    : home?.burst?.active ? {...footInput, burst: true, burstStrength: home.burst.strength ?? 1} : footInput;
   while (transition.fighterStepRemainder + 1e-10 >= FIGHTER_STEP_SECONDS) {
     const fighter = state.fighter, wasOnRoof = state.boarding?.phase === 'roof';
     if (fighter.bailTumbleSeconds > 0) {
