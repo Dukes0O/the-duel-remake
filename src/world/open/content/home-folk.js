@@ -1,4 +1,5 @@
 // The invitation reads the existing story ledger. These are outcomes, never shortcuts through a story.
+import {COMBAT_TUNING, WEAPONS} from '../../../wasteland-tuning.js';
 export const HOME_FOLK = Object.freeze([
   {id: 'slack', name: 'Slack', thread: 'runaway', ends: ['kept', 'paid', 'hidden'],
     marks: ['runaway/kept', 'runaway/paid', 'runaway/kept-ahead', 'runaway/hidden'],
@@ -35,4 +36,4 @@ export const hasHomeFolk = (home, id) => !!home?.folk?.some(row => row.id === id
 export const HOME_MARANS = Object.freeze([
   {name: 'Truffle', breed: 'marans', due: 28800}, {name: 'Cocoa', breed: 'marans', due: 28800},
 ]);
-export const HOME_CROSSBOW = Object.freeze({reach: 25, seconds: 4, damage: 12});
+export const HOME_CROSSBOW = Object.freeze({reach: 25, seconds: WEAPONS.crossbow.cooldown, damage: COMBAT_TUNING.armor.crossbow});

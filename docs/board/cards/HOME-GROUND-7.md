@@ -50,3 +50,9 @@ Older versions load unchanged after the verified backup.
   --check` (Finch's crossbow), and `npm run build`. One independent review of the save. Claude drives it by hand.
 
 ## Claude answers
+
+### Assertion review due at handoff
+
+The old hens suite pins the enabled home version: 10 becomes 11. Home and backup assertions now expect the additive
+hut load. Genuine older fixtures remove step 7's fields before testing migration. Every older-field equality remains;
+no limit or tolerance is loosened. New behavior checks cover the settled arrivals, skills, save and switch rules.
