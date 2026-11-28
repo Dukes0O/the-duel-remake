@@ -37,3 +37,10 @@ goes through the app's start hooks, is checked against the chapter's mode, venue
 Easy with `water-road` on; warlord fights get the same context. Rule 18 review, written here: the rates check's old
 8-in-10 assertion is replaced by this card's target (about 5 to 7 in 10 assisted, never below 4, and at least 2 in 10 for
 a driver no better than an Easy computer car). That follows Kyle's ruling of 20 November 2026; it is not a loosening.
+
+**28 November 2026, the scripted driver at Ambush Alley** (the questions file, commit `9b42c2fe6`): approved. The helper's
+foot driver stood still 40.57 m from its target with ammunition, so its Ambush results measured the driver, not the game. A
+bounded walk into range and around the native pile with the existing keys and turn rate, one holdFort-only walking wrapper
+for all three destinations, and a 900 s observation cap for this rates case only (Ambush has no time limit) are corrections to
+the measuring tool, not to the game; latency, aim, ammunition and clocks stay as they are. Base and tuned Ambush are both
+remeasured with the corrected driver, as the reviewer asks.
